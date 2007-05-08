@@ -1,0 +1,23 @@
+<tr>
+  <td>
+    <% if @result.respond_to? :get_promo and img = @result.get_promo('small') %>
+    <a href="<%= item_url(@result) %>"><%= image_tag(img, :alt => @result.title, :border => 0) %></a>
+    <% end %>
+  </td>
+  <td>
+    <a href="<%= item_url(@result) %>">
+      <%= @result.title %>
+    </a>
+  </td>
+  <td><%= class_link @result %></td>
+  <td><%= link_to @result.category.name, item_url(@result.category) %></td>
+  <td><%= @result.body[0..250] %></td>
+  <td>
+    <% if @result.author.user and @result.author.user.avatar %>
+      <a href="<%= item_url(@result.author.user) %>"><%= image_tag(@result.author.user.avatar.tiny.public_filename, :alt => "", :border => 0) %></a><br/>
+    <% end %>
+    <%= show_name(@result.author.user_id, @result.author.name) %>
+  </td>
+  <td><%= @result.published_at %></td>
+  <td><%= @result.activity if @result.respond_to? :activity %></td>
+</tr>

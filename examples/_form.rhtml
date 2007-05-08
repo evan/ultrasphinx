@@ -1,0 +1,44 @@
+<% form_for :search, @search, :url => {:controller => "search"}, :html => {:method => "get", :id => "search"} do |form| %>
+  <table>
+   <tr><td>
+     <%= form.text_field "query", :id => "searchbar_entry", :class => "entry", :size => 40 %>
+     <input value="search" type="image" src="/images/button-search2.gif" alt="Search" class="button" />   
+   </td></tr>
+   
+   <% if full = full %>
+     <% fields_for :options, @options do |options| %>
+       <tr><td>
+         Show only: 
+         <% Search::MODELS.keys.each do |model_name| %>
+          <!-- couldn't get form_for way to work here -->
+          <%= check_box_tag "options[models][]", model_name, 
+             @options['models'].empty? || @options['models'].include?(model_name) %>
+           <%= model_name.constantize.human_name.pluralize %>
+         <% end %>
+       </td></tr>
+       <tr><td>
+         Search mode: 
+         <%= options.select "search_mode", Search::VIEW_OPTIONS[:search_mode] %>
+       </td></tr>
+       <tr><td>
+         Sort style: 
+         <%= options.select "sort_mode", Search::VIEW_OPTIONS[:sort_mode] %>
+       </td></tr>
+       <tr><td>
+          Between: <%= options.text_field "to", :size => 20 %> 
+          and: <%= options.text_field "from", :size => 20 %>
+       </td></tr>
+       <tr><td>
+         &nbsp;
+       </td></tr>
+      <% unless @search.query.blank? or @search.page > 1 or (correction = Spell.correct(@search.query)) == @search.query %>
+        <tr><td>
+          Did you mean: 
+          <%= link_to "<i>#{h(correction)}</i>", :params => params.merge({"search[query]" => correction, :page => 1}) %>
+        </td></tr>
+      <% end %>  
+     <% end %>
+   <% end %>
+  </table>
+
+<% end %>

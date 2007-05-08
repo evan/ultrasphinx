@@ -1,0 +1,37 @@
+<% @page_title = "Search: #{h(@search.query) if @search}" -%>
+
+<% content_for :main do %>
+  <h3 class="topic_header_underline">CHOW Search</h3>
+
+  <% if @search.run? %>
+    <div class="fr"><strong>
+      <% if @search.found == 0 %>
+        No results
+      <% else %>
+        Results <%= (start = (@search.page - 1)*@search.per_page + 1).pretty %> to <%= (start + @search.found - 1).pretty %> of <%= @search.total.pretty %>
+        <%= "or more" if @search.total == Search::MAX_MATCHES %>
+      <% end %>
+    </strong></div>
+  <% end %>
+  <div><%= render :partial => 'form', :locals => {:full => true} %> </div>
+  <%= clear_float %>
+
+  <% if @error %>
+    <strong><%= h(@error) %></strong>
+  <% elsif @search.run? %>
+    <table>
+      <tr>
+      <%= %w(Image Title From Category Content Author Date Activity).map{|h| "<th>#{h}</th>"}.join("") %>
+      </tr>
+      <% @search.results.each do |@result| %>
+          <%= render :partial => "result" %>
+      <% end %>    
+    </table>
+        
+    <p>
+      <%= will_paginate(@search.total, @search.options[:per_page], @search.options[:page], params.no_pass("page")) %>
+    </p>
+  <% end %>
+
+<% end %>
+
