@@ -1,0 +1,18 @@
+
+Ultrasphinx 
+
+DESCRIPTION
+
+Ruby on Rails interface to the Sphinx full text search engine.
+
+RESOURCES
+
+http://blog.evanweaver.com
+http://errtheblog.com
+http://sphinxsearch.com
+
+LICENSE
+
+Copyright 2007 Cloudburst, LLC. Licensed under the AFL 3. See included 
+LICENSE file. Portions copyright Dmytro Shteflyuk and Alexey Kovyrin; 
+used with permission.
