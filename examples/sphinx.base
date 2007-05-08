@@ -1,0 +1,34 @@
+
+# to put in your RAILS_ROOT/config/environments
+# can be namespaced individually (sphinx.development.base)
+
+indexer
+{
+  mem_limit = 256M
+}
+
+searchd
+{
+  address = 0.0.0.0
+  port = 3312
+  log = /opt/local/var/db/sphinx/log/searchd.log
+  query_log = /opt/local/var/db/sphinx/log/query.log
+  read_timeout = 5
+  max_children = 30
+  pid_file = /opt/local/var/db/sphinx/log/searchd.pid
+  max_matches = 100000
+}
+
+ultrasphinx
+{
+  # indexer options
+  path = /opt/local/var/db/sphinx/
+  docinfo = extern # just leave this alone
+  morphology = stem_en
+  stopwords = # /path/to/stopwords.txt
+  min_word_len = 1
+  charset_type = utf-8 # or sbcs (Single Byte Character Set)
+  # client options
+  server_host = localhost
+  server_port = 3312
+}
