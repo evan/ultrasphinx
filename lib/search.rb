@@ -123,12 +123,8 @@ class Search
 
       begin
         @response = @request.Query(@query)
-        logger.debug "Ultrasphinx: Searched for #{query.inspect}, options #{@options.inspect}, error #{@request.GetLastError.inspect}, warning #{@request.GetLastWarning.inspect}, returned #{total}/#{response[:total_found]} in #{time} seconds."
-        @results = if instantiate
-          reify_results(response[:matches])
-        else
-          response[:matches]
-        end
+        logger.debug "Ultrasphinx: Searched for #{query.inspect}, options #{@options.inspect}, error #{@request.GetLastError.inspect}, warning #{@request.GetLastWarning.inspect}, returned #{total}/#{response['total_found']} in #{time} seconds."
+        @results = instantiate ? reify_results(response['matches']) : response['matches']
 
     rescue Object => e
       if e.is_a? Sphinx::SphinxInternalError and e.to_s == "searchd error: 112"
@@ -154,7 +150,7 @@ class Search
     end.flatten.map{|x| x.gsub(/<.*?>|\.\.\.|\342\200\246|\n|\r/, " ")}
 
     begin
-      responses = @request.build_excerpts(texts, "complete", query,
+      responses = @request.BuildExcerpts(texts, "complete", query,
       :before_match => "<strong>", :after_match => "</strong>",
       :chunk_separator => "...",
       :limit => 200,
@@ -177,7 +173,8 @@ class Search
 
 
   def total
-    [response[:total_found], MAX_MATCHES].min
+#    require 'ruby-debug'; Debugger.start; debugger
+    [response['total_found'], MAX_MATCHES].min
   end
 
   def found
@@ -185,7 +182,7 @@ class Search
   end
 
   def time
-    response[:time]
+    response['time']
   end
 
   def run?
