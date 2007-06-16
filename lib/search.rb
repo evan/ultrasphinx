@@ -2,7 +2,6 @@
 # Ultrasphinx search model
 
 require 'ultrasphinx'
-require "#{File.dirname(__FILE__)}/../vendor/sphinx.rb"
 require 'timeout'
 require 'chronic'
 
@@ -80,21 +79,21 @@ class Search
 
     def run(instantiate = true)
       # set all the options
-      @request = Sphinx.new
-      @request.set_server(Ultrasphinx::PLUGIN_CONF['server_host'], Ultrasphinx::PLUGIN_CONF['server_port'])
+      @request = Sphinx::Client.new
+      @request.SetServer(Ultrasphinx::PLUGIN_CONF['server_host'], Ultrasphinx::PLUGIN_CONF['server_port'])
       offset, limit = options[:per_page] * (options[:page] - 1), options[:per_page]
-      @request.set_limits offset, limit, [offset + limit, MAX_MATCHES].min
-      @request.set_match_mode map_option(:search_mode)
-      @request.set_sort_mode map_option(:sort_mode), options[:sort_by]      
+      @request.SetLimits offset, limit, [offset + limit, MAX_MATCHES].min
+      @request.SetMatchMode map_option(:search_mode)
+      @request.SetSortMode map_option(:sort_mode), options[:sort_by]      
       if weights = options[:weights]
 #        breakpoint
-        @request.set_weights((Ultrasphinx::FIELDS.keys - ["id"]).sort.inject([]) do |array, field|
+        @request.SetWeights((Ultrasphinx::FIELDS.keys - ["id"]).sort.inject([]) do |array, field|
           array << (weights[field] || 1.0)
         end)
       end
-      #@request.set_id_range # never useful
+      #@request.SetIdRange # never useful
       unless options[:models].empty?
-        @request.set_filter 'class_id', options[:models].map{|m| MODELS[m]}
+        @request.SetFilter 'class_id', options[:models].map{|m| MODELS[m]}
       end
       if options[:belongs_to]
         raise Ultrasphinx::ParameterError, "You must specify a specific :model when using :belongs_to" unless options[:models] and options(:models).size == 1
@@ -105,11 +104,11 @@ class Search
         else
           key_name = "#{options[:models].first.tableize}_#{association.options[:foreign_key]}"
         end
-        @request.set_filter key_name, [parent.id]
+        @request.SetFilter key_name, [parent.id]
       end
       options[:raw_filters].each do |field, value|
         unless value.is_a? Range
-          @request.set_filter field, Array(value)
+          @request.SetFilter field, Array(value)
         else
           min, max = [value.first, value.last].map do |x|
             x._to_numeric if x.is_a? String
@@ -117,10 +116,10 @@ class Search
         end
         unless min.class != max.class
           min, max = max, min if min > max
-          @request.set_filter_range field, min, max
+          @request.SetFilter_range field, min, max
         end
       end
-      # @request.set_group_by # not useful
+      # @request.SetGroup # not useful
 
       begin
         Timeout::timeout(5) do
@@ -287,9 +286,9 @@ end
 #        associations = parent.class.reflect_on_all_associations.select{|a| MODELS.keys.include? a.klass.name}.select{|a| [:has_many, :has_one].include? a.macro}.select{|a| !a.options[:through]} # no has_many :through right now
 #        names = associations.map(&:klass).map(&:name)
 #        if names.size > 1 and !options[:models) and names.size < MODELS.size # XXX may return spurious results right now
-#          associations.each {|a| set_filter "#{a.klass.name.tableize}_#{a.options[:foreign_key]}", [parent.id, Ultrasphinx::MAX_INT]}
-#          set_filter 'class_id', MODELS.values_at(*names)
+#          associations.each {|a| SetFilter "#{a.klass.name.tableize}_#{a.options[:foreign_key]}", [parent.id, Ultrasphinx::MAX_INT]}
+#          SetFilter 'class_id', MODELS.values_at(*names)
 #        elsif options[:models) or names.size == 1
 #
 #        else
-#          associations.each {|a| set_filter "#{a.klass.name.tableize}_#{a.options[:foreign_key]}", [parent.id, Ultrasphinx::MAX_INT]}
+#          associations.each {|a| SetFilter "#{a.klass.name.tableize}_#{a.options[:foreign_key]}", [parent.id, Ultrasphinx::MAX_INT]}
