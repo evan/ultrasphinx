@@ -10,7 +10,7 @@ class Search
 
   OPTIONS = {:command => {:search => 0, :excerpt => 1},
     #   :status => {:ok => 0, :error => 1, :retry => 2},
-    :search_mode => {:all => 0, :any => 1, :phrase => 2, :boolean => 3},
+    :search_mode => {:all => 0, :any => 1, :phrase => 2, :boolean => 3, :extended => 4},
     :sort_mode => {:relevance => 0, :desc => 1, :asc => 2, :time => 3},
     :attribute_type => {:integer => 1, :date => 2},
   :group_by => {:day => 0, :week => 1, :month => 2, :year => 3, :attribute => 4}}
@@ -116,28 +116,24 @@ class Search
         end
         unless min.class != max.class
           min, max = max, min if min > max
-          @request.SetFilter_range field, min, max
+          @request.SetFilterRange field, min, max
         end
       end
       # @request.SetGroup # not useful
 
       begin
-        Timeout::timeout(5) do
-          @response = @request.query(@query)
-        end
-        logger.debug "Ultrasphinx: Searched for #{query.inspect}, options #{@options.inspect}, error #{@request.last_error.inspect}, warning #{@request.last_warning.inspect}, returned #{total}/#{response[:total_found]} in #{time} seconds."
+        @response = @request.Query(@query)
+        logger.debug "Ultrasphinx: Searched for #{query.inspect}, options #{@options.inspect}, error #{@request.GetLastError.inspect}, warning #{@request.GetLastWarning.inspect}, returned #{total}/#{response[:total_found]} in #{time} seconds."
         @results = if instantiate
-        reify_results(response[:matches])
-      else
-        response[:matches]
-      end
+          reify_results(response[:matches])
+        else
+          response[:matches]
+        end
 
     rescue Object => e
       if e.is_a? Sphinx::SphinxInternalError and e.to_s == "searchd error: 112"
         e = Sphinx::SphinxInternalError.new("searchd error: 112. This is a request error. You did something wrong. Sorry; I don't have any more details.")
       end
-#      e = Ultrasphinx::CoreError.convert(e) unless e.is_a? Ultrasphinx::Exception
-#      logger.warn "Ultrasphinx: Searchd search error for #{query.inspect}, options #{@options.inspect} at #{Time.now}, #{e.inspect}"
       raise e #if Rails.development?
     end
   end
