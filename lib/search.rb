@@ -65,6 +65,8 @@ class Search
       [key.to_sym,
         if value.respond_to?(:to_i) && value.to_i.to_s == value
           value.to_i
+        elsif value == ""
+          nil
         elsif value.is_a? String and key.to_s != "sort_by"
           value.to_sym
         else
