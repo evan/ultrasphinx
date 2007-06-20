@@ -46,6 +46,7 @@ class Search
   attr_reader :query
   attr_reader :results
   attr_reader :response
+  attr_reader :subtotals
 
   def self.find *args
     args.push({}) unless args.last.is_a? Hash
@@ -57,8 +58,9 @@ class Search
     opts = {} unless opts
     raise Ultrasphinx::ParameterError, "Invalid query type: #{style.inspect}" unless QUERY_TYPES.include? style
     query = parse_google(query) if style == :google
-    @query = query
+    @query = query || ""
     @results = []
+    @subtotals = {}
     @response = {}
 
     @options = DEFAULTS.merge(Hash[*opts.map do |key, value|
@@ -94,8 +96,8 @@ class Search
         end)
       end
       #@request.SetIdRange # never useful
-      unless options[:models].empty?
-        @request.SetFilter 'class_id', options[:models].map{|m| MODELS[m]}
+      unless options[:models].compact.empty?
+        @request.SetFilter 'class_id', options[:models].map{|m| MODELS[m.to_s]}
       end
       if options[:belongs_to]
         raise Ultrasphinx::ParameterError, "You must specify a specific :model when using :belongs_to" unless options[:models] and options(:models).size == 1
@@ -124,10 +126,20 @@ class Search
       # @request.SetGroup # not useful
 
       begin
+        # run the search
         @response = @request.Query(@query)
         logger.debug "Ultrasphinx: Searched for #{query.inspect}, options #{@options.inspect}, error #{@request.GetLastError.inspect}, warning #{@request.GetLastWarning.inspect}, returned #{total}/#{response['total_found']} in #{time} seconds."
-        @results = instantiate ? reify_results(response['matches']) : response['matches']
 
+        # get all the subtotals, XXX should be configurable
+        _request = @request.dup
+        MODELS.each do |key, value|
+          _request.instance_eval { @filters.delete_if {|f| f['attr'] == 'class_id'} }
+          _request.SetFilter 'class_id', [value]
+          @subtotals[key] = @request.Query(@query)['total_found']
+          logger.debug "Ultrasphinx: Found #{subtotals[key]} records for sub-query #{key} (filters: #{_request.instance_variable_get('@filters').inspect})"
+        end
+
+        @results = instantiate ? reify_results(response['matches']) : response['matches']
     rescue Object => e
       if e.is_a? Sphinx::SphinxInternalError and e.to_s == "searchd error: 112"
         e = Sphinx::SphinxInternalError.new("searchd error: 112. This is a request error. You did something wrong. Sorry; I don't have any more details.")
@@ -229,7 +241,14 @@ class Search
       logger.debug "Ultrasphinx: using #{klass.name}\##{finder} as finder method"
 
       begin
-        results += klass.send(finder, id_set)
+        results += case instances = klass.send(finder, id_set)
+          when Hash
+            instances.values
+          when Array
+            instances
+          else
+            Array(instances)
+        end
       rescue ActiveRecord:: ActiveRecordError => e
         raise Ultrasphinx::ResponseError, e.inspect
       end
