@@ -57,8 +57,9 @@ class Search
   def initialize style, query, opts={}
     opts = {} unless opts
     raise Ultrasphinx::ParameterError, "Invalid query type: #{style.inspect}" unless QUERY_TYPES.include? style
-    query = parse_google(query) if style == :google
-    @query = query || ""
+    @query = (query || "").gsub(" AND ", " ") # hack
+    @parsed_query = style == :google ? parse_google(@query) : @query
+
     @results = []
     @subtotals = {}
     @response = {}
@@ -127,15 +128,15 @@ class Search
 
       begin
         # run the search
-        @response = @request.Query(@query)
-        logger.debug "Ultrasphinx: Searched for #{query.inspect}, options #{@options.inspect}, error #{@request.GetLastError.inspect}, warning #{@request.GetLastWarning.inspect}, returned #{total}/#{response['total_found']} in #{time} seconds."
+        @response = @request.Query(@parsed_query)
+        logger.debug "Ultrasphinx: Searched for #{query.inspect} (parsed as #{@parsed_query.inspect}), options #{@options.inspect}, error #{@request.GetLastError.inspect}, warning #{@request.GetLastWarning.inspect}, returned #{total}/#{response['total_found']} in #{time} seconds."
 
         # get all the subtotals, XXX should be configurable
         _request = @request.dup
         MODELS.each do |key, value|
           _request.instance_eval { @filters.delete_if {|f| f['attr'] == 'class_id'} }
           _request.SetFilter 'class_id', [value]
-          @subtotals[key] = @request.Query(@query)['total_found']
+          @subtotals[key] = @request.Query(@parsed_query)['total_found']
           logger.debug "Ultrasphinx: Found #{subtotals[key]} records for sub-query #{key} (filters: #{_request.instance_variable_get('@filters').inspect})"
         end
 
@@ -187,7 +188,6 @@ class Search
 
 
   def total
-#    require 'ruby-debug'; Debugger.start; debugger
     [response['total_found'], MAX_MATCHES].min
   end
 
@@ -217,10 +217,23 @@ class Search
 
   private
 
-  #  def parse_google query
-  #    # alters google-style querystring into sphinx-style query + options
-  #    [query, {}]
-  #  end
+  def parse_google query
+    return unless query
+    # alters google-style querystring into sphinx-style query + options
+    query = query.split(" ")
+    query.each_with_index do |token, index|
+      case token
+        when "OR"
+          query[index] = "|"
+        when "NOT"
+          query[index] = "-#{query[index+1]}"
+          query[index+1] = ""
+        when "AND"
+          query[index] = ""
+      end
+    end
+    query.join(" ").squeeze(" ")
+  end
 
   def reify_results(sphinx_ids)
     sphinx_ids = sphinx_ids.keys # just toss the index data
