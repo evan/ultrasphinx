@@ -163,7 +163,7 @@ class Search
 
     texts = maps.map do |record, methods|
       [record.send(methods[0]), record.send(methods[1])]
-    end.flatten.map{|x| x.gsub(/<.*?>|\.\.\.|\342\200\246|\n|\r/, " ")}
+    end.flatten.map{|x| x.gsub(/<.*?>|\.\.\.|\342\200\246|\n|\r/, " ").gsub(/http.*?( |$)/, ' ')}
 
     begin
       responses = @request.BuildExcerpts(texts, "complete", query,
@@ -221,7 +221,7 @@ class Search
   def parse_google query
     return unless query
     # alters google-style querystring into sphinx-style
-    query = query.scan(/[^"\(\) ]*["\(][^"\)]*["\)]|[^"\(\) ]+/) # thanks chris2
+    query = query.scan(/[^"() ]*["(][^")]*[")]|[^"() ]+/) # thanks chris2
     query.each_with_index do |token, index|
           
       if token =~ /^(.*?)\((.*)\)(.*?$)/
