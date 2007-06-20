@@ -220,13 +220,13 @@ class Search
 
   def parse_google query
     return unless query
-    # alters google-style querystring into sphinx-style query + options
+    # alters google-style querystring into sphinx-style
     query = query.scan(/[^"\(\) ]*["\(][^"\)]*["\)]|[^"\(\) ]+/) # thanks chris2
     query.each_with_index do |token, index|
-      
+          
       if token =~ /^(.*?)\((.*)\)(.*?$)/
         token = query[index] = "#{$1}(#{parse_google $2})#{$3}" # recurse for parens
-      end 
+      end       
       
       case token
         when "OR"
@@ -240,6 +240,7 @@ class Search
           query[query.size] = "@" + query[index].sub(":", " ")
           query[index] = ""
       end
+      
     end
     query.join(" ").squeeze(" ")
   end
