@@ -128,8 +128,9 @@ class Search
 
       begin
         # run the search
+        logger.debug "Ultrasphinx: Searched for #{query.inspect} (parsed as #{@parsed_query.inspect}), options #{@options.inspect}"
         @response = @request.Query(@parsed_query)
-        logger.debug "Ultrasphinx: Searched for #{query.inspect} (parsed as #{@parsed_query.inspect}), options #{@options.inspect}, error #{@request.GetLastError.inspect}, warning #{@request.GetLastWarning.inspect}, returned #{total}/#{response['total_found']} in #{time} seconds."
+        logger.debug "Ultrasphinx: Search returned, error #{@request.GetLastError.inspect}, warning #{@request.GetLastWarning.inspect}, returned #{total}/#{response['total_found']} in #{time} seconds."
 
         # get all the subtotals, XXX should be configurable
         _request = @request.dup
@@ -137,7 +138,7 @@ class Search
           _request.instance_eval { @filters.delete_if {|f| f['attr'] == 'class_id'} }
           _request.SetFilter 'class_id', [value]
           @subtotals[key] = @request.Query(@parsed_query)['total_found']
-          logger.debug "Ultrasphinx: Found #{subtotals[key]} records for sub-query #{key} (filters: #{_request.instance_variable_get('@filters').inspect})"
+#          logger.debug "Ultrasphinx: Found #{subtotals[key]} records for sub-query #{key} (filters: #{_request.instance_variable_get('@filters').inspect})"
         end
 
         @results = instantiate ? reify_results(response['matches']) : response['matches']
@@ -220,8 +221,13 @@ class Search
   def parse_google query
     return unless query
     # alters google-style querystring into sphinx-style query + options
-    query = query.scan(/[^" ]*"[^"]*"|[^" ]+/) # thanks chris2
+    query = query.scan(/[^"\(\) ]*["\(][^"\)]*["\)]|[^"\(\) ]+/) # thanks chris2
     query.each_with_index do |token, index|
+      
+      if token =~ /^(.*?)\((.*)\)(.*?$)/
+        token = query[index] = "#{$1}(#{parse_google $2})#{$3}" # recurse for parens
+      end 
+      
       case token
         when "OR"
           query[index] = "|"
