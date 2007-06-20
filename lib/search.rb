@@ -26,8 +26,8 @@ class Search
   :raw_filters => {}}
 
   VIEW_OPTIONS = {
-    :search_mode => {"All words" => "all", "Some words" => "any", "Exact phrase" => "phrase", "Boolean" => "boolean"}.sort,
-  :sort_mode => {"By relevance" => "relevance", "Descending" => "desc", "Ascending" => "asc"}.sort} #, "Time" => :time }
+    :search_mode => {"all words" => "all", "some words" => "any", "exact phrase" => "phrase", "boolean" => "boolean", "extended" => "extended"}.sort,
+  :sort_mode => {"by relevance" => "relevance", "descending" => "desc", "ascending" => "asc"}.sort} #, "Time" => :time }
 
   MODELS = begin
     Hash[*open(Ultrasphinx::SPHINX_CONF).readlines.select{|s| s =~ /^(source \w|sql_query )/}.in_groups_of(2).map{|model, _id| [model[/source ([\w\d_-]*)/, 1].classify, _id[/(\d*) AS class_id/, 1].to_i]}.flatten] # XXX blargh
