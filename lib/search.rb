@@ -220,7 +220,7 @@ class Search
   def parse_google query
     return unless query
     # alters google-style querystring into sphinx-style query + options
-    query = query.split(" ")
+    query = query.scan(/[^" ]*"[^"]*"|[^" ]+/) # thanks chris2
     query.each_with_index do |token, index|
       case token
         when "OR"
@@ -229,6 +229,9 @@ class Search
           query[index] = "-#{query[index+1]}"
           query[index+1] = ""
         when "AND"
+          query[index] = ""
+        when /:/
+          query[query.size] = "@" + query[index].sub(":", " ")
           query[index] = ""
       end
     end
