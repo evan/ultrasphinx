@@ -124,7 +124,7 @@ module Ultrasphinx
           end
           
           table, pkey = klass.table_name, klass.primary_key
-          condition_strings, join_strings = Array(options[:conditions]), []
+          condition_strings, join_strings = Array(options[:conditions]).map{|condition| "(#{condition})"}, []
           column_strings = ["(#{table}.#{pkey} * #{MODELS_CONF.size} + #{class_id}) AS id", 
                                        "#{class_id} AS class_id", "'#{klass.name}' AS class"]   
           remaining_columns = FIELDS.keys - ["class", "class_id"]
@@ -156,7 +156,7 @@ module Ultrasphinx
             join_klass = group[:model].constantize
             association = klass.reflect_on_association(group[:association_name] ? group[:association_name].to_sym :  group[:model].underscore.pluralize.to_sym)
             join_strings << "LEFT OUTER JOIN #{join_klass.table_name} ON #{table}.#{klass.primary_key} = #{join_klass.table_name}.#{association.primary_key_name}" # XXX make sure foreign key is right for polymorphic relationships
-            condition_strings << group[:conditions] if group[:conditions]
+            condition_strings << "(#{group[:conditions]})" if group[:conditions]
             column_strings << FIELDS.cast("GROUP_CONCAT(#{join_klass.table_name}.#{group[:field]} SEPARATOR ' ')", group[:as])
             remaining_columns.delete(group[:as])
           end

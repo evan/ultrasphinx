@@ -12,7 +12,7 @@ namespace :ultrasphinx do
   end
   
   task :index_with_word_frequencies => :environment do
-    Ultrasphinx::index("buildstops #{Ultrasphinx::PLUGIN_CONF['path']}stopwords.txt #{2**16}", "buildfreqs")
+    Ultrasphinx::index("buildstops #{Ultrasphinx::PLUGIN_CONF['path']}/stopwords.txt #{2**16}", "buildfreqs")
   end
   
   namespace :daemon do
@@ -49,7 +49,7 @@ namespace :ultrasphinx do
       tmpfile = "/tmp/custom_words.txt"
       words = []
       puts "Filtering"
-      File.open("#{Ultrasphinx::PLUGIN_CONF['path']}stopwords.txt").each do |line|
+      File.open("#{Ultrasphinx::PLUGIN_CONF['path']}/stopwords.txt").each do |line|
         if line =~ /^([^\s\d_]{4,}) (\d+)/
           words << $1 if $2.to_i >= 10 
           # ideally we would also skip words within X edit distance of a correction
