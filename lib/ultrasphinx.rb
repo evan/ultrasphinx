@@ -5,8 +5,6 @@ module Ultrasphinx
 
   class Exception < ::Exception
   end
-  class ParameterError < Exception
-  end
   class ConfigurationError < Exception
   end  
   class DaemonError < Exception

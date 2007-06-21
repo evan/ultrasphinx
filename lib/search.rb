@@ -56,7 +56,7 @@ class Search
 
   def initialize style, query, opts={}
     opts = {} unless opts
-    raise Ultrasphinx::ParameterError, "Invalid query type: #{style.inspect}" unless QUERY_TYPES.include? style
+    raise Sphinx::SphinxArgumentError, "Invalid query type: #{style.inspect}" unless QUERY_TYPES.include? style
     @query = (query || "").gsub(" AND ", " ") # hack
     @parsed_query = style == :google ? parse_google(@query) : @query
 
@@ -78,7 +78,7 @@ class Search
       end._flatten_once])
       @options[:models] = Array(@options[:models])
 
-      raise Ultrasphinx::ParameterError, "Invalid options: #{@extra * ', '}" if (@extra = (@options.keys - (OPTIONS.merge(DEFAULTS).keys))).size > 0
+      raise Sphinx::SphinxArgumentError, "Invalid options: #{@extra * ', '}" if (@extra = (@options.keys - (OPTIONS.merge(DEFAULTS).keys))).size > 0
       @options[:belongs_to] = @options[:belongs_to].name if @options[:belongs_to].is_a? Class
     end
 
@@ -101,7 +101,7 @@ class Search
         @request.SetFilter 'class_id', options[:models].map{|m| MODELS[m.to_s]}
       end
       if options[:belongs_to]
-        raise Ultrasphinx::ParameterError, "You must specify a specific :model when using :belongs_to" unless options[:models] and options(:models).size == 1
+        raise Sphinx::SphinxArgumentError, "You must specify a specific :model when using :belongs_to" unless options[:models] and options(:models).size == 1
         parent = options[:belongs_to]
         association = parent.class.reflect_on_all_associations.select{|a| options[:models] == a.klass.name}.first
         if MODELS.keys.inject(true) {|b, klass| b and klass.constantize.columns.map(&:name).include? association.options[:foreign_key]}
@@ -111,17 +111,22 @@ class Search
         end
         @request.SetFilter key_name, [parent.id]
       end
+
       options[:raw_filters].each do |field, value|
-        unless value.is_a? Range
-          @request.SetFilter field, Array(value)
-        else
-          min, max = [value.first, value.last].map do |x|
-            x._to_numeric if x.is_a? String
+        begin
+          unless value.is_a? Range
+            @request.SetFilter field, Array(value)
+          else
+            min, max = [value.first, value.last].map do |x|
+              x._to_numeric if x.is_a? String
+            end
+            unless min.class != max.class
+              min, max = max, min if min > max
+              @request.SetFilterRange field, min, max
+            end
           end
-        end
-        unless min.class != max.class
-          min, max = max, min if min > max
-          @request.SetFilterRange field, min, max
+        rescue NoMethodError => e
+          raise Sphinx::SphinxArgumentError, "filter: #{field.inspect}:#{value.inspect} is invalid"
         end
       end
       # @request.SetGroup # not useful
@@ -165,18 +170,12 @@ class Search
       [record.send(methods[0]), record.send(methods[1])]
     end.flatten.map{|x| x.gsub(/<.*?>|\.\.\.|\342\200\246|\n|\r/, " ").gsub(/http.*?( |$)/, ' ')}
 
-    begin
-      responses = @request.BuildExcerpts(texts, "complete", query,
+    responses = @request.BuildExcerpts(texts, "complete", query,
       :before_match => "<strong>", :after_match => "</strong>",
       :chunk_separator => "...",
       :limit => 200,
       :around => 1).in_groups_of(2)
-    rescue Object => e
-#      e = Ultrasphinx::CoreError.convert(e) unless e.is_a? Ultrasphinx::Exception
-#      logger.warn "Ultrasphinx: searchd excerpt error, #{e.inspect}"
-      raise e #if Rails.development?
-    end
-
+    
     maps.each_with_index do |record_and_methods, i|
       record, methods = record_and_methods
       2.times do |j|
@@ -283,7 +282,7 @@ class Search
 
   def map_option opt
     opt = opt.to_sym
-    OPTIONS[opt][options[opt]] or raise Ultrasphinx::ParameterError, "Invalid option value :#{opt} => #{options[opt]}"
+    OPTIONS[opt][options[opt]] or raise Sphinx::SphinxArgumentError, "Invalid option value :#{opt} => #{options[opt]}"
   end
 
   def logger; ActiveRecord::Base.logger; end
