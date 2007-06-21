@@ -27,7 +27,8 @@ class Search
 
   VIEW_OPTIONS = {
     :search_mode => {"all words" => "all", "some words" => "any", "exact phrase" => "phrase", "boolean" => "boolean", "extended" => "extended"}.sort,
-  :sort_mode => {"by relevance" => "relevance", "descending" => "desc", "ascending" => "asc"}.sort} #, "Time" => :time }
+  :sort_mode => [["descending", "desc"], ["ascending", "asc"], ["by relevance", "relevance"]]
+  } #, "Time" => :time }
 
   MODELS = begin
     Hash[*open(Ultrasphinx::SPHINX_CONF).readlines.select{|s| s =~ /^(source \w|sql_query )/}.in_groups_of(2).map{|model, _id| [model[/source ([\w\d_-]*)/, 1].classify, _id[/(\d*) AS class_id/, 1].to_i]}.flatten] # XXX blargh
@@ -57,7 +58,7 @@ class Search
   def initialize style, query, opts={}
     opts = {} unless opts
     raise Sphinx::SphinxArgumentError, "Invalid query type: #{style.inspect}" unless QUERY_TYPES.include? style
-    @query = (query || "").gsub(" AND ", " ") # hack
+    @query = (query || "")
     @parsed_query = style == :google ? parse_google(@query) : @query
 
     @results = []
@@ -170,7 +171,10 @@ class Search
       [record.send(methods[0]), record.send(methods[1])]
     end.flatten.map{|x| x.gsub(/<.*?>|\.\.\.|\342\200\246|\n|\r/, " ").gsub(/http.*?( |$)/, ' ')}
 
-    responses = @request.BuildExcerpts(texts, "complete", query,
+    responses = @request.BuildExcerpts(
+      texts, 
+      "complete", 
+      @parsed_query.gsub(/AND|OR|NOT|\@\w+/, ""),
       :before_match => "<strong>", :after_match => "</strong>",
       :chunk_separator => "...",
       :limit => 200,
@@ -220,7 +224,7 @@ class Search
   def parse_google query
     return unless query
     # alters google-style querystring into sphinx-style
-    query = query.scan(/[^"() ]*["(][^")]*[")]|[^"() ]+/) # thanks chris2
+    query = query.gsub(" AND ", " ").scan(/[^"() ]*["(][^")]*[")]|[^"() ]+/) # thanks chris2
     query.each_with_index do |token, index|
           
       if token =~ /^(.*?)\((.*)\)(.*?$)/
@@ -250,7 +254,6 @@ class Search
     # find associated record ids
     ids = Hash.new([])
     sphinx_ids.each do |_id|
-      #      require 'ruby-debug'; Debugger.start; debugger
       ids[MODELS.invert[_id % MODELS.size]] += [_id / MODELS.size] # yay math
     end
     raise Ultrasphinx::ResponseError, "impossible document id in query result" unless ids.values.flatten.size == sphinx_ids.size
@@ -263,7 +266,7 @@ class Search
       logger.debug "Ultrasphinx: using #{klass.name}\##{finder} as finder method"
 
       begin
-        results += case instances = klass.send(finder, id_set)
+        results += case instances = id_set.map {|id| klass.send(finder, id)} # XXX temporary until we update cache_fu
           when Hash
             instances.values
           when Array
