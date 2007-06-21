@@ -29,6 +29,8 @@ class Search
     :search_mode => {"all words" => "all", "some words" => "any", "exact phrase" => "phrase", "boolean" => "boolean", "extended" => "extended"}.sort,
   :sort_mode => [["descending", "desc"], ["ascending", "asc"], ["by relevance", "relevance"]]
   } #, "Time" => :time }
+  
+  MAX_RETRIES = 4
 
   MODELS = begin
     Hash[*open(Ultrasphinx::SPHINX_CONF).readlines.select{|s| s =~ /^(source \w|sql_query )/}.in_groups_of(2).map{|model, _id| [model[/source ([\w\d_-]*)/, 1].classify, _id[/(\d*) AS class_id/, 1].to_i]}.flatten] # XXX blargh
@@ -132,9 +134,10 @@ class Search
       end
       # @request.SetGroup # not useful
 
+      tries = 0
+      logger.debug "Ultrasphinx: Searching for #{query.inspect} (parsed as #{@parsed_query.inspect}), options #{@options.inspect}"
       begin
         # run the search
-        logger.debug "Ultrasphinx: Searched for #{query.inspect} (parsed as #{@parsed_query.inspect}), options #{@options.inspect}"
         @response = @request.Query(@parsed_query)
         logger.debug "Ultrasphinx: Search returned, error #{@request.GetLastError.inspect}, warning #{@request.GetLastWarning.inspect}, returned #{total}/#{response['total_found']} in #{time} seconds."
 
@@ -148,11 +151,14 @@ class Search
         end
 
         @results = instantiate ? reify_results(response['matches']) : response['matches']
-    rescue Object => e
-      if e.is_a? Sphinx::SphinxInternalError and e.to_s == "searchd error: 112"
-        e = Sphinx::SphinxInternalError.new("searchd error: 112. This is a request error. You did something wrong. Sorry; I don't have any more details.")
+    rescue Sphinx::SphinxResponseError => e
+      if (tries += 1) <= MAX_RETRIES
+        logger.warn "Ultrasphinx: Restarting query (#{tries} attempts already) (#{e})"
+        retry
+      else
+        logger.warn "Ultrasphinx: Query failed"
+        raise e
       end
-      raise e #if Rails.development?
     end
   end
 
@@ -256,7 +262,7 @@ class Search
     sphinx_ids.each do |_id|
       ids[MODELS.invert[_id % MODELS.size]] += [_id / MODELS.size] # yay math
     end
-    raise Ultrasphinx::ResponseError, "impossible document id in query result" unless ids.values.flatten.size == sphinx_ids.size
+    raise Sphinx::SphinxResponseError, "impossible document id in query result" unless ids.values.flatten.size == sphinx_ids.size
 
     # fetch them for real
     results = []
@@ -275,7 +281,7 @@ class Search
             Array(instances)
         end
       rescue ActiveRecord:: ActiveRecordError => e
-        raise Ultrasphinx::ResponseError, e.inspect
+        raise Sphinx::SphinxResponseError, e.inspect
       end
     end
 

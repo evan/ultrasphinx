@@ -9,13 +9,6 @@ module Ultrasphinx
   end  
   class DaemonError < Exception
   end
-  class ResponseError < Exception
-  end
-#  class CoreError < Exception
-#    def self.convert e
-#      new e.inspect
-#    end
-#  end
 
   SPHINX_CONF = "#{RAILS_ROOT}/config/environments/sphinx.#{RAILS_ENV}.conf"
   ENV_BASE = "#{RAILS_ROOT}/config/environments/sphinx.#{RAILS_ENV}.base" 
