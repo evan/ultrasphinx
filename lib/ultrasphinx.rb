@@ -48,7 +48,7 @@ module Ultrasphinx
         begin
           open(filename) {|file| load filename if file.grep(/is_indexed/).any?}
         rescue Object => e
-         logger.warn "Ultrasphinx: autoload error on #{filename}"
+          puts "Ultrasphinx: warning; autoload error on #{filename}"
         end
       end 
       FIELDS.configure(MODELS_CONF)
