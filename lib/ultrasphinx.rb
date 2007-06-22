@@ -45,7 +45,11 @@ module Ultrasphinx
     def load_constants
       Dir["#{RAILS_ROOT}/app/models/**/*.rb"].each do |filename|
         next if filename =~ /svn|CVS|bzr/
-        open(filename) {|file| load filename if file.grep(/is_indexed/).any?}
+        begin
+          open(filename) {|file| load filename if file.grep(/is_indexed/).any?}
+        rescue Object => e
+         logger.warn "Ultrasphinx: autoload error on #{filename}"
+        end
       end 
       FIELDS.configure(MODELS_CONF)
     end
