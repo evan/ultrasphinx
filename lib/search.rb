@@ -27,7 +27,7 @@ class Search
 
   VIEW_OPTIONS = {
     :search_mode => {"all words" => "all", "some words" => "any", "exact phrase" => "phrase", "boolean" => "boolean", "extended" => "extended"}.sort,
-  :sort_mode => [["descending", "desc"], ["ascending", "asc"], ["by relevance", "relevance"]]
+  :sort_mode => [["newest first", "desc"], ["oldest first", "asc"], ["relevance", "relevance"]]
   } #, "Time" => :time }
   
   MAX_RETRIES = 4
