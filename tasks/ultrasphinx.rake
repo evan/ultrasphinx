@@ -51,7 +51,7 @@ namespace :ultrasphinx do
       puts "Filtering"
       File.open("#{Ultrasphinx::PLUGIN_CONF['path']}/stopwords.txt").each do |line|
         if line =~ /^([^\s\d_]{4,}) (\d+)/
-          words << $1 if $2.to_i >= 10 
+          words << $1 if $2.to_i > 40 # XXX should be configurable
           # ideally we would also skip words within X edit distance of a correction
           # by aspell-en, in order to not add typos to the dictionary
         end
