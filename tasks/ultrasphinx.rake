@@ -12,7 +12,7 @@ namespace :ultrasphinx do
   end
   
   task :index_with_word_frequencies => :environment do
-    Ultrasphinx::index("buildstops #{Ultrasphinx::PLUGIN_CONF['path']}/stopwords.txt #{2**16}", "buildfreqs")
+    Ultrasphinx::index("buildstops #{Ultrasphinx::PLUGIN_CONF['path']}/stopwords.txt #{2**16}", "buildfreqs") # XXX max absolute words should be configurable
   end
   
   namespace :daemon do
