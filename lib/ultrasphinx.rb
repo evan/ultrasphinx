@@ -69,6 +69,8 @@ module Ultrasphinx
       case action
         when :start
           raise DaemonError, "Already running" if daemon_running?
+          # remove lockfiles
+          Dir[PLUGIN_CONF["path"] + "*spl"].each {|file| File.delete(file)}
           exec "searchd --config #{SPHINX_CONF}"
         when :stop
           raise DaemonError, "Doesn't seem to be running" unless daemon_running?
