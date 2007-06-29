@@ -95,7 +95,7 @@ class Search
       @request.SetSortMode map_option(:sort_mode), options[:sort_by]      
       if weights = options[:weights]
 #        breakpoint
-        @request.SetWeights((Ultrasphinx::FIELDS.keys - ["id"]).sort.inject([]) do |array, field|
+        @request.SetWeights(Ultrasphinx::FIELDS.select{|n,t| t == 'text'}.map(&:first).sort.inject([]) do |array, field|
           array << (weights[field] || 1.0)
         end)
       end
