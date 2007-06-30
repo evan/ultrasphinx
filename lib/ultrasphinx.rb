@@ -130,9 +130,10 @@ module Ultrasphinx
           
           conf.puts "\nsql_query_range = SELECT MIN(#{pkey}), MAX(#{pkey}) FROM #{table}"
           
-          options[:fields].to_a.each do |field|
-            column_strings << FIELDS.cast("#{table}.#{field}", field)
-            remaining_columns.delete(field)
+          options[:fields].to_a.each do |f|
+            column, as = f.is_a?(Hash) ? [f[:field], f[:as]] : [f, f]
+            column_strings << FIELDS.cast("#{table}.#{column}", as)
+            remaining_columns.delete(as)
           end
           
           options[:includes].to_a.each do |join|
