@@ -255,7 +255,7 @@ class Search
   end
 
   def reify_results(sphinx_ids)
-    sphinx_ids = sphinx_ids.keys # just toss the index data
+    sphinx_ids = sphinx_ids.sort_by{|k, v| v['index']}.map(&:first).reverse # sort and then toss the rest of the data
 
     # find associated record ids
     ids = Hash.new([])
