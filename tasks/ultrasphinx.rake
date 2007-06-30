@@ -32,6 +32,22 @@ namespace :ultrasphinx do
       Ultrasphinx::daemon(:start)
     end
     
+    desc "Tail queries in the log"
+    task :tail => :environment do
+      require 'file/tail'
+      puts "Tailing #{filename = Ultrasphinx::DAEMON_CONF['query_log']}"
+      File.open(filename) do |log|
+          log.extend(File::Tail)
+          log.interval = 2
+          log.backward(10)
+          last = nil
+          log.tail do |line| 
+          current = line[/\"(.*)\"/, 1]
+          last = current and puts current unless current == last
+        end
+      end 
+    end
+    
     desc "Check if the search daemon is running"
     task :status => :environment do
       if Ultrasphinx::daemon_running?
