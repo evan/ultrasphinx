@@ -42,7 +42,7 @@ namespace :ultrasphinx do
         log.backward(10)
         last = nil
         log.tail do |line| 
-          current = line[/\[\*\](.*)$, 1]
+          current = line[/\[\*\](.*)$/, 1]
           last = current and puts current unless current == last
         end
       end 
