@@ -37,12 +37,12 @@ namespace :ultrasphinx do
       require 'file/tail'
       puts "Tailing #{filename = Ultrasphinx::DAEMON_CONF['query_log']}"
       File.open(filename) do |log|
-          log.extend(File::Tail)
-          log.interval = 2
-          log.backward(10)
-          last = nil
-          log.tail do |line| 
-          current = line[/\"(.*)\"/, 1]
+        log.extend(File::Tail)
+        log.interval = 1
+        log.backward(10)
+        last = nil
+        log.tail do |line| 
+          current = line[/\[\*\](.*)$, 1]
           last = current and puts current unless current == last
         end
       end 
