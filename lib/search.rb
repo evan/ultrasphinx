@@ -19,9 +19,9 @@ class Search
     :models => nil,
     :per_page => 20,
     :sort_by => 'created_at',
-    :sort_mode => :desc,
+    :sort_mode => :relevance,
     :weights => nil,
-    :search_mode => :all,
+    :search_mode => :extended,
     :belongs_to => nil,
   :raw_filters => {}}
 
