@@ -135,11 +135,11 @@ class Search
       # @request.SetGroup # not useful
 
       tries = 0
-      logger.debug "Ultrasphinx: Searching for #{query.inspect} (parsed as #{@parsed_query.inspect}), options #{@options.inspect}"
+      logger.info "Ultrasphinx: Searching for #{query.inspect} (parsed as #{@parsed_query.inspect}), options #{@options.inspect}"
       begin
         # run the search
         @response = @request.Query(@parsed_query)
-        logger.debug "Ultrasphinx: Search returned, error #{@request.GetLastError.inspect}, warning #{@request.GetLastWarning.inspect}, returned #{total}/#{response['total_found']} in #{time} seconds."
+        logger.info "Ultrasphinx: Search returned, error #{@request.GetLastError.inspect}, warning #{@request.GetLastWarning.inspect}, returned #{total}/#{response['total_found']} in #{time} seconds."
 
         # get all the subtotals, XXX should be configurable
         _request = @request.dup
