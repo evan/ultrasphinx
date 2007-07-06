@@ -23,7 +23,7 @@ module Ultrasphinx
     end
   end
   
-  SOURCE_DEFAULTS = "strip_html = 0\nindex_html_attrs =\nsql_query_pre = SET SESSION group_concat_max_len = 65535\nsql_query_post =\nsql_range_step = 20000"
+  SOURCE_DEFAULTS = "strip_html = 0\nindex_html_attrs =\nsql_query_pre = SET SESSION group_concat_max_len = 65535\nsql_query_pre = SET NAMES utf8\nsql_query_post =\nsql_range_step = 20000"
   MAX_INT = 2**32-1
   COLUMN_TYPES = {:string => 'text', :text => 'text', :integer => 'numeric', :date => 'date', :datetime => 'date' }
   CONFIG_MAP = {:username => 'sql_user',
