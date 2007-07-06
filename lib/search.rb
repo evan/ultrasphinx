@@ -286,7 +286,12 @@ class Search
     end
 
     # put them back in order
-    results.sort_by{|r| (sphinx_ids.index((r.id*MODELS.size)+MODELS[r.class.base_class.name])) / sphinx_ids.size.to_f }
+    results.sort_by do |r| 
+      raise Sphinx::SphinxResponseError, "Bogus ActiveRecord id for #{r.class}:#{r.id}" unless r.id
+      index = (sphinx_ids.index(sphinx_id = (r.id*MODELS.size)+MODELS[r.class.base_class.name])) 
+      raise Sphinx::SphinxResponseError, "Bogus reverse id for #{r.class}:#{r.id} (Sphinx:#{sphinx_id})" unless index
+      index / sphinx_ids.size.to_f
+    end
   end
 
   def map_option opt
