@@ -19,7 +19,7 @@ module Ultrasphinx
   
   class << self
     def options_for(heading)
-      Hash[*(open(BASE).read[/^#{heading}.*?\{(.*?)\}/m, 1].split("\n").reject{|l| l.strip.empty?}.map{|c| c =~ /\s*(.*?)\s*=\s*([^\s\#]*)/; $1 ? [$1, $2] : []}.flatten)] 
+      Hash[*(open(BASE).read[/^#{heading}.*?\{(.*?)\}/m, 1].split("\n").reject{|l| l.strip.empty?}.map{|c| c =~ /\s*(.*?)\s*=\s*([^\#]*)/; $1 ? [$1, $2.strip] : []}.flatten)] 
     end
   end
   
@@ -33,7 +33,7 @@ module Ultrasphinx
     :adapter => 'type',
     :port => 'sql_port',
     :socket => 'sql_sock'}
-  OPTIONAL_SPHINX_KEYS = ['morphology', 'stopwords', 'min_word_len', 'charset_type', 'docinfo']
+  OPTIONAL_SPHINX_KEYS = ['morphology', 'stopwords', 'min_word_len', 'charset_type', 'charset_table', 'docinfo']
   PLUGIN_CONF = options_for('ultrasphinx')
   DAEMON_CONF = options_for('searchd')
   #logger.debug "Ultrasphinx options are: #{PLUGIN_CONF.inspect}"
