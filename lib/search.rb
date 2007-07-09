@@ -149,12 +149,16 @@ class Search
           @subtotals[key] = @request.Query(@parsed_query)['total_found']
 #          logger.debug "Ultrasphinx: Found #{subtotals[key]} records for sub-query #{key} (filters: #{_request.instance_variable_get('@filters').inspect})"
         end
+        raise Sphinx::SphinxTemporaryError
 
         @results = instantiate ? reify_results(response['matches']) : response['matches']
     rescue Sphinx::SphinxResponseError, Sphinx::SphinxTemporaryError, Errno::EPIPE => e
       if (tries += 1) <= MAX_RETRIES
-        sleep(2) if tries == MAX_RETRIES
         logger.warn "Ultrasphinx: Restarting query (#{tries} attempts already) (#{e})"
+        if tries == MAX_RETRIES
+          logger.warn "Ultrasphinx: Sleeping..."
+          sleep(3) 
+        end
         retry
       else
         logger.warn "Ultrasphinx: Query failed"
