@@ -151,8 +151,9 @@ class Search
         end
 
         @results = instantiate ? reify_results(response['matches']) : response['matches']
-    rescue Sphinx::SphinxResponseError, Errno::EPIPE => e
+    rescue Sphinx::SphinxResponseError, Sphinx::SphinxTemporaryError, Errno::EPIPE => e
       if (tries += 1) <= MAX_RETRIES
+        sleep(2) if tries == MAX_RETRIES
         logger.warn "Ultrasphinx: Restarting query (#{tries} attempts already) (#{e})"
         retry
       else
