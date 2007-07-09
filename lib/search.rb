@@ -149,7 +149,6 @@ class Search
           @subtotals[key] = @request.Query(@parsed_query)['total_found']
 #          logger.debug "Ultrasphinx: Found #{subtotals[key]} records for sub-query #{key} (filters: #{_request.instance_variable_get('@filters').inspect})"
         end
-        raise Sphinx::SphinxTemporaryError
 
         @results = instantiate ? reify_results(response['matches']) : response['matches']
     rescue Sphinx::SphinxResponseError, Sphinx::SphinxTemporaryError, Errno::EPIPE => e
