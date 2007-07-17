@@ -19,7 +19,18 @@ module Ultrasphinx
   
   class << self
     def options_for(heading)
-      Hash[*(open(BASE).read[/^#{heading}.*?\{(.*?)\}/m, 1].split("\n").reject{|l| l.strip.empty?}.map{|c| c =~ /\s*(.*?)\s*=\s*([^\#]*)/; $1 ? [$1, $2.strip] : []}.flatten)] 
+      section = open(BASE).read[/^#{heading}.*?\{(.*?)\}/m, 1]
+
+      raise "missing heading #{heading} in #{BASE}" if section.nil?
+
+      lines = section.split("\n").reject { |l| l.strip.empty? }
+
+      options = lines.map do |c|
+        c =~ /\s*(.*?)\s*=\s*([^\#]*)/
+        $1 ? [$1, $2.strip] : []
+      end
+
+      Hash[*options.flatten] 
     end
   end
   
@@ -44,7 +55,7 @@ module Ultrasphinx
   class << self    
     def load_constants
       Dir["#{RAILS_ROOT}/app/models/**/*.rb"].each do |filename|
-        next if filename =~ /svn|CVS|bzr/
+        next if filename =~ /\/(\.svn|CVS|\.bzr)\//
         begin
           open(filename) {|file| load filename if file.grep(/is_indexed/).any?}
         rescue Object => e
