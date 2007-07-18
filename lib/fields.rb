@@ -6,7 +6,8 @@ module Ultrasphinx
       self["class"] = "text"
     end
   
-    def slam(field, new_type)
+    def slam(field, new_type) # XXX what was i thinking
+      # tries to smoosh fields together by name in the sphinx query schema; raises if their types don't match
       field, new_type = field.to_s, COLUMN_TYPES[new_type.to_sym]
       if existing_type = self[field]
         raise ConfigurationError, "Column type mismatch for #{field.inspect}" unless new_type == existing_type
@@ -42,9 +43,10 @@ module Ultrasphinx
         klass = model.constantize
                 
         begin
-          # fields are from the model, renames are not allowed right now... use concat (vinegar)
-          options[:fields].to_a.each do |field|
-            klass.columns_hash[field] and slam(field, klass.columns_hash[field].type) or ActiveRecord::Base.logger.warn "ultrasphinx: WARNING: field #{field} is not present in #{model}"
+          # fields are from the model
+          options[:fields].to_a.each do |entry|
+            entry = {:field => entry, :as => entry} unless entry.is_a? Hash
+            klass.columns_hash[entry[:field]] and slam(entry[:as], klass.columns_hash[entry[:field]].type) or ActiveRecord::Base.logger.warn "ultrasphinx: WARNING: field #{entry.inspect} is not present in #{model}"
           end  
           # joins are whatever they are in the target       
           options[:includes].to_a.each do |join|

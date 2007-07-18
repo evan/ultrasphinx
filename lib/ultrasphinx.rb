@@ -20,16 +20,12 @@ module Ultrasphinx
   class << self
     def options_for(heading)
       section = open(BASE).read[/^#{heading}.*?\{(.*?)\}/m, 1]
-
       raise "missing heading #{heading} in #{BASE}" if section.nil?
-
       lines = section.split("\n").reject { |l| l.strip.empty? }
-
       options = lines.map do |c|
         c =~ /\s*(.*?)\s*=\s*([^\#]*)/
         $1 ? [$1, $2.strip] : []
       end
-
       Hash[*options.flatten] 
     end
   end
