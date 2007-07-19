@@ -81,7 +81,7 @@ module Ultrasphinx
           exec "searchd --config #{SPHINX_CONF}"
         when :stop
           raise DaemonError, "Doesn't seem to be running" unless daemon_running?
-          exec "kill #{get_daemon_pid}"
+          system "kill #{get_daemon_pid}"
       end
     end
    
