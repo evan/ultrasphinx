@@ -29,6 +29,7 @@ namespace :ultrasphinx do
       # remove lockfiles
       Dir[Ultrasphinx::PLUGIN_SETTINGS["path"] + "*spl"].each {|file| File.delete(file)}
       system "searchd --config #{Ultrasphinx::CONF_PATH}"
+      sleep(2)
       if daemon_running?
         puts "Started successfully"
       else
