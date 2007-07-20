@@ -1,6 +1,6 @@
 
-# to put in your RAILS_ROOT/config/environments
-# can be namespaced individually (sphinx.development.base)
+# to put in RAILS_ROOT/config/ultrasphinx
+# can be namespaced individually (development.base)
 
 indexer
 {

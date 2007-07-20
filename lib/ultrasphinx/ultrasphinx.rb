@@ -10,16 +10,18 @@ module Ultrasphinx
   class DaemonError < Exception
   end
 
-  CONF_PATH = "#{RAILS_ROOT}/config/environments/sphinx.#{RAILS_ENV}.conf"
-  ENV_BASE_PATH = "#{RAILS_ROOT}/config/environments/sphinx.#{RAILS_ENV}.base" 
-  GENERIC_BASE_PATH = "#{RAILS_ROOT}/config/sphinx.base"
+  DIR = "#{RAILS_ROOT}/config/ultrasphinx/"
+
+  CONF_PATH = "#{DIR}/#{RAILS_ENV}.conf"
+  ENV_BASE_PATH = "#{DIR}/#{RAILS_ENV}.base" 
+  GENERIC_BASE_PATH = "#{DIR}/default.base"
   BASE_PATH = (File.exist?(ENV_BASE_PATH) ? ENV_BASE_PATH : GENERIC_BASE_PATH)
   
   raise ConfigurationError, "Please create a #{BASE_PATH} configuration file." unless File.exist? BASE_PATH
   
-  def self.options_for(heading)
-    section = open(BASE_PATH).read[/^#{heading}.*?\{(.*?)\}/m, 1]
-    raise "missing heading #{heading} in #{BASE_PATH}" if section.nil?
+  def self.options_for(heading, path = BASE_PATH)
+    section = open(path).read[/^#{heading}.*?\{(.*?)\}/m, 1]
+    raise "missing heading #{heading} in #{path}" if section.nil?
     lines = section.split("\n").reject { |l| l.strip.empty? }
     options = lines.map do |c|
       c =~ /\s*(.*?)\s*=\s*([^\#]*)/
@@ -53,7 +55,7 @@ sql_range_step = 20000
   MAX_WORDS = 2**16 # maximum number of stopwords built  
   STOPWORDS_PATH = "#{Ultrasphinx::PLUGIN_SETTINGS['path']}/stopwords.txt}"
 
-  #logger.debug "Ultrasphinx options are: #{PLUGIN_SETTINGS.inspect}"
+  #logger.debug "** ultrasphinx options are: #{PLUGIN_SETTINGS.inspect}"
 
   MODELS_HASH = {}
 
@@ -64,10 +66,14 @@ sql_range_step = 20000
         begin
           open(filename) {|file| load filename if file.grep(/is_indexed/).any?}
         rescue Object => e
-          puts "Ultrasphinx: warning; autoload error on #{filename}"
+          puts "** ultrasphinx: warning; autoload error on #{filename}"
         end
       end 
       Fields.instance.configure(MODELS_HASH)
+    end
+    
+    def verify_database_name
+#      options_for(
     end
          
     def configure       

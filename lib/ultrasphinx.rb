@@ -5,4 +5,13 @@ require 'ultrasphinx/autoload'
 require 'ultrasphinx/fields'
 require 'ultrasphinx/is_indexed'
 require 'ultrasphinx/search'
-require 'ultrasphinx/spell'
+
+$stderr.puts(
+begin
+  require 'raspell'
+  require 'ultrasphinx/spell'
+  "** ultrasphinx: spelling support enabled"
+rescue Object => e
+  "** ultrasphinx: spelling support not available (module load raised \"#{e}\")"
+end)
+

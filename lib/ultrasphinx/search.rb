@@ -32,7 +32,7 @@ module Ultrasphinx
     MODELS = begin
       Hash[*open(CONF_PATH).readlines.select{|s| s =~ /^(source \w|sql_query )/}.in_groups_of(2).map{|model, _id| [model[/source ([\w\d_-]*)/, 1].classify, _id[/(\d*) AS class_id/, 1].to_i]}.flatten] # XXX blargh
     rescue
-      puts "Ultrasphinx configuration file not found for #{ENV['RAILS_ENV'].inspect} environment"
+      puts "** ultrasphinx configuration file not found for #{ENV['RAILS_ENV'].inspect} environment"
       {}
     end
   
@@ -122,11 +122,11 @@ module Ultrasphinx
         # @request.SetGroup # not useful
   
         tries = 0
-        logger.info "Ultrasphinx: Searching for #{query.inspect} (parsed as #{@parsed_query.inspect}), options #{@options.inspect}"
+        logger.info "** ultrasphinx: searching for #{query.inspect} (parsed as #{@parsed_query.inspect}), options #{@options.inspect}"
         begin
           # run the search
           @response = @request.Query(@parsed_query)
-          logger.info "Ultrasphinx: Search returned, error #{@request.GetLastError.inspect}, warning #{@request.GetLastWarning.inspect}, returned #{total}/#{response['total_found']} in #{time} seconds."
+          logger.info "** ultrasphinx: search returned, error #{@request.GetLastError.inspect}, warning #{@request.GetLastWarning.inspect}, returned #{total}/#{response['total_found']} in #{time} seconds."
   
           # get all the subtotals, XXX should be configurable
           # andrew says there's a better way to do this
@@ -135,20 +135,20 @@ module Ultrasphinx
             filtered_request.instance_eval { @filters.delete_if {|f| f['attr'] == 'class_id'} }
             filtered_request.SetFilter 'class_id', [value]
             @subtotals[key] = @request.Query(@parsed_query)['total_found']
-  #          logger.debug "Ultrasphinx: Found #{subtotals[key]} records for sub-query #{key} (filters: #{filtered_request.instance_variable_get('@filters').inspect})"
+  #          logger.debug "** ultrasphinx: found #{subtotals[key]} records for sub-query #{key} (filters: #{filtered_request.instance_variable_get('@filters').inspect})"
           end
   
           @results = instantiate ? reify_results(response['matches']) : response['matches']
       rescue Sphinx::SphinxResponseError, Sphinx::SphinxTemporaryError, Errno::EPIPE => e
         if (tries += 1) <= MAX_RETRIES
-          logger.warn "Ultrasphinx: Restarting query (#{tries} attempts already) (#{e})"
+          logger.warn "** ultrasphinx: restarting query (#{tries} attempts already) (#{e})"
           if tries == MAX_RETRIES
-            logger.warn "Ultrasphinx: Sleeping..."
+            logger.warn "** ultrasphinx: sleeping..."
             sleep(3) 
           end
           retry
         else
-          logger.warn "Ultrasphinx: Query failed"
+          logger.warn "** ultrasphinx: query failed"
           raise e
         end
       end
@@ -261,7 +261,7 @@ module Ultrasphinx
       ids.each do |model, id_set|
         klass = model.constantize
         finder = klass.respond_to?(:get_cache) ? :get_cache : :find
-        logger.debug "Ultrasphinx: using #{klass.name}\##{finder} as finder method"
+        logger.debug "** ultrasphinx: using #{klass.name}\##{finder} as finder method"
   
         begin
           results += case instances = id_set.map {|id| klass.send(finder, id)} # XXX temporary until we update cache_fu
