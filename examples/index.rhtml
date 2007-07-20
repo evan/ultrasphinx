@@ -9,7 +9,7 @@
         No results
       <% else %>
         Results <%= (start = (@search.page - 1)*@search.per_page + 1).pretty %> to <%= (start + @search.found - 1).pretty %> of <%= @search.total.pretty %>
-        <%= "or more" if @search.total == Search::MAX_MATCHES %>
+        <%= "or more" if @search.total == Ultrasphinx::Search::MAX_MATCHES %>
       <% end %>
     </strong></div>
   <% end %>

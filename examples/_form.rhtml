@@ -9,7 +9,7 @@
      <% fields_for :options, @options do |options| %>
        <tr><td>
          Show only: 
-         <% Search::MODELS.keys.each do |model_name| %>
+         <% Ultrasphinx::Search::MODELS.keys.each do |model_name| %>
           <!-- couldn't get form_for way to work here -->
           <%= check_box_tag "options[models][]", model_name, 
              @options['models'].empty? || @options['models'].include?(model_name) %>
@@ -18,11 +18,11 @@
        </td></tr>
        <tr><td>
          Search mode: 
-         <%= options.select "search_mode", Search::VIEW_OPTIONS[:search_mode] %>
+         <%= options.select "search_mode", Ultrasphinx::Search::VIEW_OPTIONS[:search_mode] %>
        </td></tr>
        <tr><td>
          Sort style: 
-         <%= options.select "sort_mode", Search::VIEW_OPTIONS[:sort_mode] %>
+         <%= options.select "sort_mode", Ultrasphinx::Search::VIEW_OPTIONS[:sort_mode] %>
        </td></tr>
        <tr><td>
           Between: <%= options.text_field "to", :size => 20 %> 
