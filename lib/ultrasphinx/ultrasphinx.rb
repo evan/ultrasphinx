@@ -10,7 +10,7 @@ module Ultrasphinx
   class DaemonError < Exception
   end
 
-  DIR = "#{RAILS_ROOT}/config/ultrasphinx/"
+  DIR = "#{RAILS_ROOT}/config/ultrasphinx"
 
   CONF_PATH = "#{DIR}/#{RAILS_ENV}.conf"
   ENV_BASE_PATH = "#{DIR}/#{RAILS_ENV}.base" 
