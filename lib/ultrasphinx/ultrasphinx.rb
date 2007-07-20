@@ -33,11 +33,19 @@ module Ultrasphinx
   SOURCE_DEFAULTS = %(
 strip_html = 0
 index_html_attrs =
-sql_query_pre = SET SESSION group_concat_max_len = 65535
-sql_query_pre = SET NAMES utf8
 sql_query_post =
 sql_range_step = 20000
   )
+  
+  ADAPTER_DEFAULTS = {
+    "mysql" => %(
+type = mysql
+sql_query_pre = SET SESSION group_concat_max_len = 65535
+sql_query_pre = SET NAMES utf8
+  ), 
+    "postgresql" => %(
+type = pgsql
+  )}
 
   MAX_INT = 2**32-1
   COLUMN_TYPES = {:string => 'text', :text => 'text', :integer => 'numeric', :date => 'date', :datetime => 'date' }
@@ -45,7 +53,6 @@ sql_range_step = 20000
     :password => 'sql_pass',
     :host => 'sql_host',
     :database => 'sql_db',
-    :adapter => 'type',
     :port => 'sql_port',
     :socket => 'sql_sock'}
   OPTIONAL_SPHINX_KEYS = ['morphology', 'stopwords', 'min_word_len', 'charset_type', 'charset_table', 'docinfo']
@@ -102,10 +109,18 @@ sql_range_step = 20000
           index_list["complete"] << source
   
           conf.puts "source #{source}\n{"
-          conf.puts SOURCE_DEFAULTS        
-          klass.connection.instance_variable_get("@config").each do |key, value|
+          conf.puts SOURCE_DEFAULTS
+                    
+          # apparently we're supporting postgres now
+          connection_settings = klass.connection.instance_variable_get("@config")
+
+          adapter_defaults = ADAPTER_DEFAULTS[connection_settings[:adapter]]
+          raise ConfigurationError, "Unsupported database adapter" unless adapter_defaults
+          conf.puts adapter_defaults
+                    
+          connection_settings.each do |key, value|
             conf.puts "#{CONFIG_MAP[key]} = #{value}" if CONFIG_MAP[key]          
-          end
+          end          
           
           table, pkey = klass.table_name, klass.primary_key
           condition_strings, join_strings = Array(options[:conditions]).map{|condition| "(#{condition})"}, []
