@@ -2,6 +2,11 @@
 ENV['RAILS_ENV'] ||= "development"
 
 namespace :ultrasphinx do  
+  
+  desc "Bootstrap a full Sphinx environment"
+  task :bootstrap => [:environment, :configure, :index, :start] do
+  end
+  
   desc "Rebuild the configuration file for this particular environment."
   task :configure => :environment do
     Ultrasphinx::configure
@@ -34,8 +39,8 @@ namespace :ultrasphinx do
     desc "Stop the search daemon"
     task :stop => [:environment] do
       raise Ultrasphinx::DaemonError, "Doesn't seem to be running" unless daemon_running?
-      system "kill #{daemon_pid}"
-      puts "Stopped"
+      system "kill #{pid = daemon_pid}"
+      puts "Stopped #{pid}."
     end
 
     desc "Restart the search daemon"
@@ -61,9 +66,9 @@ namespace :ultrasphinx do
     desc "Check if the search daemon is running"
     task :status => :environment do
       if daemon_running?
-        puts "Daemon is running"
+        puts "Daemon is running."
       else
-        puts "Daemon is stopped"
+        puts "Daemon is stopped."
       end
     end      
   end
