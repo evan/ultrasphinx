@@ -29,12 +29,12 @@ module Ultrasphinx
   end
   
   SOURCE_DEFAULTS = %(
-    strip_html = 0
-    index_html_attrs =
-    sql_query_pre = SET SESSION group_concat_max_len = 65535
-    sql_query_pre = SET NAMES utf8
-    sql_query_post =
-    sql_range_step = 20000
+strip_html = 0
+index_html_attrs =
+sql_query_pre = SET SESSION group_concat_max_len = 65535
+sql_query_pre = SET NAMES utf8
+sql_query_post =
+sql_range_step = 20000
   )
 
   MAX_INT = 2**32-1
