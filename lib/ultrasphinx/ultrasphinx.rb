@@ -21,7 +21,7 @@ module Ultrasphinx
   
   def self.options_for(heading, path = BASE_PATH)
     section = open(path).read[/^#{heading}.*?\{(.*?)\}/m, 1]
-    raise "missing heading #{heading} in #{path}" if section.nil?
+    raise "missing heading #{heading.inspect} in #{path}" unless section
     lines = section.split("\n").reject { |l| l.strip.empty? }
     options = lines.map do |c|
       c =~ /\s*(.*?)\s*=\s*([^\#]*)/
@@ -62,25 +62,33 @@ type = pgsql
   MAX_WORDS = 2**16 # maximum number of stopwords built  
   STOPWORDS_PATH = "#{Ultrasphinx::PLUGIN_SETTINGS['path']}/stopwords.txt}"
 
-  #logger.debug "** ultrasphinx options are: #{PLUGIN_SETTINGS.inspect}"
-
   MODELS_HASH = {}
 
   class << self    
+
+    def say msg
+      $stderr.puts "** ultrasphinx: #{msg}"
+    end
+
     def load_constants
       Dir["#{RAILS_ROOT}/app/models/**/*.rb"].each do |filename|
         next if filename =~ /\/(\.svn|CVS|\.bzr)\//
         begin
           open(filename) {|file| load filename if file.grep(/is_indexed/).any?}
         rescue Object => e
-          puts "** ultrasphinx: warning; autoload error on #{filename}"
+          say "warning; possibly critical autoload error on #{filename}"
         end
       end 
       Fields.instance.configure(MODELS_HASH)
     end
     
     def verify_database_name
-#      options_for(
+      if File.exist? CONF_PATH
+        if options_for("source", CONF_PATH)['sql_db'] != ActiveRecord::Base.connection.instance_variable_get("@config")[:database]
+           say "warning; configured database name is out-of-date"
+           say "please run 'rake ultrasphinx:configure'"
+        end
+      end
     end
          
     def configure       

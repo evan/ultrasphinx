@@ -32,7 +32,8 @@ module Ultrasphinx
     MODELS = begin
       Hash[*open(CONF_PATH).readlines.select{|s| s =~ /^(source \w|sql_query )/}.in_groups_of(2).map{|model, _id| [model[/source ([\w\d_-]*)/, 1].classify, _id[/(\d*) AS class_id/, 1].to_i]}.flatten] # XXX blargh
     rescue
-      puts "** ultrasphinx configuration file not found for #{ENV['RAILS_ENV'].inspect} environment"
+      Ultrasphinx.say "configuration file not found for #{ENV['RAILS_ENV'].inspect} environment"
+      Ultrasphinx.say "please run 'rake ultrasphinx:configure'"
       {}
     end
   
