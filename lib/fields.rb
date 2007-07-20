@@ -1,12 +1,17 @@
 
+require 'singleton'
+
 module Ultrasphinx
+
   class Fields < Hash
+    include Singleton
+    
     def initialize
       self["class_id"] = "numeric"
       self["class"] = "text"
     end
   
-    def slam(field, new_type) # XXX what was i thinking
+    def check_type_match(field, new_type)
       # tries to smoosh fields together by name in the sphinx query schema; raises if their types don't match
       field, new_type = field.to_s, COLUMN_TYPES[new_type.to_sym]
       if existing_type = self[field]
@@ -46,15 +51,15 @@ module Ultrasphinx
           # fields are from the model
           options[:fields].to_a.each do |entry|
             entry = {:field => entry, :as => entry} unless entry.is_a? Hash
-            klass.columns_hash[entry[:field]] and slam(entry[:as], klass.columns_hash[entry[:field]].type) or ActiveRecord::Base.logger.warn "ultrasphinx: WARNING: field #{entry.inspect} is not present in #{model}"
+            klass.columns_hash[entry[:field]] and check_type_match(entry[:as], klass.columns_hash[entry[:field]].type) or ActiveRecord::Base.logger.warn "ultrasphinx: WARNING: field #{entry.inspect} is not present in #{model}"
           end  
           # joins are whatever they are in the target       
           options[:includes].to_a.each do |join|
-            slam(join[:as] || join[:field], join[:model].constantize.columns_hash[join[:field]].type)
+            check_type_match(join[:as] || join[:field], join[:model].constantize.columns_hash[join[:field]].type)
           end  
           # regular concats are CHAR (I think), group_concats are BLOB and need to be cast to CHAR, e.g. :text
           options[:concats].to_a.each do |concats|
-            slam(concats[:as], :text)          
+            check_type_match(concats[:as], :text)          
           end          
         rescue ActiveRecord::StatementInvalid
           ActiveRecord::Base.logger.warn "ultrasphinx: WARNING: model #{model} does not exist in the database yet"

@@ -33,17 +33,17 @@ class Search
   MAX_RETRIES = 4
 
   MODELS = begin
-    Hash[*open(Ultrasphinx::SPHINX_CONF).readlines.select{|s| s =~ /^(source \w|sql_query )/}.in_groups_of(2).map{|model, _id| [model[/source ([\w\d_-]*)/, 1].classify, _id[/(\d*) AS class_id/, 1].to_i]}.flatten] # XXX blargh
+    Hash[*open(Ultrasphinx::CONF_PATH).readlines.select{|s| s =~ /^(source \w|sql_query )/}.in_groups_of(2).map{|model, _id| [model[/source ([\w\d_-]*)/, 1].classify, _id[/(\d*) AS class_id/, 1].to_i]}.flatten] # XXX blargh
   rescue
     puts "Ultrasphinx configuration file not found for #{ENV['RAILS_ENV'].inspect} environment"
     {}
   end
 
-  MAX_MATCHES = Ultrasphinx::DAEMON_CONF["max_matches"].to_i
+  MAX_MATCHES = Ultrasphinx::DAEMON_SETTINGS["max_matches"].to_i
 
   QUERY_TYPES = [:sphinx, :google]
 
-  #INDEXES = YAML.load_file(Ultrasphinx::MODELS_CONF).keys.select{|x| !x.blank?}.map(&:tableize) + ["complete"]
+  #INDEXES = YAML.load_file(Ultrasphinx::MODELS_HASH).keys.select{|x| !x.blank?}.map(&:tableize) + ["complete"]
 
   attr_reader :options
   attr_reader :query
@@ -88,22 +88,26 @@ class Search
     def run(instantiate = true)
       # set all the options
       @request = Sphinx::Client.new
-      @request.SetServer(Ultrasphinx::PLUGIN_CONF['server_host'], Ultrasphinx::PLUGIN_CONF['server_port'])
+      @request.SetServer(Ultrasphinx::PLUGIN_SETTINGS['server_host'], Ultrasphinx::PLUGIN_SETTINGS['server_port'])
       offset, limit = options[:per_page] * (options[:page] - 1), options[:per_page]
       @request.SetLimits offset, limit, [offset + limit, MAX_MATCHES].min
       @request.SetMatchMode map_option(:search_mode)
       @request.SetSortMode map_option(:sort_mode), options[:sort_by]      
+
       if weights = options[:weights]
-#        breakpoint
-        @request.SetWeights(Ultrasphinx::FIELDS.select{|n,t| t == 'text'}.map(&:first).sort.inject([]) do |array, field|
+        @request.SetWeights(Ultrasphinx::Fields.instance.select{|n,t| t == 'text'}.map(&:first).sort.inject([]) do |array, field|
           array << (weights[field] || 1.0)
         end)
       end
+
       #@request.SetIdRange # never useful
+
       unless options[:models].compact.empty?
         @request.SetFilter 'class_id', options[:models].map{|m| MODELS[m.to_s]}
       end
-      if options[:belongs_to]
+      
+      if options[:belongs_to] 
+        # not sure if this actually works
         raise Sphinx::SphinxArgumentError, "You must specify a specific :model when using :belongs_to" unless options[:models] and options(:models).size == 1
         parent = options[:belongs_to]
         association = parent.class.reflect_on_all_associations.select{|a| options[:models] == a.klass.name}.first
@@ -142,12 +146,13 @@ class Search
         logger.info "Ultrasphinx: Search returned, error #{@request.GetLastError.inspect}, warning #{@request.GetLastWarning.inspect}, returned #{total}/#{response['total_found']} in #{time} seconds."
 
         # get all the subtotals, XXX should be configurable
-        _request = @request.dup
+        # andrew says there's a better way to do this
+        filtered_request = @request.dup
         MODELS.each do |key, value|
-          _request.instance_eval { @filters.delete_if {|f| f['attr'] == 'class_id'} }
-          _request.SetFilter 'class_id', [value]
+          filtered_request.instance_eval { @filters.delete_if {|f| f['attr'] == 'class_id'} }
+          filtered_request.SetFilter 'class_id', [value]
           @subtotals[key] = @request.Query(@parsed_query)['total_found']
-#          logger.debug "Ultrasphinx: Found #{subtotals[key]} records for sub-query #{key} (filters: #{_request.instance_variable_get('@filters').inspect})"
+#          logger.debug "Ultrasphinx: Found #{subtotals[key]} records for sub-query #{key} (filters: #{filtered_request.instance_variable_get('@filters').inspect})"
         end
 
         @results = instantiate ? reify_results(response['matches']) : response['matches']

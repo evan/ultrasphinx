@@ -10,27 +10,33 @@ module Ultrasphinx
   class DaemonError < Exception
   end
 
-  SPHINX_CONF = "#{RAILS_ROOT}/config/environments/sphinx.#{RAILS_ENV}.conf"
-  ENV_BASE = "#{RAILS_ROOT}/config/environments/sphinx.#{RAILS_ENV}.base" 
-  GENERIC_BASE = "#{RAILS_ROOT}/config/sphinx.base"
-  BASE = (File.exist?(ENV_BASE) ? ENV_BASE : GENERIC_BASE)
+  CONF_PATH = "#{RAILS_ROOT}/config/environments/sphinx.#{RAILS_ENV}.conf"
+  ENV_BASE_PATH = "#{RAILS_ROOT}/config/environments/sphinx.#{RAILS_ENV}.base" 
+  GENERIC_BASE_PATH = "#{RAILS_ROOT}/config/sphinx.base"
+  BASE_PATH = (File.exist?(ENV_BASE_PATH) ? ENV_BASE_PATH : GENERIC_BASE_PATH)
   
-  raise ConfigurationError, "Please create a #{BASE} configuration file." unless File.exist? BASE
+  raise ConfigurationError, "Please create a #{BASE_PATH} configuration file." unless File.exist? BASE_PATH
   
-  class << self
-    def options_for(heading)
-      section = open(BASE).read[/^#{heading}.*?\{(.*?)\}/m, 1]
-      raise "missing heading #{heading} in #{BASE}" if section.nil?
-      lines = section.split("\n").reject { |l| l.strip.empty? }
-      options = lines.map do |c|
-        c =~ /\s*(.*?)\s*=\s*([^\#]*)/
-        $1 ? [$1, $2.strip] : []
-      end
-      Hash[*options.flatten] 
+  def self.options_for(heading)
+    section = open(BASE_PATH).read[/^#{heading}.*?\{(.*?)\}/m, 1]
+    raise "missing heading #{heading} in #{BASE_PATH}" if section.nil?
+    lines = section.split("\n").reject { |l| l.strip.empty? }
+    options = lines.map do |c|
+      c =~ /\s*(.*?)\s*=\s*([^\#]*)/
+      $1 ? [$1, $2.strip] : []
     end
+    Hash[*options.flatten] 
   end
   
-  SOURCE_DEFAULTS = "strip_html = 0\nindex_html_attrs =\nsql_query_pre = SET SESSION group_concat_max_len = 65535\nsql_query_pre = SET NAMES utf8\nsql_query_post =\nsql_range_step = 20000"
+  SOURCE_DEFAULTS = %(
+    strip_html = 0
+    index_html_attrs =
+    sql_query_pre = SET SESSION group_concat_max_len = 65535
+    sql_query_pre = SET NAMES utf8
+    sql_query_post =
+    sql_range_step = 20000
+  )
+
   MAX_INT = 2**32-1
   COLUMN_TYPES = {:string => 'text', :text => 'text', :integer => 'numeric', :date => 'date', :datetime => 'date' }
   CONFIG_MAP = {:username => 'sql_user',
@@ -41,13 +47,16 @@ module Ultrasphinx
     :port => 'sql_port',
     :socket => 'sql_sock'}
   OPTIONAL_SPHINX_KEYS = ['morphology', 'stopwords', 'min_word_len', 'charset_type', 'charset_table', 'docinfo']
-  PLUGIN_CONF = options_for('ultrasphinx')
-  DAEMON_CONF = options_for('searchd')
-  #logger.debug "Ultrasphinx options are: #{PLUGIN_CONF.inspect}"
+  PLUGIN_SETTINGS = options_for('ultrasphinx')
+  DAEMON_SETTINGS = options_for('searchd')
 
-  MODELS_CONF = {}
-  FIELDS = Fields.new    
-    
+  MAX_WORDS = 2**16 # maximum number of stopwords built  
+  STOPWORDS_PATH = "#{Ultrasphinx::PLUGIN_SETTINGS['path']}/stopwords.txt}"
+
+  #logger.debug "Ultrasphinx options are: #{PLUGIN_SETTINGS.inspect}"
+
+  MODELS_HASH = {}
+
   class << self    
     def load_constants
       Dir["#{RAILS_ROOT}/app/models/**/*.rb"].each do |filename|
@@ -58,63 +67,26 @@ module Ultrasphinx
           puts "Ultrasphinx: warning; autoload error on #{filename}"
         end
       end 
-      FIELDS.configure(MODELS_CONF)
+      Fields.instance.configure(MODELS_HASH)
     end
-  
-    def index *opts
-      cmd = "indexer --config #{SPHINX_CONF}"
-      opts.each do |opt|
-        cmd << " --#{opt}"
-      end
-      cmd << " --rotate" if daemon_running?
-      cmd << " complete"
-      puts cmd
-      exec cmd      
-    end
-    
-    def daemon(action = :start)
-      case action
-        when :start
-          raise DaemonError, "Already running" if daemon_running?
-          # remove lockfiles
-          Dir[PLUGIN_CONF["path"] + "*spl"].each {|file| File.delete(file)}
-          exec "searchd --config #{SPHINX_CONF}"
-        when :stop
-          raise DaemonError, "Doesn't seem to be running" unless daemon_running?
-          system "kill #{get_daemon_pid}"
-      end
-    end
-   
-    def get_daemon_pid
-      # really need a generic way to query the conf file
-      open(open(BASE).readlines.map{|s| s[/^\s*pid_file\s*=\s*([^\s\#]*)/, 1]}.compact.first).readline.chomp rescue nil
-    end    
-    
-    def daemon_running?     
-      if get_daemon_pid
-        `ps #{get_daemon_pid} | wc`.to_i > 1 
-      else
-        false
-      end
-    end
-   
+         
     def configure       
       load_constants
             
       puts "Rebuilding Ultrasphinx configurations for #{ENV['RAILS_ENV']} environment" 
-      puts "Available models are #{MODELS_CONF.keys.to_sentence}"
-      File.open(SPHINX_CONF, "w") do |conf|
+      puts "Available models are #{MODELS_HASH.keys.to_sentence}"
+      File.open(CONF_PATH, "w") do |conf|
         conf.puts "\n# Auto-generated at #{Time.now}.\n# Hand modifications will be overwritten.\n"
         
-        conf.puts "\n# #{BASE}"
-        conf.puts open(BASE).read.sub(/^ultrasphinx.*?\{.*?\}/m, '') + "\n"
+        conf.puts "\n# #{BASE_PATH}"
+        conf.puts open(BASE_PATH).read.sub(/^ultrasphinx.*?\{.*?\}/m, '') + "\n"
         
         index_list = {"complete" => []}
         
         conf.puts "\n# Source configuration\n\n"
 
         puts "Generating SQL"
-        MODELS_CONF.each_with_index do |model_options, class_id|
+        MODELS_HASH.each_with_index do |model_options, class_id|
           model, options = model_options
           klass, source = model.constantize, model.tableize
 
@@ -131,15 +103,15 @@ module Ultrasphinx
           
           table, pkey = klass.table_name, klass.primary_key
           condition_strings, join_strings = Array(options[:conditions]).map{|condition| "(#{condition})"}, []
-          column_strings = ["(#{table}.#{pkey} * #{MODELS_CONF.size} + #{class_id}) AS id", 
+          column_strings = ["(#{table}.#{pkey} * #{MODELS_HASH.size} + #{class_id}) AS id", 
                                        "#{class_id} AS class_id", "'#{klass.name}' AS class"]   
-          remaining_columns = FIELDS.keys - ["class", "class_id"]
+          remaining_columns = Fields.instance.keys - ["class", "class_id"]
           
           conf.puts "\nsql_query_range = SELECT MIN(#{pkey}), MAX(#{pkey}) FROM #{table}"
           
           options[:fields].to_a.each do |f|
             column, as = f.is_a?(Hash) ? [f[:field], f[:as]] : [f, f]
-            column_strings << FIELDS.cast("#{table}.#{column}", as)
+            column_strings << Fields.instance.cast("#{table}.#{column}", as)
             remaining_columns.delete(as)
           end
           
@@ -163,18 +135,18 @@ module Ultrasphinx
             join_klass = group[:model].constantize
             association = klass.reflect_on_association(group[:association_name] ? group[:association_name].to_sym :  group[:model].underscore.pluralize.to_sym)
             join_strings << "LEFT OUTER JOIN #{join_klass.table_name} ON #{table}.#{klass.primary_key} = #{join_klass.table_name}.#{association.primary_key_name}" + (" AND (#{group[:conditions]})" if group[:conditions]).to_s # XXX make sure foreign key is right for polymorphic relationships
-            column_strings << FIELDS.cast("GROUP_CONCAT(#{join_klass.table_name}.#{group[:field]} SEPARATOR ' ')", group[:as])
+            column_strings << Fields.instance.cast("GROUP_CONCAT(#{join_klass.table_name}.#{group[:field]} SEPARATOR ' ')", group[:as])
             remaining_columns.delete(group[:as])
           end
           
           options[:concats].to_a.select{|concat| concat[:fields]}.each do |concat|
-            column_strings << FIELDS.cast("CONCAT_WS(' ', #{concat[:fields].map{|field| "#{table}.#{field}"}.join(', ')})", concat[:as])
+            column_strings << Fields.instance.cast("CONCAT_WS(' ', #{concat[:fields].map{|field| "#{table}.#{field}"}.join(', ')})", concat[:as])
             remaining_columns.delete(concat[:as])
           end
             
 #          puts "#{model} has #{remaining_columns.inspect} remaining"
           remaining_columns.each do |field|
-            column_strings << FIELDS.null(field)
+            column_strings << Fields.instance.null(field)
           end
           
           query_strings = ["SELECT", column_strings.sort_by do |string| 
@@ -191,7 +163,7 @@ module Ultrasphinx
           
           groups = []
           # group and date sorting params... this really only would have to be run once
-          FIELDS.each do |field, type|
+          Fields.instance.each do |field, type|
             case type
               when 'numeric'
                 groups << "sql_group_column = #{field}"
@@ -200,7 +172,7 @@ module Ultrasphinx
             end
           end
           conf.puts "\n" + groups.sort_by{|s| s[/= (.*)/, 1]}.join("\n")
-          conf.puts "\nsql_query_info = SELECT * FROM #{table} WHERE #{table}.#{pkey} = (($id - #{class_id}) / #{MODELS_CONF.size})"           
+          conf.puts "\nsql_query_info = SELECT * FROM #{table} WHERE #{table}.#{pkey} = (($id - #{class_id}) / #{MODELS_HASH.size})"           
           conf.puts "}\n\n"                
         end
         
@@ -209,9 +181,9 @@ module Ultrasphinx
           conf.puts "index #{name}\n{"
           source_list.each {|source| conf.puts "source = #{source}"}
           OPTIONAL_SPHINX_KEYS.each do |key|
-            conf.puts "#{key} = #{PLUGIN_CONF[key]}" if PLUGIN_CONF[key]
+            conf.puts "#{key} = #{PLUGIN_SETTINGS[key]}" if PLUGIN_SETTINGS[key]
           end
-          conf.puts "path = #{PLUGIN_CONF["path"]}/sphinx_index_#{name}"
+          conf.puts "path = #{PLUGIN_SETTINGS["path"]}/sphinx_index_#{name}"
           conf.puts "}\n\n"        
         end
       end
