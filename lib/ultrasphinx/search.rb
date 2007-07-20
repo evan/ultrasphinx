@@ -19,10 +19,10 @@ module Ultrasphinx
       :sort_mode => :relevance,
       :weights => nil,
       :search_mode => :extended,
-      :belongs_to => nil,
     :raw_filters => {}}
   
-    VIEW_OPTIONS = {
+  
+    VIEW_OPTIONS = { # XXX this is crappy
       :search_mode => {"all words" => "all", "some words" => "any", "exact phrase" => "phrase", "boolean" => "boolean", "extended" => "extended"}.sort,
     :sort_mode => [["newest first", "desc"], ["oldest first", "asc"], ["relevance", "relevance"]]
     } #, "Time" => :time }
@@ -79,7 +79,6 @@ module Ultrasphinx
         @options[:models] = Array(@options[:models])
   
         raise Sphinx::SphinxArgumentError, "Invalid options: #{@extra * ', '}" if (@extra = (@options.keys - (OPTIONS.merge(DEFAULTS).keys))).size > 0
-        @options[:belongs_to] = @options[:belongs_to].name if @options[:belongs_to].is_a? Class
       end
   
       def run(instantiate = true)
@@ -101,20 +100,7 @@ module Ultrasphinx
   
         unless options[:models].compact.empty?
           @request.SetFilter 'class_id', options[:models].map{|m| MODELS[m.to_s]}
-        end
-        
-        if options[:belongs_to] 
-          # not sure if this actually works
-          raise Sphinx::SphinxArgumentError, "You must specify a specific :model when using :belongs_to" unless options[:models] and options(:models).size == 1
-          parent = options[:belongs_to]
-          association = parent.class.reflect_on_all_associations.select{|a| options[:models] == a.klass.name}.first
-          if MODELS.keys.inject(true) {|b, klass| b and klass.constantize.columns.map(&:name).include? association.options[:foreign_key]}
-            key_name = "global_#{association.options[:foreign_key]}"
-          else
-            key_name = "#{options[:models].first.tableize}_#{association.options[:foreign_key]}"
-          end
-          @request.SetFilter key_name, [parent.id]
-        end
+        end        
   
         options[:raw_filters].each do |field, value|
           begin
