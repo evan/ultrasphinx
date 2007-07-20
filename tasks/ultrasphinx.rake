@@ -14,7 +14,7 @@ namespace :ultrasphinx do
     cmd << " --rotate" if daemon_running?
     cmd << " complete"
     puts cmd
-    exec cmd
+    system cmd
   end
   
   namespace :daemon do
@@ -23,13 +23,19 @@ namespace :ultrasphinx do
       raise Ultrasphinx::DaemonError, "Already running" if daemon_running?
       # remove lockfiles
       Dir[Ultrasphinx::PLUGIN_SETTINGS["path"] + "*spl"].each {|file| File.delete(file)}
-      exec "searchd --config #{Ultrasphinx::CONF_PATH}"
+      system "searchd --config #{Ultrasphinx::CONF_PATH}"
+      if daemon_running?
+        puts "Started successfully"
+      else
+        puts "Failed to start"
+      end
     end
     
     desc "Stop the search daemon"
     task :stop => [:environment] do
       raise Ultrasphinx::DaemonError, "Doesn't seem to be running" unless daemon_running?
       system "kill #{daemon_pid}"
+      puts "Stopped"
     end
 
     desc "Restart the search daemon"
@@ -55,9 +61,9 @@ namespace :ultrasphinx do
     desc "Check if the search daemon is running"
     task :status => :environment do
       if daemon_running?
-        puts "Running."
+        puts "Daemon is running"
       else
-        puts "Stopped."
+        puts "Daemon is stopped"
       end
     end      
   end
