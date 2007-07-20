@@ -206,15 +206,21 @@ type = pgsql
         end
         
         conf.puts "\n# Index configuration\n\n"
-        index_list.to_a.sort_by {|x| x.first == "complete" ? 1 : 0}.each do |name, source_list|
-          conf.puts "index #{name}\n{"
-          source_list.each {|source| conf.puts "source = #{source}"}
-          OPTIONAL_SPHINX_KEYS.each do |key|
-            conf.puts "#{key} = #{PLUGIN_SETTINGS[key]}" if PLUGIN_SETTINGS[key]
-          end
-          conf.puts "path = #{PLUGIN_SETTINGS["path"]}/sphinx_index_#{name}"
-          conf.puts "}\n\n"        
+        
+        # only output the unified index, no one uses the individual ones anyway
+        
+        index = "complete"        
+        conf.puts "index #{index}"
+        conf.puts "{"
+        index_list[index].each do |source| 
+          conf.puts "source = #{source}" 
         end
+        OPTIONAL_SPHINX_KEYS.each do |key|
+          conf.puts "#{key} = #{PLUGIN_SETTINGS[key]}" if PLUGIN_SETTINGS[key]
+        end
+        conf.puts "path = #{PLUGIN_SETTINGS["path"]}/sphinx_index_#{index}"
+        conf.puts "}\n\n"        
+
       end
             
     end
