@@ -69,7 +69,7 @@ namespace :ultrasphinx do
       tmpfile = "/tmp/custom_words.txt"
       words = []
       puts "Filtering"
-      File.open(Ultrasphinx:STOPWORDS_PATH).each do |line|
+      File.open(Ultrasphinx::STOPWORDS_PATH).each do |line|
         if line =~ /^([^\s\d_]{4,}) (\d+)/
           words << $1 if $2.to_i > 40 # XXX should be configurable
           # ideally we would also skip words within X edit distance of a correction
