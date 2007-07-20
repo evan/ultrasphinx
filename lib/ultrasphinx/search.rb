@@ -41,8 +41,6 @@ module Ultrasphinx
   
     QUERY_TYPES = [:sphinx, :google]
   
-    #INDEXES = YAML.load_file(MODELS_HASH).keys.select{|x| !x.blank?}.map(&:tableize) + ["complete"]
-  
     attr_reader :options
     attr_reader :query
     attr_reader :results
@@ -180,6 +178,7 @@ module Ultrasphinx
         :around => 1).in_groups_of(2)
       
       maps.each_with_index do |record_and_methods, i|
+        # override the individual model accessors with the excerpted data
         record, methods = record_and_methods
         2.times do |j|
           record._metaclass.send(:define_method, methods[j]) { responses[i][j] }
