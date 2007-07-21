@@ -157,16 +157,24 @@ module Ultrasphinx
       run unless run?
       return if results.empty?
   
+      possible_methods = [[:title, :name], [:body, :description, :content], [:metadata]]
+  
       maps = results.map do |record|
         [record] <<
-        [[:title, :name], [:body, :description, :content]].map do |methods|
-          methods.detect{|x| record.respond_to? x}
+        possible_methods.map do |methods|
+          methods.detect do |x| 
+            record.respond_to? x
+          end
         end
       end
   
       texts = maps.map do |record, methods|
-        [record.send(methods[0]), record.send(methods[1])]
-      end.flatten.map{|x| x.gsub(/<.*?>|\.\.\.|\342\200\246|\n|\r/, " ").gsub(/http.*?( |$)/, ' ')}
+        methods.map do |method|
+          (record.send(method) if method) or ""
+        end
+      end.flatten.map do |text| 
+        text.gsub(/<.*?>|\.\.\.|\342\200\246|\n|\r/, " ").gsub(/http.*?( |$)/, ' ')
+      end
   
       responses = @request.BuildExcerpts(
         texts, 
@@ -175,13 +183,13 @@ module Ultrasphinx
         :before_match => "<strong>", :after_match => "</strong>",
         :chunk_separator => "...",
         :limit => 200,
-        :around => 1).in_groups_of(2)
+        :around => 1).in_groups_of(possible_methods.size)
       
       maps.each_with_index do |record_and_methods, i|
         # override the individual model accessors with the excerpted data
         record, methods = record_and_methods
-        2.times do |j|
-          record._metaclass.send(:define_method, methods[j]) { responses[i][j] }
+        possible_methods.size.times do |m|          
+          record._metaclass.send(:define_method, methods[m]) { responses[i][m] } if methods[m]
         end
       end
   
