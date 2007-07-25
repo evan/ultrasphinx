@@ -10,14 +10,15 @@ module Ultrasphinx
   class DaemonError < Exception
   end
 
-  DIR = "#{RAILS_ROOT}/config/ultrasphinx"
+  SUBDIR = "config/ultrasphinx"
+  DIR = "#{RAILS_ROOT}/#{SUBDIR}"
 
   CONF_PATH = "#{DIR}/#{RAILS_ENV}.conf"
   ENV_BASE_PATH = "#{DIR}/#{RAILS_ENV}.base" 
   GENERIC_BASE_PATH = "#{DIR}/default.base"
   BASE_PATH = (File.exist?(ENV_BASE_PATH) ? ENV_BASE_PATH : GENERIC_BASE_PATH)
   
-  raise ConfigurationError, "Please create a #{BASE_PATH} configuration file." unless File.exist? BASE_PATH
+  raise ConfigurationError, "Please create a '#{SUBDIR}/#{RAILS_ENV}.base' or '#{SUBDIR}/default.base' file in order to use Ultrasphinx in your #{RAILS_ENV} environment." unless File.exist? BASE_PATH # XXX lame
   
   def self.options_for(heading, path = BASE_PATH)
     section = open(path).read[/^#{heading}.*?\{(.*?)\}/m, 1]
