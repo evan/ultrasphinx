@@ -73,18 +73,7 @@ module Ultrasphinx
       @response = {}
   
       # do some typecasting
-      @options = DEFAULTS.merge(Hash[*opts.map do |key, value|
-        [key.to_sym,
-          if value.respond_to?(:to_i) && value.to_i.to_s == value
-            value.to_i
-          elsif value == ""
-            nil
-          elsif value.is_a? String
-            value.to_sym
-          else
-            value
-          end]
-        end._flatten_once])
+      @options = DEFAULTS.merge(opts._coerce_basic_types)
         
       @options[:models] = Array(@options[:models])
   
@@ -333,6 +322,6 @@ module Ultrasphinx
     def logger
       RAILS_DEFAULT_LOGGER
     end
-  
+    
   end
 end
