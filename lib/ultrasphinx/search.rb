@@ -36,11 +36,6 @@ module Ultrasphinx
     
     RETRY_SLEEP_TIME = 3
 
-    VIEW_OPTIONS = { # XXX this is crappy
-      :search_mode => {"all words" => "all", "some words" => "any", "exact phrase" => "phrase", "boolean" => "boolean", "extended" => "extended"}.sort,
-    :sort_mode => [["newest first", "desc"], ["oldest first", "asc"], ["relevance", "relevance"]]
-    } #, "Time" => :time }
-  
     MODELS = begin
       Hash[*open(CONF_PATH).readlines.select{|s| s =~ /^(source \w|sql_query )/}.in_groups_of(2).map{|model, _id| [model[/source ([\w\d_-]*)/, 1].classify, _id[/(\d*) AS class_id/, 1].to_i]}.flatten] # XXX blargh
     rescue
