@@ -26,7 +26,7 @@ module Ultrasphinx
       'chunk_separator' => "...",
       'limit' => 256,
       'around' => 3,
-      # results should respond to one in each group of these, in precedence order, for the excerpting to fire
+      # results should respond to one in each group of these, in precedence order, in order for the excerpting to fire
       'content_methods' => [[:title, :name], [:body, :description, :content], [:metadata]] 
     }
       
