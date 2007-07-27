@@ -17,12 +17,8 @@
          <% end %>
        </td></tr>
        <tr><td>
-         Search mode: 
-         <%= options.select "search_mode", Ultrasphinx::Search::VIEW_OPTIONS[:search_mode] %>
-       </td></tr>
-       <tr><td>
          Sort style: 
-         <%= options.select "sort_mode", Ultrasphinx::Search::VIEW_OPTIONS[:sort_mode] %>
+         <%= options.select "sort_mode", [["newest first", "descending"], ["oldest first", "ascending"], ["relevance", "relevance"]] %>
        </td></tr>
        <tr><td>
           Between: <%= options.text_field "to", :size => 20 %> 
