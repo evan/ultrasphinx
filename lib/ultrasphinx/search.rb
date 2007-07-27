@@ -58,13 +58,7 @@ module Ultrasphinx
     attr_reader :results
     attr_reader :response
     attr_reader :subtotals
-  
-    def self.find *args
-      args.push({}) unless args.last.is_a? Hash
-      args.unshift :sphinx if args.size == 2
-      self.new(*args).run
-    end
-  
+    
     def initialize style, query, opts = {}
       
       opts = {} unless opts
