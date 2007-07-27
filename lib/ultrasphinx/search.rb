@@ -105,6 +105,7 @@ module Ultrasphinx
       raise Sphinx::SphinxArgumentError, "Invalid options: #{@extra * ', '}" if (@extra = (@options.keys - (SPHINX_CLIENT_PARAMS.merge(DEFAULTS).keys))).size > 0      
     end
     
+    
     def run(reify = true)
       # run the search    
       @request = build_request_with_options(@options)
@@ -133,6 +134,7 @@ module Ultrasphinx
       
       self
     end
+  
   
     def excerpt
     
@@ -245,20 +247,28 @@ module Ultrasphinx
     end
     
     def strip_query_commands(s)
-      # XXX hack for query commands, since sphinx doesn't parse them on excerpt
+      # XXX dumb hack for query commands, since sphinx doesn't intelligently parse the query in excerpt mode
       s.gsub(/AND|OR|NOT|\@\w+/, "")
     end 
   
     def parse_google query
-      return unless query
       # alters google-style querystring into sphinx-style
-      query = query.gsub(" AND ", " ").scan(/[^"() ]*["(][^")]*[")]|[^"() ]+/) # thanks chris2
+      return if query.blank?
+
+      # remove AND's, always
+      query = " #{query} ".gsub(" AND ", " ")
+
+      # split query on spaces that are not inside sets of quotes or parens
+      query = query.scan(/[^"() ]*["(][^")]*[")]|[^"() ]+/) 
+
       query.each_with_index do |token, index|
-            
+      
+        # recurse for parens, if necessary
         if token =~ /^(.*?)\((.*)\)(.*?$)/
-          token = query[index] = "#{$1}(#{parse_google $2})#{$3}" # recurse for parens
+          token = query[index] = "#{$1}(#{parse_google $2})#{$3}"
         end       
         
+        # translate to sphinx-language
         case token
           when "OR"
             query[index] = "|"
