@@ -19,7 +19,7 @@ module ActiveRecord
         join.assert_valid_keys [:model, :field, :as]
       end
       
-      Ultrasphinx::MODELS_HASH[self.name] = opts
+      Ultrasphinx::MODEL_CONFIGURATION[self.name] = opts
     end
   end
 end

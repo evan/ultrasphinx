@@ -9,7 +9,7 @@
      <% fields_for :options, @options do |options| %>
        <tr><td>
          Show only: 
-         <% Ultrasphinx::Search::MODELS.keys.each do |model_name| %>
+         <% Ultrasphinx::Search::MODELS_TO_IDS.keys.each do |model_name| %>
           <!-- couldn't get form_for way to work here -->
           <%= check_box_tag "options[models][]", model_name, 
              @options['models'].empty? || @options['models'].include?(model_name) %>

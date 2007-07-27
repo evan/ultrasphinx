@@ -17,10 +17,7 @@ class Recipe < ActiveRecord::Base
                                       {:fields => ["long_description", "short_description"], :as => "editorial"},
                                       {:model => "Comment", :field => "body", :as => "comments", 
                                         :conditions => "comments.item_type = '#{base_class}'"}],
-#                                      {:model => "Ingredient", :field => "title", :as => "ingredients"}],
                    :conditions => live_condition_string
-                   # XXX ingredients
-                   # XXX tags                   
 end
 
 class Story < ActiveRecord::Base

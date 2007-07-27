@@ -69,7 +69,7 @@ module Ultrasphinx
       end
     end
 
-    MODEL_HASH = get_models_to_class_ids || {}
+    MODELS_TO_IDS = get_models_to_class_ids || {}
       
     MAX_MATCHES = DAEMON_SETTINGS["max_matches"].to_i
   
@@ -224,7 +224,7 @@ module Ultrasphinx
       end
 
       unless opts[:models].compact.empty?
-        request.SetFilter 'class_id', opts[:models].map{|m| MODEL_HASH[m.to_s]}
+        request.SetFilter 'class_id', opts[:models].map{|m| MODELS_TO_IDS[m.to_s]}
       end        
 
       # extract ranged raw filters 
@@ -256,7 +256,7 @@ module Ultrasphinx
       # XXX andrew says there's a better way to do this
       subtotals, filtered_request = {}, request.dup
       
-      MODEL_HASH.each do |name, class_id|
+      MODELS_TO_IDS.each do |name, class_id|
         filtered_request.instance_eval { @filters.delete_if {|f| f['attr'] == 'class_id'} }
         filtered_request.SetFilter 'class_id', [class_id]
         subtotals[name] = request.Query(query)['total_found']
@@ -320,8 +320,8 @@ module Ultrasphinx
   
       # inverse-modulus map the sphinx ids to the table-specific ids
       ids = Hash.new([])
-      sphinx_ids.each do |_id|
-        ids[MODEL_HASH.invert[_id % MODEL_HASH.size]] += [_id / MODEL_HASH.size] # yay math
+      sphinx_ids.each do |id|
+        ids[MODELS_TO_IDS.invert[id % MODELS_TO_IDS.size]] += [id / MODELS_TO_IDS.size] # yay math
       end
       raise Sphinx::SphinxResponseError, "impossible document id in query result" unless ids.values.flatten.size == sphinx_ids.size
   
@@ -349,7 +349,7 @@ module Ultrasphinx
       # put them back in order
       results.sort_by do |r| 
         raise Sphinx::SphinxResponseError, "Bogus ActiveRecord id for #{r.class}:#{r.id}" unless r.id
-        index = (sphinx_ids.index(sphinx_id = r.id * MODEL_HASH.size + MODEL_HASH[r.class.base_class.name]))
+        index = (sphinx_ids.index(sphinx_id = r.id * MODELS_TO_IDS.size + MODELS_TO_IDS[r.class.base_class.name]))
         raise Sphinx::SphinxResponseError, "Bogus reverse id for #{r.class}:#{r.id} (Sphinx:#{sphinx_id})" unless index
         index / sphinx_ids.size.to_f
       end

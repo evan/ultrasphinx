@@ -21,13 +21,18 @@ module Ultrasphinx
   raise ConfigurationError, "Please create a '#{SUBDIR}/#{RAILS_ENV}.base' or '#{SUBDIR}/default.base' file in order to use Ultrasphinx in your #{RAILS_ENV} environment." unless File.exist? BASE_PATH # XXX lame
   
   def self.options_for(heading, path = BASE_PATH)
-    section = open(path).read[/^#{heading}.*?\{(.*?)\}/m, 1]
-    raise "missing heading #{heading.inspect} in #{path}" unless section
-    lines = section.split("\n").reject { |l| l.strip.empty? }
-    options = lines.map do |c|
-      c =~ /\s*(.*?)\s*=\s*([^\#]*)/
+    
+    section = open(path).read[/^#{heading}.*?\{(.*?)\}/m, 1]    
+    unless section
+      Ultrasphinx.say "#{path} appears to be corrupted; please delete file"
+      raise ConfigurationError, "Missing heading #{heading.inspect}" 
+    end
+    
+    options = section.split("\n").map do |line|
+      line =~ /\s*(.*?)\s*=\s*([^\#]*)/
       $1 ? [$1, $2.strip] : []
     end
+    
     Hash[*options.flatten] 
   end
   
@@ -49,21 +54,28 @@ type = pgsql
   )}
 
   MAX_INT = 2**32-1
+
   COLUMN_TYPES = {:string => 'text', :text => 'text', :integer => 'numeric', :date => 'date', :datetime => 'date' }
+
   CONFIG_MAP = {:username => 'sql_user',
     :password => 'sql_pass',
     :host => 'sql_host',
     :database => 'sql_db',
     :port => 'sql_port',
     :socket => 'sql_sock'}
+
   OPTIONAL_SPHINX_KEYS = ['morphology', 'stopwords', 'min_word_len', 'charset_type', 'charset_table', 'docinfo']
+
   PLUGIN_SETTINGS = options_for('ultrasphinx')
+
   DAEMON_SETTINGS = options_for('searchd')
 
   MAX_WORDS = 2**16 # maximum number of stopwords built  
+
   STOPWORDS_PATH = "#{Ultrasphinx::PLUGIN_SETTINGS['path']}/stopwords.txt}"
 
-  MODELS_HASH = {}
+  MODEL_CONFIGURATION = {}
+
 
   class << self    
 
@@ -80,7 +92,7 @@ type = pgsql
           say "warning; possibly critical autoload error on #{filename}"
         end
       end 
-      Fields.instance.configure(MODELS_HASH)
+      Fields.instance.configure(MODEL_CONFIGURATION)
     end
     
     def verify_database_name
@@ -96,7 +108,7 @@ type = pgsql
       load_constants
             
       puts "Rebuilding Ultrasphinx configurations for #{ENV['RAILS_ENV']} environment" 
-      puts "Available models are #{MODELS_HASH.keys.to_sentence}"
+      puts "Available models are #{MODEL_CONFIGURATION.keys.to_sentence}"
       File.open(CONF_PATH, "w") do |conf|
         conf.puts "\n# Auto-generated at #{Time.now}.\n# Hand modifications will be overwritten.\n"
         
@@ -108,7 +120,7 @@ type = pgsql
         conf.puts "\n# Source configuration\n\n"
 
         puts "Generating SQL"
-        MODELS_HASH.each_with_index do |model_options, class_id|
+        MODEL_CONFIGURATION.each_with_index do |model_options, class_id|
           model, options = model_options
           klass, source = model.constantize, model.tableize
 
@@ -133,7 +145,7 @@ type = pgsql
           
           table, pkey = klass.table_name, klass.primary_key
           condition_strings, join_strings = Array(options[:conditions]).map{|condition| "(#{condition})"}, []
-          column_strings = ["(#{table}.#{pkey} * #{MODELS_HASH.size} + #{class_id}) AS id", 
+          column_strings = ["(#{table}.#{pkey} * #{MODEL_CONFIGURATION.size} + #{class_id}) AS id", 
                                        "#{class_id} AS class_id", "'#{klass.name}' AS class"]   
           remaining_columns = Fields.instance.keys - ["class", "class_id"]
           
@@ -214,7 +226,7 @@ type = pgsql
             end
           end
           conf.puts "\n" + groups.sort_by{|s| s[/= (.*)/, 1]}.join("\n")
-          conf.puts "\nsql_query_info = SELECT * FROM #{table} WHERE #{table}.#{pkey} = (($id - #{class_id}) / #{MODELS_HASH.size})"           
+          conf.puts "\nsql_query_info = SELECT * FROM #{table} WHERE #{table}.#{pkey} = (($id - #{class_id}) / #{MODEL_CONFIGURATION.size})"           
           conf.puts "}\n\n"                
         end
         
