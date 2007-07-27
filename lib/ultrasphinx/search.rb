@@ -5,23 +5,20 @@ module Ultrasphinx
   class Search
     unloadable if RAILS_ENV == "development"
   
-    SPHINX_CLIENT_PARAMS = {:command => {:search => 0, :excerpt => 1},
-      #   :status => {:ok => 0, :error => 1, :retry => 2},
-      :search_mode => {:all => 0, :any => 1, :phrase => 2, :boolean => 3, :extended => 4},
-      :sort_mode => {:relevance => 0, :desc => 1, :asc => 2, :time => 3},
-      :attribute_type => {:integer => 1, :date => 2},
-    :group_by => {:day => 0, :week => 1, :month => 2, :year => 3, :attribute => 4}}
+    ### configurable parameters
   
-    DEFAULTS = {:page => 1,
+    cattr_accessor :defaults  
+    self.defaults = {:page => 1,
       :models => nil,
       :per_page => 20,
       :sort_by => 'created_at',
       :sort_mode => :relevance,
       :weights => nil,
       :search_mode => :extended,
-    :raw_filters => {}}
+      :raw_filters => nil}
     
-    EXCERPT_OPTIONS = {
+    cattr_accessor :excerpt_options
+    self.excerpt_options = {
       'before_match' => "<strong>", 'after_match' => "</strong>",
       'chunk_separator' => "...",
       'limit' => 256,
@@ -29,12 +26,22 @@ module Ultrasphinx
       # results should respond to one in each group of these, in precedence order, in order for the excerpting to fire
       'content_methods' => [[:title, :name], [:body, :description, :content], [:metadata]] 
     }
-      
-    WITH_SUBTOTALS = true
-      
-    MAX_RETRIES = 4
     
-    RETRY_SLEEP_TIME = 3
+    cattr_accessor :client_options
+    self.client_options = { 
+      :with_subtotals => true, 
+      :max_retries => 4,
+      :retry_sleep_time => 3
+    }
+    
+    ### derived, non-configurable parameters
+    
+    SPHINX_CLIENT_PARAMS = {:command => {:search => 0, :excerpt => 1},
+      #   :status => {:ok => 0, :error => 1, :retry => 2},
+      :search_mode => {:all => 0, :any => 1, :phrase => 2, :boolean => 3, :extended => 4},
+      :sort_mode => {:relevance => 0, :desc => 1, :asc => 2, :time => 3},
+      :attribute_type => {:integer => 1, :date => 2},
+    :group_by => {:day => 0, :week => 1, :month => 2, :year => 3, :attribute => 4}}
 
     MODELS = begin
       Hash[*open(CONF_PATH).readlines.select{|s| s =~ /^(source \w|sql_query )/}.in_groups_of(2).map{|model, _id| [model[/source ([\w\d_-]*)/, 1].classify, _id[/(\d*) AS class_id/, 1].to_i]}.flatten] # XXX blargh
@@ -94,10 +101,11 @@ module Ultrasphinx
   
       @results, @subtotals, @response = [], {}, {}
   
-      @options = DEFAULTS.merge(opts._coerce_basic_types)        
+      @options = self.class.defaults.merge(opts._coerce_basic_types)        
+      @options[:raw_filters] ||= {}
       @options[:models] = Array(@options[:models])
   
-      raise Sphinx::SphinxArgumentError, "Invalid options: #{@extra * ', '}" if (@extra = (@options.keys - (SPHINX_CLIENT_PARAMS.merge(DEFAULTS).keys))).size > 0      
+      raise Sphinx::SphinxArgumentError, "Invalid options: #{@extra * ', '}" if (@extra = (@options.keys - (SPHINX_CLIENT_PARAMS.merge(self.class.defaults).keys))).size > 0      
     end
     
     
@@ -112,16 +120,16 @@ module Ultrasphinx
         @response = @request.Query(@parsed_query)
         logger.info "** ultrasphinx: search returned, error #{@request.GetLastError.inspect}, warning #{@request.GetLastWarning.inspect}, returned #{total}/#{response['total_found']} in #{time} seconds."  
 
-        @subtotals = get_subtotals(@request, @parsed_query) if WITH_SUBTOTALS  
+        @subtotals = get_subtotals(@request, @parsed_query) if self.class.client_options[:with_subtotals]
         @results = response['matches']
         
         # if you don't reify, you'll have to do the modulus reversal yourself to get record ids
         @results = reify_results(@results) if reify
                   
       rescue Sphinx::SphinxResponseError, Sphinx::SphinxTemporaryError, Errno::EPIPE => e
-        if (tries += 1) <= MAX_RETRIES
+        if (tries += 1) <= self.class.client_options[:max_retries]
           logger.warn "** ultrasphinx: restarting query (#{tries} attempts already) (#{e})"
-          sleep(RETRY_SLEEP_TIME) if tries == MAX_RETRIES
+          sleep(self.class.client_options[:retry_sleep_time]) if tries == self.class.client_options[:max_retries]
           retry
         else
           logger.warn "** ultrasphinx: query failed"
@@ -140,7 +148,7 @@ module Ultrasphinx
     
       # see what fields each result might respond to for our excerpting
       results_with_content_methods = results.map do |result|
-        [result] << EXCERPT_OPTIONS['content_methods'].map do |methods|
+        [result] << self.class.excerpt_options['content_methods'].map do |methods|
           methods.detect { |x| result.respond_to? x }
         end
       end
@@ -157,8 +165,8 @@ module Ultrasphinx
         texts, 
         "complete", 
         strip_query_commands(@parsed_query),
-        EXCERPT_OPTIONS.except('content_methods')
-      ).in_groups_of(EXCERPT_OPTIONS['content_methods'].size)
+        self.class.excerpt_options.except('content_methods')
+      ).in_groups_of(self.class.excerpt_options['content_methods'].size)
       
       results_with_content_methods.each_with_index do |result_and_methods, i|
         # override the individual model accessors with the excerpted data
