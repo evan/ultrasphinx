@@ -159,30 +159,32 @@ module Ultrasphinx
   
       possible_methods = [[:title, :name], [:body, :description, :content], [:metadata]]
   
+      # XXX maps needs to be refactored from a magic array to something that makes sense
       maps = results.map do |record|
-        [record] <<
-        possible_methods.map do |methods|
+        [record] << possible_methods.map do |methods|
           methods.detect do |x| 
             record.respond_to? x
           end
         end
       end
   
+      # snag the field bodies
       texts = maps.map do |record, methods|
         methods.map do |method|
           (record.send(method) if method) or ""
         end
       end.flatten.map do |text| 
-        text.gsub(/<.*?>|\.\.\.|\342\200\246|\n|\r/, " ").gsub(/http.*?( |$)/, ' ')
+        text.gsub(/<.*?>|\.\.\.|\342\200\246|\n|\r/, " ").gsub(/http.*?( |$)/, ' ') # XXX remove some garbage before highlighting
       end
   
+      # ship to sphinx to highlight and excerpt
       responses = @request.BuildExcerpts(
         texts, 
         "complete", 
         @parsed_query.gsub(/AND|OR|NOT|\@\w+/, ""),
         :before_match => "<strong>", :after_match => "</strong>",
         :chunk_separator => "...",
-        :limit => 200,
+        :limit => 200, # XXX should be configurable
         :around => 1).in_groups_of(possible_methods.size)
       
       maps.each_with_index do |record_and_methods, i|
@@ -297,6 +299,13 @@ module Ultrasphinx
         raise Sphinx::SphinxResponseError, "Bogus reverse id for #{r.class}:#{r.id} (Sphinx:#{sphinx_id})" unless index
         index / sphinx_ids.size.to_f
       end
+      
+      # add an accessor for global index in this search
+      results.each_with_index do |r, index|
+        i = per_page * page + index
+        r._metaclass.send(:define_method, "result_index") { i }
+      end
+      
     end
   
     def map_option opt
