@@ -183,11 +183,11 @@ module Ultrasphinx
       responses = @request.BuildExcerpts(
         texts, 
         "complete", 
-        @parsed_query.gsub(/AND|OR|NOT|\@\w+/, ""),
-        :before_match => "<strong>", :after_match => "</strong>",
-        :chunk_separator => "...",
-        :limit => 200, # XXX should be configurable
-        :around => 1).in_groups_of(possible_methods.size)
+        @parsed_query.gsub(/AND|OR|NOT|\@\w+/, ""), # XXX hack for query commands, since sphinx doesn't parse them on excerpt
+        'before_match' => "<strong>", 'after_match' => "</strong>",
+        'chunk_separator' => "...",
+        'limit' => 256, # XXX should be configurable
+        'around' => 1).in_groups_of(possible_methods.size)
       
       maps.each_with_index do |record_and_methods, i|
         # override the individual model accessors with the excerpted data
