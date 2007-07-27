@@ -14,7 +14,6 @@ module Ultrasphinx
       :sort_by => 'created_at',
       :sort_mode => :relevance,
       :weights => nil,
-      :search_mode => :extended,
       :raw_filters => nil}
     
     cattr_accessor :excerpting_options
@@ -36,12 +35,18 @@ module Ultrasphinx
     
     ### derived, non-configurable parameters
     
-    SPHINX_CLIENT_PARAMS = {:command => {:search => 0, :excerpt => 1},
-      #   :status => {:ok => 0, :error => 1, :retry => 2},
-      :search_mode => {:all => 0, :any => 1, :phrase => 2, :boolean => 3, :extended => 4},
-      :sort_mode => {:relevance => 0, :desc => 1, :asc => 2, :time => 3},
-      :attribute_type => {:integer => 1, :date => 2},
-    :group_by => {:day => 0, :week => 1, :month => 2, :year => 3, :attribute => 4}}
+    SPHINX_CLIENT_PARAMS = {
+      :sort_mode => {
+        :relevance => Sphinx::Client::SPH_SORT_RELEVANCE, 
+        :descending => Sphinx::Client::SPH_SORT_ATTR_DESC, 
+        :ascending => Sphinx::Client::SPH_SORT_ATTR_ASC, 
+        :time => Sphinx::Client::SPH_SORT_TIME_SEGMENTS,
+        :extended => Sphinx::Client::SPH_SORT_EXTENDED,
+        # legacy compatibility
+        :desc => Sphinx::Client::SPH_SORT_ATTR_DESC, 
+        :asc => Sphinx::Client::SPH_SORT_ATTR_ASC
+      }
+    }
 
     def self.get_models_to_class_ids
       unless File.exist? CONF_PATH
@@ -68,8 +73,6 @@ module Ultrasphinx
       
     MAX_MATCHES = DAEMON_SETTINGS["max_matches"].to_i
   
-    QUERY_TYPES = [:sphinx, :google]
-
     # some accessors
     
     attr_reader :options
@@ -108,18 +111,16 @@ module Ultrasphinx
     
     ##### public methods
     
-    def initialize style, query, opts = {}      
-      raise Sphinx::SphinxArgumentError, "Invalid query type: #{style.inspect}" unless QUERY_TYPES.include? style
-      
-      @parsed_query = @query = (query || "")
-      @parsed_query = parse_google(@parsed_query) if style == :google
-  
-      @results, @subtotals, @response = [], {}, {}
-  
+    def initialize query, opts = {}                
+      @query = query || ""
+      @parsed_query = parse_google_to_sphinx(@query)
+        
       @options = self.class.query_defaults.merge(opts._coerce_basic_types)        
       @options[:raw_filters] ||= {}
       @options[:models] = Array(@options[:models])
   
+      @results, @subtotals, @response = [], {}, {}
+              
       raise Sphinx::SphinxArgumentError, "Invalid options: #{@extra * ', '}" if (@extra = (@options.keys - (SPHINX_CLIENT_PARAMS.merge(self.class.query_defaults).keys))).size > 0      
     end
     
@@ -204,15 +205,18 @@ module Ultrasphinx
     def build_request_with_options opts
 
       request = Sphinx::Client.new
+
       request.SetServer(PLUGIN_SETTINGS['server_host'], PLUGIN_SETTINGS['server_port'])
+      request.SetMatchMode Sphinx::Client::SPH_MATCH_EXTENDED # force extended query mode
 
       offset, limit = opts[:per_page] * (opts[:page] - 1), opts[:per_page]
       
       request.SetLimits offset, limit, [offset + limit, MAX_MATCHES].min
-      request.SetMatchMode SPHINX_CLIENT_PARAMS[:search_mode][opts[:search_mode]]
       request.SetSortMode SPHINX_CLIENT_PARAMS[:sort_mode][opts[:sort_mode]], opts[:sort_by].to_s
 
+
       if weights = opts[:weights]
+        # order the weights hash according to the field order for sphinx, and set the missing fields to 1.0
         # XXX we shouldn't really have to hit Fields.instance from within Ultrasphinx::Search
         request.SetWeights(Fields.instance.select{|n,t| t == 'text'}.map(&:first).sort.inject([]) do |array, field|
           array << (weights[field] || 1.0)
@@ -262,7 +266,7 @@ module Ultrasphinx
     end
 
     def strip_bogus_characters(s)
-      # used remove some garbage before highlighting
+      # used to remove some garbage before highlighting
       s.gsub(/<.*?>|\.\.\.|\342\200\246|\n|\r/, " ").gsub(/http.*?( |$)/, ' ') 
     end
     
@@ -271,7 +275,7 @@ module Ultrasphinx
       s.gsub(/AND|OR|NOT|\@\w+/, "")
     end 
   
-    def parse_google query
+    def parse_google_to_sphinx query
       # alters google-style querystring into sphinx-style
       return if query.blank?
 
@@ -285,7 +289,7 @@ module Ultrasphinx
       
         # recurse for parens, if necessary
         if token =~ /^(.*?)\((.*)\)(.*?$)/
-          token = query[index] = "#{$1}(#{parse_google $2})#{$3}"
+          token = query[index] = "#{$1}(#{parse_google_to_sphinx $2})#{$3}"
         end       
         
         # translate to sphinx-language
