@@ -119,6 +119,8 @@ module Ultrasphinx
 
         @subtotals = get_subtotals(@request, @parsed_query) if WITH_SUBTOTALS  
         @results = response['matches']
+        
+        # if you don't reify, you'll have to do the modulus reversal yourself to get record ids
         @results = reify_results(@results) if reify
                   
       rescue Sphinx::SphinxResponseError, Sphinx::SphinxTemporaryError, Errno::EPIPE => e
