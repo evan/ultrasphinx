@@ -52,99 +52,15 @@ module Ultrasphinx
     MAX_MATCHES = DAEMON_SETTINGS["max_matches"].to_i
   
     QUERY_TYPES = [:sphinx, :google]
-  
+
+    # some accessors
+    
     attr_reader :options
     attr_reader :query
     attr_reader :results
     attr_reader :response
     attr_reader :subtotals
-    
-    def initialize style, query, opts = {}
-      
-      raise Sphinx::SphinxArgumentError, "Invalid query type: #{style.inspect}" unless QUERY_TYPES.include? style
-      
-      @parsed_query = @query = (query || "")
-      @parsed_query = parse_google(@parsed_query) if style == :google
-  
-      @results, @subtotals, @response = [], {}, {}
-  
-      @options = DEFAULTS.merge(opts._coerce_basic_types)
-        
-      @options[:models] = Array(@options[:models])
-  
-      raise Sphinx::SphinxArgumentError, "Invalid options: #{@extra * ', '}" if (@extra = (@options.keys - (SPHINX_CLIENT_PARAMS.merge(DEFAULTS).keys))).size > 0
-      
-    end
-  
-    def run(reify = true)
-    
-      @request = build_request_with_options
-      tries = 0
 
-      logger.info "** ultrasphinx: searching for #{query.inspect} (parsed as #{@parsed_query.inspect}), options #{@options.inspect}"
-
-      begin
-        # run the search
-        @response = @request.Query(@parsed_query)
-        logger.info "** ultrasphinx: search returned, error #{@request.GetLastError.inspect}, warning #{@request.GetLastWarning.inspect}, returned #{total}/#{response['total_found']} in #{time} seconds."  
-
-        @subtotals = get_subtotals(@request, @parsed_query) if WITH_SUBTOTALS  
-        @results = response['matches']
-        @results = reify_results(@results) if reify
-                  
-      rescue Sphinx::SphinxResponseError, Sphinx::SphinxTemporaryError, Errno::EPIPE => e
-        if (tries += 1) <= MAX_RETRIES
-          logger.warn "** ultrasphinx: restarting query (#{tries} attempts already) (#{e})"
-          sleep(RETRY_SLEEP_TIME) if tries == MAX_RETRIES
-          retry
-        else
-          logger.warn "** ultrasphinx: query failed"
-          raise e
-        end
-      end
-    end
-  
-    def excerpt
-      run unless run?
-      return if results.empty?
-    
-      # XXX 'maps' needs to be refactored from a magic array to something that makes sense
-      maps = results.map do |record|
-        [record] << EXCERPT_OPTIONS['content_methods'].map do |methods|
-          methods.detect do |x| 
-            record.respond_to? x
-          end
-        end
-      end
-  
-      # snag the field bodies
-      texts = maps.map do |record, methods|
-        methods.map do |method|
-          (record.send(method) if method) or ""
-        end
-      end.flatten.map do |text| 
-        text.gsub(/<.*?>|\.\.\.|\342\200\246|\n|\r/, " ").gsub(/http.*?( |$)/, ' ') # XXX remove some garbage before highlighting
-      end
-  
-      # ship to sphinx to highlight and excerpt
-      responses = @request.BuildExcerpts(
-        texts, 
-        "complete", 
-        @parsed_query.gsub(/AND|OR|NOT|\@\w+/, ""), # XXX hack for query commands, since sphinx doesn't parse them on excerpt
-        EXCERPT_OPTIONS.except('content_methods')).in_groups_of(EXCERPT_OPTIONS['content_methods'].size)
-      
-      maps.each_with_index do |record_and_methods, i|
-        # override the individual model accessors with the excerpted data
-        record, methods = record_and_methods
-        EXCERPT_OPTIONS['content_methods'].size.times do |m|          
-          record._metaclass.send(:define_method, methods[m]) { responses[i][m] } if methods[m]
-        end
-      end
-  
-      @results = maps.map(&:first).map(&:freeze)
-    end
-  
-  
     def total
       [response['total_found'], MAX_MATCHES].min
     end
@@ -172,6 +88,88 @@ module Ultrasphinx
     def last_page
       (total / per_page) + (total % per_page == 0 ? 0 : 1)
     end
+    
+    # meatier methods
+    
+    def initialize style, query, opts = {}      
+      raise Sphinx::SphinxArgumentError, "Invalid query type: #{style.inspect}" unless QUERY_TYPES.include? style
+      
+      @parsed_query = @query = (query || "")
+      @parsed_query = parse_google(@parsed_query) if style == :google
+  
+      @results, @subtotals, @response = [], {}, {}
+  
+      @options = DEFAULTS.merge(opts._coerce_basic_types)        
+      @options[:models] = Array(@options[:models])
+  
+      raise Sphinx::SphinxArgumentError, "Invalid options: #{@extra * ', '}" if (@extra = (@options.keys - (SPHINX_CLIENT_PARAMS.merge(DEFAULTS).keys))).size > 0      
+    end
+  
+    def run(reify = true)
+      # run the search    
+      @request = build_request_with_options
+      tries = 0
+
+      logger.info "** ultrasphinx: searching for #{query.inspect} (parsed as #{@parsed_query.inspect}), options #{@options.inspect}"
+
+      begin
+        @response = @request.Query(@parsed_query)
+        logger.info "** ultrasphinx: search returned, error #{@request.GetLastError.inspect}, warning #{@request.GetLastWarning.inspect}, returned #{total}/#{response['total_found']} in #{time} seconds."  
+
+        @subtotals = get_subtotals(@request, @parsed_query) if WITH_SUBTOTALS  
+        @results = response['matches']
+        @results = reify_results(@results) if reify
+                  
+      rescue Sphinx::SphinxResponseError, Sphinx::SphinxTemporaryError, Errno::EPIPE => e
+        if (tries += 1) <= MAX_RETRIES
+          logger.warn "** ultrasphinx: restarting query (#{tries} attempts already) (#{e})"
+          sleep(RETRY_SLEEP_TIME) if tries == MAX_RETRIES
+          retry
+        else
+          logger.warn "** ultrasphinx: query failed"
+          raise e
+        end
+      end
+    end
+  
+    def excerpt
+    
+      run unless run?
+    
+      return if results.empty?
+    
+      # see what fields each result might respond to for our excerpting
+      results_with_content_methods = results.map do |result|
+        [result] << EXCERPT_OPTIONS['content_methods'].map do |methods|
+          methods.detect { |x| result.respond_to? x }
+        end
+      end
+  
+      # fetch the actual field contents
+      texts = results_with_content_methods.map do |result, methods|
+        methods.map do |method| 
+          method ? strip_bogus_characters(result.send(method)) : ""
+        end
+      end.flatten
+  
+      # ship to sphinx to highlight and excerpt
+      responses = @request.BuildExcerpts(
+        texts, 
+        "complete", 
+        strip_query_commands(@parsed_query),
+        EXCERPT_OPTIONS.except('content_methods')
+      ).in_groups_of(EXCERPT_OPTIONS['content_methods'].size)
+      
+      results_with_content_methods.each_with_index do |result_and_methods, i|
+        # override the individual model accessors with the excerpted data
+        result, methods = result_and_methods
+        methods.each_with_index do |method, j|
+          result._metaclass.send(:define_method, method) { responses[i][j] } if method
+        end
+      end
+  
+      @results = results_with_content_methods.map(&:first).map(&:freeze)
+    end  
   
     private
     
@@ -220,7 +218,7 @@ module Ultrasphinx
       # request.SetGroup # never useful
       
       request
-    end
+    end    
   
     def get_subtotals(request, query)
       # XXX andrew says there's a better way to do this
@@ -234,6 +232,16 @@ module Ultrasphinx
       
       subtotals
     end
+
+    def strip_bogus_characters(s)
+      # used remove some garbage before highlighting
+      s.gsub(/<.*?>|\.\.\.|\342\200\246|\n|\r/, " ").gsub(/http.*?( |$)/, ' ') 
+    end
+    
+    def strip_query_commands(s)
+      # XXX hack for query commands, since sphinx doesn't parse them on excerpt
+      s.gsub(/AND|OR|NOT|\@\w+/, "")
+    end 
   
     def parse_google query
       return unless query
