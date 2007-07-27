@@ -157,9 +157,11 @@ module Ultrasphinx
       run unless run?
       return if results.empty?
   
-      possible_methods = [[:title, :name], [:body, :description, :content], [:metadata]]
+      # results should respond to one in each group of these, in precedence order, for the excerpting to fire
+      # XXX should be configurable
+      possible_methods = [[:title, :name], [:body, :description, :content], [:metadata]] 
   
-      # XXX maps needs to be refactored from a magic array to something that makes sense
+      # XXX 'maps' needs to be refactored from a magic array to something that makes sense
       maps = results.map do |record|
         [record] << possible_methods.map do |methods|
           methods.detect do |x| 
