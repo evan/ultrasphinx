@@ -61,18 +61,13 @@ module Ultrasphinx
     
     def initialize style, query, opts = {}
       
-      opts = {} unless opts
-      
       raise Sphinx::SphinxArgumentError, "Invalid query type: #{style.inspect}" unless QUERY_TYPES.include? style
       
-      @query = (query || "")
-      @parsed_query = style == :google ? parse_google(@query) : @query
+      @parsed_query = @query = (query || "")
+      @parsed_query = parse_google(@parsed_query) if style == :google
   
-      @results = []
-      @subtotals = {}
-      @response = {}
+      @results, @subtotals, @response = [], {}, {}
   
-      # do some typecasting
       @options = DEFAULTS.merge(opts._coerce_basic_types)
         
       @options[:models] = Array(@options[:models])
