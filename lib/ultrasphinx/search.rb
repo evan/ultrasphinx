@@ -82,7 +82,7 @@ module Ultrasphinx
     attr_reader :subtotals
 
     def total
-      [response['total_found'], MAX_MATCHES].min
+      [response['total_found'] || 0, MAX_MATCHES].min
     end
   
     def found
@@ -267,7 +267,7 @@ module Ultrasphinx
 
     def strip_bogus_characters(s)
       # used to remove some garbage before highlighting
-      s.gsub(/<.*?>|\.\.\.|\342\200\246|\n|\r/, " ").gsub(/http.*?( |$)/, ' ') 
+      s.gsub(/<.*?>|\.\.\.|\342\200\246|\n|\r/, " ").gsub(/http.*?( |$)/, ' ') if s
     end
     
     def strip_query_commands(s)
