@@ -89,7 +89,7 @@ module Ultrasphinx
       (total / per_page) + (total % per_page == 0 ? 0 : 1)
     end
     
-    # meatier methods
+    ##### public methods
     
     def initialize style, query, opts = {}      
       raise Sphinx::SphinxArgumentError, "Invalid query type: #{style.inspect}" unless QUERY_TYPES.include? style
@@ -104,10 +104,10 @@ module Ultrasphinx
   
       raise Sphinx::SphinxArgumentError, "Invalid options: #{@extra * ', '}" if (@extra = (@options.keys - (SPHINX_CLIENT_PARAMS.merge(DEFAULTS).keys))).size > 0      
     end
-  
+    
     def run(reify = true)
       # run the search    
-      @request = build_request_with_options
+      @request = build_request_with_options(@options)
       tries = 0
 
       logger.info "** ultrasphinx: searching for #{query.inspect} (parsed as #{@parsed_query.inspect}), options #{@options.inspect}"
@@ -130,12 +130,13 @@ module Ultrasphinx
           raise e
         end
       end
+      
+      self
     end
   
     def excerpt
     
-      run unless run?
-    
+      run unless run?         
       return if results.empty?
     
       # see what fields each result might respond to for our excerpting
@@ -169,34 +170,39 @@ module Ultrasphinx
       end
   
       @results = results_with_content_methods.map(&:first).map(&:freeze)
+      
+      self
     end  
+  
+  
+    ##### private methods #####
   
     private
     
-    def build_request_with_options
-      # XXX ugly, partially stateful build method
+    def build_request_with_options opts
 
       request = Sphinx::Client.new
-
       request.SetServer(PLUGIN_SETTINGS['server_host'], PLUGIN_SETTINGS['server_port'])
-      offset, limit = options[:per_page] * (options[:page] - 1), options[:per_page]
-      request.SetLimits offset, limit, [offset + limit, MAX_MATCHES].min
-      request.SetMatchMode SPHINX_CLIENT_PARAMS[:search_mode][options[:search_mode]]
-      request.SetSortMode SPHINX_CLIENT_PARAMS[:sort_mode][options[:sort_mode]], options[:sort_by].to_s
 
-      if weights = options[:weights]
+      offset, limit = opts[:per_page] * (opts[:page] - 1), opts[:per_page]
+      
+      request.SetLimits offset, limit, [offset + limit, MAX_MATCHES].min
+      request.SetMatchMode SPHINX_CLIENT_PARAMS[:search_mode][opts[:search_mode]]
+      request.SetSortMode SPHINX_CLIENT_PARAMS[:sort_mode][opts[:sort_mode]], opts[:sort_by].to_s
+
+      if weights = opts[:weights]
         # XXX we shouldn't really have to hit Fields.instance from within Ultrasphinx::Search
         request.SetWeights(Fields.instance.select{|n,t| t == 'text'}.map(&:first).sort.inject([]) do |array, field|
           array << (weights[field] || 1.0)
         end)
       end
 
-      unless options[:models].compact.empty?
-        request.SetFilter 'class_id', options[:models].map{|m| MODELS[m.to_s]}
+      unless opts[:models].compact.empty?
+        request.SetFilter 'class_id', opts[:models].map{|m| MODELS[m.to_s]}
       end        
 
       # extract ranged raw filters 
-      options[:raw_filters].each do |field, value|
+      opts[:raw_filters].each do |field, value|
         begin
           unless value.is_a? Range
             request.SetFilter field, Array(value)
