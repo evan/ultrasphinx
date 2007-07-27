@@ -7,8 +7,8 @@ module Ultrasphinx
   
     ### configurable parameters
   
-    cattr_accessor :defaults  
-    self.defaults = {:page => 1,
+    cattr_accessor :query_defaults  
+    self.query_defaults ||= {:page => 1,
       :models => nil,
       :per_page => 20,
       :sort_by => 'created_at',
@@ -17,8 +17,8 @@ module Ultrasphinx
       :search_mode => :extended,
       :raw_filters => nil}
     
-    cattr_accessor :excerpt_options
-    self.excerpt_options = {
+    cattr_accessor :excerpting_options
+    self.excerpting_options ||= {
       'before_match' => "<strong>", 'after_match' => "</strong>",
       'chunk_separator' => "...",
       'limit' => 256,
@@ -28,7 +28,7 @@ module Ultrasphinx
     }
     
     cattr_accessor :client_options
-    self.client_options = { 
+    self.client_options ||= { 
       :with_subtotals => true, 
       :max_retries => 4,
       :retry_sleep_time => 3
@@ -43,14 +43,29 @@ module Ultrasphinx
       :attribute_type => {:integer => 1, :date => 2},
     :group_by => {:day => 0, :week => 1, :month => 2, :year => 3, :attribute => 4}}
 
-    MODELS = begin
-      Hash[*open(CONF_PATH).readlines.select{|s| s =~ /^(source \w|sql_query )/}.in_groups_of(2).map{|model, _id| [model[/source ([\w\d_-]*)/, 1].classify, _id[/(\d*) AS class_id/, 1].to_i]}.flatten] # XXX blargh
-    rescue
-      Ultrasphinx.say "configuration file not found for #{ENV['RAILS_ENV'].inspect} environment"
-      Ultrasphinx.say "please run 'rake ultrasphinx:configure'"
-      {}
+    def self.get_models_to_class_ids
+      unless File.exist? CONF_PATH
+        Ultrasphinx.say "configuration file not found for #{ENV['RAILS_ENV'].inspect} environment"
+        Ultrasphinx.say "please run 'rake ultrasphinx:configure'"
+      else
+        begin  
+          lines = open(CONF_PATH).readlines          
+          sources = lines.select {|s| s =~ /^source \w/ }.map {|s| s[/source ([\w\d_-]*)/, 1].classify }
+          ids = lines.select {|s| s =~ /^sql_query / }.map {|s| s[/(\d*) AS class_id/, 1].to_i }
+          
+          raise unless sources.size == ids.size          
+          Hash[*sources.zip(ids).flatten]
+                                  
+        rescue
+          Ultrasphinx.say "#{CONF_PATH} file is corrupted"
+          Ultrasphinx.say "please run 'rake ultrasphinx:configure'"
+        end    
+        
+      end
     end
-  
+
+    MODEL_HASH = get_models_to_class_ids || {}
+      
     MAX_MATCHES = DAEMON_SETTINGS["max_matches"].to_i
   
     QUERY_TYPES = [:sphinx, :google]
@@ -101,11 +116,11 @@ module Ultrasphinx
   
       @results, @subtotals, @response = [], {}, {}
   
-      @options = self.class.defaults.merge(opts._coerce_basic_types)        
+      @options = self.class.query_defaults.merge(opts._coerce_basic_types)        
       @options[:raw_filters] ||= {}
       @options[:models] = Array(@options[:models])
   
-      raise Sphinx::SphinxArgumentError, "Invalid options: #{@extra * ', '}" if (@extra = (@options.keys - (SPHINX_CLIENT_PARAMS.merge(self.class.defaults).keys))).size > 0      
+      raise Sphinx::SphinxArgumentError, "Invalid options: #{@extra * ', '}" if (@extra = (@options.keys - (SPHINX_CLIENT_PARAMS.merge(self.class.query_defaults).keys))).size > 0      
     end
     
     
@@ -148,7 +163,7 @@ module Ultrasphinx
     
       # see what fields each result might respond to for our excerpting
       results_with_content_methods = results.map do |result|
-        [result] << self.class.excerpt_options['content_methods'].map do |methods|
+        [result] << self.class.excerpting_options['content_methods'].map do |methods|
           methods.detect { |x| result.respond_to? x }
         end
       end
@@ -165,8 +180,8 @@ module Ultrasphinx
         texts, 
         "complete", 
         strip_query_commands(@parsed_query),
-        self.class.excerpt_options.except('content_methods')
-      ).in_groups_of(self.class.excerpt_options['content_methods'].size)
+        self.class.excerpting_options.except('content_methods')
+      ).in_groups_of(self.class.excerpting_options['content_methods'].size)
       
       results_with_content_methods.each_with_index do |result_and_methods, i|
         # override the individual model accessors with the excerpted data
@@ -205,7 +220,7 @@ module Ultrasphinx
       end
 
       unless opts[:models].compact.empty?
-        request.SetFilter 'class_id', opts[:models].map{|m| MODELS[m.to_s]}
+        request.SetFilter 'class_id', opts[:models].map{|m| MODEL_HASH[m.to_s]}
       end        
 
       # extract ranged raw filters 
@@ -237,7 +252,7 @@ module Ultrasphinx
       # XXX andrew says there's a better way to do this
       subtotals, filtered_request = {}, request.dup
       
-      MODELS.each do |name, class_id|
+      MODEL_HASH.each do |name, class_id|
         filtered_request.instance_eval { @filters.delete_if {|f| f['attr'] == 'class_id'} }
         filtered_request.SetFilter 'class_id', [class_id]
         subtotals[name] = request.Query(query)['total_found']
@@ -302,7 +317,7 @@ module Ultrasphinx
       # inverse-modulus map the sphinx ids to the table-specific ids
       ids = Hash.new([])
       sphinx_ids.each do |_id|
-        ids[MODELS.invert[_id % MODELS.size]] += [_id / MODELS.size] # yay math
+        ids[MODEL_HASH.invert[_id % MODEL_HASH.size]] += [_id / MODEL_HASH.size] # yay math
       end
       raise Sphinx::SphinxResponseError, "impossible document id in query result" unless ids.values.flatten.size == sphinx_ids.size
   
@@ -330,7 +345,7 @@ module Ultrasphinx
       # put them back in order
       results.sort_by do |r| 
         raise Sphinx::SphinxResponseError, "Bogus ActiveRecord id for #{r.class}:#{r.id}" unless r.id
-        index = (sphinx_ids.index(sphinx_id = r.id * MODELS.size + MODELS[r.class.base_class.name]))
+        index = (sphinx_ids.index(sphinx_id = r.id * MODEL_HASH.size + MODEL_HASH[r.class.base_class.name]))
         raise Sphinx::SphinxResponseError, "Bogus reverse id for #{r.class}:#{r.id} (Sphinx:#{sphinx_id})" unless index
         index / sphinx_ids.size.to_f
       end
