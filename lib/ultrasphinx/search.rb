@@ -172,7 +172,7 @@ module Ultrasphinx
       # fetch the actual field contents
       texts = results_with_content_methods.map do |result, methods|
         methods.map do |method| 
-          method ? strip_bogus_characters(result.send(method) || "") : ""
+          method and strip_bogus_characters(result.send(method)) or ""
         end
       end.flatten
   
