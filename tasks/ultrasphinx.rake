@@ -17,7 +17,7 @@ namespace :ultrasphinx do
     cmd = "indexer --config #{Ultrasphinx::CONF_PATH}"
     cmd << " #{ENV['OPTS']} " if ENV['OPTS']
     cmd << " --rotate" if daemon_running?
-    cmd << " complete"
+    cmd << " #{Ultrasphinx::UNIFIED_INDEX_NAME}"
     puts cmd
     system cmd
   end
@@ -74,6 +74,8 @@ namespace :ultrasphinx do
     end      
   end
     
+    
+    
   namespace :spelling do
     desc "Rebuild custom spelling dictionary"
     task :build => :environment do    
@@ -83,7 +85,8 @@ namespace :ultrasphinx do
       puts "Filtering"
       File.open(Ultrasphinx::STOPWORDS_PATH).each do |line|
         if line =~ /^([^\s\d_]{4,}) (\d+)/
-          words << $1 if $2.to_i > 40 # XXX should be configurable
+          # XXX should be configurable
+          words << $1 if $2.to_i > 40 
           # ideally we would also skip words within X edit distance of a correction
           # by aspell-en, in order to not add typos to the dictionary
         end
@@ -96,6 +99,9 @@ namespace :ultrasphinx do
   end
   
 end
+
+
+# support methods... is there a way to namespace these?
 
 def daemon_pid
   open(open(Ultrasphinx::BASE_PATH).readlines.map do |line| 

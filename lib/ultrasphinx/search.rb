@@ -49,6 +49,8 @@ module Ultrasphinx
     }
 
     def self.get_models_to_class_ids
+      # reading the conf file makes sure that we are in sync with the actual sphinx index,
+      # not whatever you happened to change your models to most recently
       unless File.exist? CONF_PATH
         Ultrasphinx.say "configuration file not found for #{ENV['RAILS_ENV'].inspect} environment"
         Ultrasphinx.say "please run 'rake ultrasphinx:configure'"
@@ -179,7 +181,7 @@ module Ultrasphinx
       # ship to sphinx to highlight and excerpt
       responses = @request.BuildExcerpts(
         texts, 
-        "complete", 
+        UNIFIED_INDEX_NAME, 
         strip_query_commands(@parsed_query),
         self.class.excerpting_options.except('content_methods')
       ).in_groups_of(self.class.excerpting_options['content_methods'].size)
@@ -214,7 +216,6 @@ module Ultrasphinx
       request.SetLimits offset, limit, [offset + limit, MAX_MATCHES].min
       request.SetSortMode SPHINX_CLIENT_PARAMS[:sort_mode][opts[:sort_mode]], opts[:sort_by].to_s
 
-
       if weights = opts[:weights]
         # order the weights hash according to the field order for sphinx, and set the missing fields to 1.0
         # XXX we shouldn't really have to hit Fields.instance from within Ultrasphinx::Search
@@ -228,6 +229,7 @@ module Ultrasphinx
       end        
 
       # extract ranged raw filters 
+      # XXX some of this mangling might not be necessary
       opts[:raw_filters].each do |field, value|
         begin
           unless value.is_a? Range
@@ -354,7 +356,7 @@ module Ultrasphinx
         index / sphinx_ids.size.to_f
       end
       
-      # add an accessor for global index in this search
+      # add an accessor for absolute search rank for each record
       results.each_with_index do |r, index|
         i = per_page * page + index
         r._metaclass.send(:define_method, "result_index") { i }

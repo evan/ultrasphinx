@@ -1,6 +1,5 @@
 
 require 'ultrasphinx'
-require 'yaml'
 
 module ActiveRecord
   class Base

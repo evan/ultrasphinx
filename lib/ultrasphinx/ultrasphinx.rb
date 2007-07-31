@@ -1,6 +1,4 @@
 
-require 'yaml'
-
 module Ultrasphinx
 
   class Exception < ::Exception
@@ -10,31 +8,42 @@ module Ultrasphinx
   class DaemonError < Exception
   end
 
+  # internal file paths
+  
   SUBDIR = "config/ultrasphinx"
+  
   DIR = "#{RAILS_ROOT}/#{SUBDIR}"
 
   CONF_PATH = "#{DIR}/#{RAILS_ENV}.conf"
+  
   ENV_BASE_PATH = "#{DIR}/#{RAILS_ENV}.base" 
+  
   GENERIC_BASE_PATH = "#{DIR}/default.base"
+  
   BASE_PATH = (File.exist?(ENV_BASE_PATH) ? ENV_BASE_PATH : GENERIC_BASE_PATH)
   
   raise ConfigurationError, "Please create a '#{SUBDIR}/#{RAILS_ENV}.base' or '#{SUBDIR}/default.base' file in order to use Ultrasphinx in your #{RAILS_ENV} environment." unless File.exist? BASE_PATH # XXX lame
+
+  # some miscellaneous constants
+
+  MAX_INT = 2**32-1
+
+  MAX_WORDS = 2**16 # maximum number of stopwords built  
   
-  def self.options_for(heading, path = BASE_PATH)
-    
-    section = open(path).read[/^#{heading}.*?\{(.*?)\}/m, 1]    
-    unless section
-      Ultrasphinx.say "#{path} appears to be corrupted; please delete file"
-      raise ConfigurationError, "Missing heading #{heading.inspect}" 
-    end
-    
-    options = section.split("\n").map do |line|
-      line =~ /\s*(.*?)\s*=\s*([^\#]*)/
-      $1 ? [$1, $2.strip] : []
-    end
-    
-    Hash[*options.flatten] 
-  end
+  UNIFIED_INDEX_NAME = "complete"
+
+  COLUMN_TYPES = {:string => 'text', :text => 'text', :integer => 'numeric', :date => 'date', :datetime => 'date' }
+
+  CONFIG_MAP = {:username => 'sql_user',
+    :password => 'sql_pass',
+    :host => 'sql_host',
+    :database => 'sql_db',
+    :port => 'sql_port',
+    :socket => 'sql_sock'}
+
+  OPTIONAL_SPHINX_KEYS = ['morphology', 'stopwords', 'min_word_len', 'charset_type', 'charset_table', 'docinfo']
+  
+  # some default settings for the sphinx conf files
   
   SOURCE_DEFAULTS = %(
 strip_html = 0
@@ -52,50 +61,65 @@ sql_query_pre = SET NAMES utf8
     "postgresql" => %(
 type = pgsql
   )}
+ 
+  
+  # configuration file parser
 
-  MAX_INT = 2**32-1
+  def self.options_for(heading, path)
+    
+    section = open(path).read[/^#{heading}.*?\{(.*?)\}/m, 1]    
+    unless section
+      Ultrasphinx.say "#{path} appears to be corrupted; please delete file"
+      raise ConfigurationError, "Missing heading #{heading.inspect}" 
+    end
+    
+    options = section.split("\n").map do |line|
+      line =~ /\s*(.*?)\s*=\s*([^\#]*)/
+      $1 ? [$1, $2.strip] : []
+    end
+    
+    Hash[*options.flatten] 
+  end
 
-  COLUMN_TYPES = {:string => 'text', :text => 'text', :integer => 'numeric', :date => 'date', :datetime => 'date' }
+  # introspect on the existing generated conf files
 
-  CONFIG_MAP = {:username => 'sql_user',
-    :password => 'sql_pass',
-    :host => 'sql_host',
-    :database => 'sql_db',
-    :port => 'sql_port',
-    :socket => 'sql_sock'}
+  PLUGIN_SETTINGS = options_for('ultrasphinx', BASE_PATH)
 
-  OPTIONAL_SPHINX_KEYS = ['morphology', 'stopwords', 'min_word_len', 'charset_type', 'charset_table', 'docinfo']
-
-  PLUGIN_SETTINGS = options_for('ultrasphinx')
-
-  DAEMON_SETTINGS = options_for('searchd')
-
-  MAX_WORDS = 2**16 # maximum number of stopwords built  
+  DAEMON_SETTINGS = options_for('searchd', BASE_PATH)
 
   STOPWORDS_PATH = "#{Ultrasphinx::PLUGIN_SETTINGS['path']}/stopwords.txt}"
 
   MODEL_CONFIGURATION = {}
 
 
+
   class << self    
+  
+    # support methods
 
     def say msg
       $stderr.puts "** ultrasphinx: #{msg}"
     end
 
     def load_constants
+
+      # force all the indexed models to load and fill the MODEL_CONFIGURATION hash
       Dir["#{RAILS_ROOT}/app/models/**/*.rb"].each do |filename|
         next if filename =~ /\/(\.svn|CVS|\.bzr)\//
         begin
           open(filename) {|file| load filename if file.grep(/is_indexed/).any?}
         rescue Object => e
           say "warning; possibly critical autoload error on #{filename}"
+          say e.inspect
         end
       end 
+
+      # build the field-to-type mappings
       Fields.instance.configure(MODEL_CONFIGURATION)
     end
     
     def verify_database_name
+      # complain if the database names go out of sync
       if File.exist? CONF_PATH
         if options_for("source", CONF_PATH)['sql_db'] != ActiveRecord::Base.connection.instance_variable_get("@config")[:database]
            say "warning; configured database name is out-of-date"
@@ -103,6 +127,9 @@ type = pgsql
         end rescue nil
       end
     end
+         
+                  
+    # sql builder
          
     def configure       
       load_constants
@@ -115,7 +142,7 @@ type = pgsql
         conf.puts "\n# #{BASE_PATH}"
         conf.puts open(BASE_PATH).read.sub(/^ultrasphinx.*?\{.*?\}/m, '') + "\n"
         
-        index_list = {"complete" => []}
+        sphinx_source_list = []
         
         conf.puts "\n# Source configuration\n\n"
 
@@ -126,8 +153,7 @@ type = pgsql
 
 #          puts "SQL for #{model}"
           
-          index_list[source] = [source]
-          index_list["complete"] << source
+          sphinx_source_list << source
   
           conf.puts "source #{source}\n{"
           conf.puts SOURCE_DEFAULTS
@@ -232,20 +258,19 @@ type = pgsql
         
         conf.puts "\n# Index configuration\n\n"
         
-        # only output the unified index, no one uses the individual ones anyway
-        
-        index = "complete"        
-        conf.puts "index #{index}"
+
+        # only output the unified index; no one uses the individual ones anyway        
+
+        conf.puts "index #{UNIFIED_INDEX_NAME}"
         conf.puts "{"
-        index_list[index].each do |source| 
-          conf.puts "source = #{source}" 
-        end
+        conf.puts sphinx_source_list.map {|s| "source = #{s}" }
+
         OPTIONAL_SPHINX_KEYS.each do |key|
           conf.puts "#{key} = #{PLUGIN_SETTINGS[key]}" if PLUGIN_SETTINGS[key]
         end
-        conf.puts "path = #{PLUGIN_SETTINGS["path"]}/sphinx_index_#{index}"
-        conf.puts "}\n\n"        
-
+        
+        conf.puts "path = #{PLUGIN_SETTINGS["path"]}/sphinx_index_#{UNIFIED_INDEX_NAME}"
+        conf.puts "}\n\n"
       end
             
     end
