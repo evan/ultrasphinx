@@ -5,6 +5,12 @@ DESCRIPTION
 
 Ruby on Rails interface to the Sphinx full text search engine.
 
+LICENSE
+
+Copyright 2007 Cloudburst, LLC. Licensed under the AFL 3. See included 
+LICENSE file. Portions copyright Dmytro Shteflyuk and Alexey Kovyrin; 
+used with permission.
+
 REQUIREMENTS
 
   * MySQL (or Postgres, experimental)
@@ -28,7 +34,9 @@ USAGE
 
   BASIC SETUP
   
-  First, copy the example/default.base file to:
+  Install the plugin, and then Sphinx (http://www.sphinxsearch.com).
+  
+  Next, copy the example/default.base file to:
     RAILS_ROOT/config/ultrasphinx/default.base
     
   If you need per-environment configuration, you can use:
@@ -41,6 +49,21 @@ USAGE
     class Post
       is_indexed :fields => ["created_at", "title", "body"]
     end
+
+  Next, for your particular environment, run:
+    rake ultrasphinx:configure 
+  
+  Then, to index the data, run:
+    rake ultrasphinx:index
+    
+  Finally, to start the daemon, run:
+    rake ultrasphinx:daemon:start
+    
+  Query the daemon as so:
+  
+     @search = Ultrasphinx::Search.new(@query
+     @search.run
+     @search.results          
    
   PER-MODEL INDEXING OPTIONS
 
@@ -91,11 +114,6 @@ USAGE
           :conditions => "comments.item_type = '#{base_class}'"}],
       :conditions => live_condition_string
   end
-  
-  
-  BUILDING THE INDEX        
-  
-  Once your models are configured, run rake ultrasphinx:configure in your particular environment. Then run rake ultrasphinx:index, and then finally rake ultrasphinx:daemon:start to start the daemon.
   
   USING THE CLIENT
   
@@ -205,10 +223,19 @@ EXCERPTING
 
 SPELLING SUPPORT
 
-  In order to spellcheck your user's query, Ultrasphinx bundles a small spelling module. First, make sure Aspell, an appropriate Aspell dictionary, and the Rubygem Raspell are installed.
+  In order to spellcheck your user's query, Ultrasphinx bundles a small spelling module. First, make sure Aspell 0.6, an appropriate Aspell dictionary, and the Rubygem 'raspell' are all installed.
   
-  Then, 
-
+  Copy examples/app.multi into your Aspell dictionary folder. It allows you to use Sphinx to generate a custom wordlist for your app. Modify it if you don't want to also use the default American English dictionary.
+  
+  Then, to build the custom wordlist, run:  
+    rake ultrasphinx:spelling:build
+    
+  Now you can see if a query is correctly spelled as so:
+  
+    correction = Ultrasphinx::Spell.correct(@search.query)
+    
+  If the correction is different than the original query, display it to the user.
+  
 AVAILABLE RAKE TASKS
 
 rake ultrasphinx:configure                     
@@ -239,8 +266,3 @@ FURTHER RESOURCES
 
 http://blog.evanweaver.com/articles/2007/07/09/ultrasphinx-searching-the-world-in-231-seconds
 
-LICENSE
-
-Copyright 2007 Cloudburst, LLC. Licensed under the AFL 3. See included 
-LICENSE file. Portions copyright Dmytro Shteflyuk and Alexey Kovyrin; 
-used with permission.
