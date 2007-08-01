@@ -1,5 +1,6 @@
 ./CHANGELOG
 ./LICENSE
+./Manifest
 ./README
 ./Rakefile
 ./examples/app.multi
@@ -18,4 +19,3 @@
 ./vendor/sphinx/Rakefile
 ./vendor/sphinx/init.rb
 ./vendor/sphinx/lib/client.rb
-./Manifest
