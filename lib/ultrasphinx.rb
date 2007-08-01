@@ -1,4 +1,6 @@
 
+require '../vendor/sphinx/lib/client'
+
 require 'ultrasphinx/core_extensions'
 require 'ultrasphinx/ultrasphinx'
 require 'ultrasphinx/autoload'

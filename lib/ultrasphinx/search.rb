@@ -315,10 +315,10 @@ module Ultrasphinx
     def reify_results(sphinx_ids)
   
       # order by position and then toss the rest of the data
-      # make sure you patched the sphinx client as per the blog article or your results will be out of order
+      # make sure you are using the bundled Sphinx client, which has a patch
       sphinx_ids = sphinx_ids.sort_by do |key, value| 
-        value['index'] or raise ConfigurationError, "Your Sphinx client is not properly patched. See http://rubyurl.com/AIn"
-      end.map(&:first).reverse 
+        value['index'] or raise ConfigurationError, "Your Sphinx client is not properly patched."
+      end.map(&:first)
   
       # inverse-modulus map the sphinx ids to the table-specific ids
       ids = Hash.new([])
