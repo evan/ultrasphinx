@@ -101,8 +101,18 @@ namespace :ultrasphinx do
   
 end
 
+# task shortcuts
+namespace :us do
+  task :start => ["ultrasphinx:daemon:start"]
+  task :restart => ["ultrasphinx:daemon:restart"]
+  task :stop => ["ultrasphinx:daemon:stop"]
+  task :in => ["ultrasphinx:index"]
+  task :spell => ["ultrasphinx:spelling:build"]
+  task :conf => ["ultrasphinx:configure"]  
+  task :boot => ["ultrasphinx:bootstrap"]  
+end
 
-# support methods... is there a way to namespace these?
+# support methods
 
 def ultrasphinx_daemon_pid
   open(open(Ultrasphinx::BASE_PATH).readlines.map do |line| 
@@ -113,5 +123,3 @@ end
 def ultrasphinx_daemon_running?
   ultrasphinx_daemon_pid and `ps #{ultrasphinx_daemon_pid} | wc`.to_i > 1 
 end
-
-
