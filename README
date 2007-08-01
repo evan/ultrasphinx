@@ -3,13 +3,11 @@ Ultrasphinx
 
 DESCRIPTION
 
-Ruby on Rails interface to the Sphinx full text search engine.
+Ruby on Rails configurator and client to the Sphinx full text search engine.
 
 LICENSE
 
-Copyright 2007 Cloudburst, LLC. Licensed under the AFL 3. See included 
-LICENSE file. Portions copyright Dmytro Shteflyuk and Alexey Kovyrin; 
-used with permission.
+Copyright 2007 Cloudburst, LLC. Licensed under the AFL 3. See included LICENSE file. Portions copyright Dmytro Shteflyuk and Alexey Kovyrin, distributed under the Ruby License, and used with permission.
 
 REQUIREMENTS
 
