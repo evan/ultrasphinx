@@ -1,5 +1,7 @@
 =Sphinx Client API 0.3.0
 
+Patched for Ultrasphinx.
+
 This document gives an overview of what is Sphinx itself and how to use in 
 within Ruby on Rails. For more information or documentation, 
 please go to http://www.sphinxsearch.com
