@@ -28,11 +28,13 @@ USAGE
 
   BASIC SETUP
   
-  First, copy the doc/example.base file to either 
+  First, copy the example/default.base file to:
     RAILS_ROOT/config/ultrasphinx/default.base
-  or, if you need per-environment configuration, 
-    RAILS_ROOT}/config/ultrasphinx/development.base (etc.)
-  This file sets up the basic Sphinx and Ultrasphinx options such as ports, hosts, etc.
+    
+  If you need per-environment configuration, you can use:
+    RAILS_ROOT}/config/ultrasphinx/development.base
+    
+  etc. This file sets up the basic Sphinx and Ultrasphinx options such as ports, hosts, etc.
   
   Now, in your models, use the is_indexed() macro to configure a model as searchable. For example:
     
@@ -42,7 +44,7 @@ USAGE
    
   PER-MODEL INDEXING OPTIONS
 
-  is_indexed() has many options, which are used to generate the SQL queries that the Sphinx indexer uses to extract your data directly from your database. Availabe are:
+  is_indexed() has many options, which are used to generate the SQL queries that the Sphinx indexer uses to extract your data directly from your database. Available are:
   
     :fields => ["", {}]
       Fields from this model to index. Accepts an array of field names.
@@ -147,18 +149,27 @@ USAGE
     total()
       Returns the total result count.
       
+    subtotals()
+      Returns a hash of total result counts, scoped to each available model.
+
     page()
       Returns the current page number of the result set. (Page indexes begin at 1.)
       
     per_page()
       Returns the number of records per page.
       
+    found()
+      Returns the number of results on this particular page, and may range from 0 up to per_page().
+      
     last_page()
       Returns the last available page number in the result set.
       
-    subtotals()
-      Returns a hash of total result counts, scoped to each available model.
-
+    run?
+      Returns whether the query has been run.
+      
+    time()
+      Returns the response time of the query, in milliseconds.
+      
   Note that you can set up your own query defaults by assigning to Ultrasphinx::Search.query_defaults in environment.rb. Example:
   
   Ultrasphinx::Search.query_defaults = {
@@ -194,6 +205,9 @@ EXCERPTING
 
 SPELLING SUPPORT
 
+  In order to spellcheck your user's query, Ultrasphinx bundles a small spelling module. First, make sure Aspell, an appropriate Aspell dictionary, and the Rubygem Raspell are installed.
+  
+  Then, 
 
 AVAILABLE RAKE TASKS
 
