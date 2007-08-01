@@ -16,7 +16,7 @@ namespace :ultrasphinx do
   task :index => :environment do
     cmd = "indexer --config #{Ultrasphinx::CONF_PATH}"
     cmd << " #{ENV['OPTS']} " if ENV['OPTS']
-    cmd << " --rotate" if daemon_running?
+    cmd << " --rotate" if ultrasphinx_daemon_running?
     cmd << " #{Ultrasphinx::UNIFIED_INDEX_NAME}"
     puts cmd
     system cmd
@@ -25,12 +25,12 @@ namespace :ultrasphinx do
   namespace :daemon do
     desc "Start the search daemon"
     task :start => :environment do
-      raise Ultrasphinx::DaemonError, "Already running" if daemon_running?
+      raise Ultrasphinx::DaemonError, "Already running" if ultrasphinx_daemon_running?
       # remove lockfiles
       Dir[Ultrasphinx::PLUGIN_SETTINGS["path"] + "*spl"].each {|file| File.delete(file)}
       system "searchd --config #{Ultrasphinx::CONF_PATH}"
       sleep(2) # give daemon a chance to write the pid file
-      if daemon_running?
+      if ultrasphinx_daemon_running?
         puts "Started successfully"
       else
         puts "Failed to start"
@@ -39,8 +39,8 @@ namespace :ultrasphinx do
     
     desc "Stop the search daemon"
     task :stop => [:environment] do
-      raise Ultrasphinx::DaemonError, "Doesn't seem to be running" unless daemon_running?
-      system "kill #{pid = daemon_pid}"
+      raise Ultrasphinx::DaemonError, "Doesn't seem to be running" unless ultrasphinx_daemon_running?
+      system "kill #{pid = ultrasphinx_daemon_pid}"
       puts "Stopped #{pid}."
     end
 
@@ -66,7 +66,7 @@ namespace :ultrasphinx do
     
     desc "Check if the search daemon is running"
     task :status => :environment do
-      if daemon_running?
+      if ultrasphinx_daemon_running?
         puts "Daemon is running."
       else
         puts "Daemon is stopped."
@@ -79,7 +79,8 @@ namespace :ultrasphinx do
   namespace :spelling do
     desc "Rebuild custom spelling dictionary"
     task :build => :environment do    
-      system "rake ultrasphinx:index OPTS='--buildstops #{Ultrasphinx::STOPWORDS_PATH} #{Ultrasphinx::MAX_WORDS} --buildfreqs'"
+      ENV['OPTS'] = "--buildstops #{Ultrasphinx::STOPWORDS_PATH} #{Ultrasphinx::MAX_WORDS} --buildfreqs"
+      Rake::Task["ultrasphinx:index"].invoke
       tmpfile = "/tmp/custom_words.txt"
       words = []
       puts "Filtering"
@@ -103,14 +104,14 @@ end
 
 # support methods... is there a way to namespace these?
 
-def daemon_pid
+def ultrasphinx_daemon_pid
   open(open(Ultrasphinx::BASE_PATH).readlines.map do |line| 
     line[/^\s*pid_file\s*=\s*([^\s\#]*)/, 1]
   end.compact.first).readline.chomp rescue nil # XXX ridiculous
 end
 
-def daemon_running?
-  daemon_pid and `ps #{daemon_pid} | wc`.to_i > 1 
+def ultrasphinx_daemon_running?
+  ultrasphinx_daemon_pid and `ps #{ultrasphinx_daemon_pid} | wc`.to_i > 1 
 end
 
 
