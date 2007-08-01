@@ -12,14 +12,17 @@ module Ultrasphinx
     SP.set_option("ignore-case", "true")
     
     def self.correct string
-      string.gsub(/[\w\']+/) do |word| 
+      correction = string.gsub(/[\w\']+/) do |word| 
         unless SP.check(word)
           SP.suggest(word).first
         else
           word
         end
       end
+      
+      correction if correction != string
     end
+    
   end
   
 end

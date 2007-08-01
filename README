@@ -20,7 +20,7 @@ FEATURES
     * association includes via GROUP_CONCAT
     * field merging
     * field aliasing
-  * index merging via missing-field nullification
+  * multi-source merging
   * excerpt highlighting
   * Memcached integration with cache_fu
   * query spellcheck via raspell
@@ -197,6 +197,15 @@ USAGE
 CACHE_FU INTEGRATION
   
   The get_cache() method will be used to instantiate records for models that respond to it. Otherwise, find() is used.
+
+INDEX ROTATION
+
+  Just run:
+    rake ultrasphinx:index
+    
+  If the search daemon is running, it will have its index rotated. Otherwise the new index will be installed but the daemon will remain stopped.
+  
+  Make sure to manually stop and restart the daemon if you change the field configuration or model set. It will not reload the configuration file automatically.
   
 EXCERPTING
 
@@ -230,9 +239,9 @@ SPELLING SUPPORT
     
   Now you can see if a query is correctly spelled as so:
   
-    correction = Ultrasphinx::Spell.correct(@search.query)
+    @correction = Ultrasphinx::Spell.correct(@search.query)
     
-  If the correction is different than the original query, display it to the user.
+  If @correction is not nil, display it to the user.
   
 AVAILABLE RAKE TASKS
 
