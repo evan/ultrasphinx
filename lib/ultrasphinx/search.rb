@@ -1,12 +1,71 @@
 
-# Ultrasphinx command-pattern search model
-
 module Ultrasphinx
-  class Search
+
+=begin rdoc
+Command-interface Search object.
+
+== Making a search
+  
+To perform a search, instantiate an Ultrasphinx::Search object. Parameters are the query string, and an optional hash of query options.  
+  @search = Ultrasphinx::Search.new(
+    @query, 
+    :sort_mode => 'descending', 
+    :sort_by => 'created_at'
+  )
+    
+Now, to run the query, call its <tt>run()</tt> method. Your results will be available as ActiveRecord instances via <tt>results()</tt>. Example:  
+  @search.run
+  @search.results
+
+== Query options
+<tt>:per_page</tt>:: An integer.. How many results per page.
+<tt>:page</tt>:: An integer. Which page of the paginated results to return.
+<tt>:models</tt>:: An array or string. The class name of the model you want to search, an array of models names to search, or nil for all available models.    
+<tt>:sort_mode</tt>:: 'relevance' or 'ascending' or 'descending'. How to order the result set. Note that 'time' and 'extended' modes are available, but not tested.  
+<tt>:sort_by</tt>:: A field name. What field to order by for 'ascending' or 'descending' mode. Has no effect for 'relevance'.
+<tt>:weights</tt>:: A hash. Text-field names and associated query weighting. The default weight for every field is 1.0. Example: <tt>:weights => {"title" => 2.0}</tt>
+<tt>:raw_filters</tt>:: A hash. Field names and associated values. You can use a single value, an array of values, or a range. 
+
+Note that you can set up your own query defaults in <tt>environment.rb</tt>: 
+  
+  Ultrasphinx::Search.query_defaults = {
+    :per_page => 10,
+    :sort_mode => :relevance,
+    :weights => {"title" => 2.0}
+  }
+
+== Cache_fu integration
+  
+The <tt>get_cache</tt> method will be used to instantiate records for models that respond to it. Otherwise, <tt>find</tt> is used.
+
+== Excerpt mode
+
+You can have Sphinx excerpt and highlight the matched sections in the associated fields. Instead of calling <tt>run</tt>, call <tt>excerpt</tt>. 
+  
+  @search.excerpt
+
+The returned models will be frozen and have their field contents temporarily changed to the excerpted and highlighted results. 
+  
+You need to set the <tt>content_methods</tt> key on Ultrasphinx::Search.excerpting_options to whatever methods you need the excerpter to try to excerpt. This way Ruby-only methods are supported (for example, a metadata method which combines various model fields, or an aliased field so that the original record contents are still available).
+  
+There are some other keys you can set, such as excerpt size, HTML tags to highlight with, and number of words on either side of each excerpt chunk. Example (in <tt>environment.rb</tt>):
+  
+  Ultrasphinx::Search.excerpting_options = {
+    'before_match' => "<strong>", 
+    'after_match' => "</strong>",
+    'chunk_separator' => "...",
+    'limit' => 256,
+    'around' => 3,
+    'content_methods' => [[:title], [:body, :description, :content], [:metadata]] 
+  }
+  
+Note that your database is never changed by anything Ultrasphinx does.
+
+=end    
+
+  class Search  
     unloadable if RAILS_ENV == "development"
-  
-    ### configurable parameters
-  
+    
     cattr_accessor :query_defaults  
     self.query_defaults ||= {:page => 1,
       :models => nil,
@@ -33,22 +92,20 @@ module Ultrasphinx
       :retry_sleep_time => 3
     }
     
-    ### derived, non-configurable parameters
-    
-    SPHINX_CLIENT_PARAMS = {
+    # mode to integer mappings    
+    SPHINX_CLIENT_PARAMS = { 
       :sort_mode => {
         :relevance => Sphinx::Client::SPH_SORT_RELEVANCE, 
         :descending => Sphinx::Client::SPH_SORT_ATTR_DESC, 
         :ascending => Sphinx::Client::SPH_SORT_ATTR_ASC, 
         :time => Sphinx::Client::SPH_SORT_TIME_SEGMENTS,
         :extended => Sphinx::Client::SPH_SORT_EXTENDED,
-        # legacy compatibility
-        :desc => Sphinx::Client::SPH_SORT_ATTR_DESC, 
+        :desc => Sphinx::Client::SPH_SORT_ATTR_DESC, # legacy compatibility
         :asc => Sphinx::Client::SPH_SORT_ATTR_ASC
       }
     }
 
-    def self.get_models_to_class_ids
+    def self.get_models_to_class_ids #:nodoc:
       # reading the conf file makes sure that we are in sync with the actual sphinx index,
       # not whatever you happened to change your models to most recently
       unless File.exist? CONF_PATH
@@ -71,48 +128,61 @@ module Ultrasphinx
       end
     end
 
-    MODELS_TO_IDS = get_models_to_class_ids || {}
+    MODELS_TO_IDS = get_models_to_class_ids || {} 
       
-    MAX_MATCHES = DAEMON_SETTINGS["max_matches"].to_i
-  
-    # some accessors
+    MAX_MATCHES = DAEMON_SETTINGS["max_matches"].to_i 
     
-    attr_reader :options
-    attr_reader :query
-    attr_reader :results
-    attr_reader :response
-    attr_reader :subtotals
+    # Returns the options hash you used.
+    def options; @options; end
+    
+    #  Returns the query string used.
+    def query; @query; end
+    
+    # Returns an array of result objects.
+    def results; @results; end
+    
+    # Returns the raw response from the Sphinx client.
+    def response; @response; end
+    
+    # Returns a hash of total result counts, scoped to each available model.
+    def subtotals; @subtotals; end
 
+    # Returns the total result count.
     def total
       [response['total_found'] || 0, MAX_MATCHES].min
     end
   
+    # Returns the number of results on this particular page, and may range from 0 up to per_page().
     def found
       results.size
     end
   
+    # Returns the response time of the query, in milliseconds.
     def time
       response['time']
     end
-  
+
+    # Returns whether the query has been run.  
     def run?
       !response.blank?
     end
-  
+ 
+    # Returns the current page number of the result set. (Page indexes begin at 1.) 
     def page
       options[:page]
     end
   
+    # Returns the number of records per page.
     def per_page
       options[:per_page]
     end
-  
+    
+    # Returns the last available page number in the result set.  
     def last_page
       (total / per_page) + (total % per_page == 0 ? 0 : 1)
     end
     
-    ##### public methods
-    
+    # Builds a new command-interface Search object.
     def initialize query, opts = {}                
       @query = query || ""
       @parsed_query = parse_google_to_sphinx(@query)
@@ -126,9 +196,8 @@ module Ultrasphinx
       raise Sphinx::SphinxArgumentError, "Invalid options: #{@extra * ', '}" if (@extra = (@options.keys - (SPHINX_CLIENT_PARAMS.merge(self.class.query_defaults).keys))).size > 0      
     end
     
-    
-    def run(reify = true)
-      # run the search    
+    # Run the search, filling results with an array of ActiveRecord objects.
+    def run(reify = true)      
       @request = build_request_with_options(@options)
       tries = 0
 
@@ -159,6 +228,8 @@ module Ultrasphinx
     end
   
   
+    # Overwrite the configured content accessors with excerpted and highlighted versions of themselves.
+    # Runs run if it hasn't already been done.
     def excerpt
     
       run unless run?         
@@ -199,8 +270,6 @@ module Ultrasphinx
       self
     end  
   
-  
-    ##### private methods #####
   
     private
     

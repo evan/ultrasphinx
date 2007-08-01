@@ -1,11 +1,11 @@
 
 module Ultrasphinx
 
-  class Exception < ::Exception
+  class Exception < ::Exception #:nodoc:
   end
-  class ConfigurationError < Exception
+  class ConfigurationError < Exception #:nodoc:
   end  
-  class DaemonError < Exception
+  class DaemonError < Exception #:nodoc:
   end
 
   # internal file paths
@@ -63,8 +63,7 @@ type = pgsql
   )}
  
   
-  # configuration file parser
-
+  # Configuration file parser.
   def self.options_for(heading, path)
     
     section = open(path).read[/^#{heading}.*?\{(.*?)\}/m, 1]    
@@ -95,15 +94,14 @@ type = pgsql
 
   class << self    
   
-    # support methods
-
+    # Logger.
     def say msg
       $stderr.puts "** ultrasphinx: #{msg}"
     end
 
+    # Force all the indexed models to load and fill the MODEL_CONFIGURATION hash.
     def load_constants
 
-      # force all the indexed models to load and fill the MODEL_CONFIGURATION hash
       Dir["#{RAILS_ROOT}/app/models/**/*.rb"].each do |filename|
         next if filename =~ /\/(\.svn|CVS|\.bzr)\//
         begin
@@ -118,8 +116,8 @@ type = pgsql
       Fields.instance.configure(MODEL_CONFIGURATION)
     end
     
+    # Complain if the database names go out of sync.
     def verify_database_name
-      # complain if the database names go out of sync
       if File.exist? CONF_PATH
         if options_for("source", CONF_PATH)['sql_db'] != ActiveRecord::Base.connection.instance_variable_get("@config")[:database]
            say "warning; configured database name is out-of-date"
@@ -129,8 +127,7 @@ type = pgsql
     end
          
                   
-    # sql builder
-         
+    # Main SQL builder.
     def configure       
       load_constants
             

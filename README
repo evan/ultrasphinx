@@ -1,275 +1,93 @@
 
 Ultrasphinx 
 
-DESCRIPTION
-
 Ruby on Rails configurator and client to the Sphinx full text search engine.
 
-LICENSE
+== License
 
 Copyright 2007 Cloudburst, LLC. Licensed under the AFL 3. See included LICENSE file. Portions copyright Dmytro Shteflyuk and Alexey Kovyrin, distributed under the Ruby License, and used with permission.
 
-REQUIREMENTS
+== Requirements
 
-  * MySQL (or Postgres, experimental)
-  * Sphinx 0.97
+* MySQL (or Postgres, experimental)
+* Sphinx 0.97
 
-FEATURES
+== Features
 
-  *  ActiveRecord-style SQL generation
-    * association includes via GROUP_CONCAT
-    * field merging
-    * field aliasing
-  * multi-source merging
-  * excerpt highlighting
-  * Memcached integration with cache_fu
-  * query spellcheck via raspell
-  * Google-style query parser
-  * multiple deployment environments
-  * some other things
+Advanced Sphinx usage:
+* multi-source merging
+* excerpt highlighting
+* field weighting
 
-USAGE
+ActiveRecord-style SQL generation:
+* belongs_to and has_many includes
+* field merging
+* field aliasing
 
-  BASIC SETUP
+Good Rails integration:
+* automatic memcached loads via cache_fu
+* query spellcheck
+* Google-style query parser
+* multiple deployment environments
+* comprehensive rake tasks
+
+And some other things.
+
+== Basic setup
   
-  Install the plugin, and then Sphinx (http://www.sphinxsearch.com).
-  
-  Next, copy the example/default.base file to:
-    RAILS_ROOT/config/ultrasphinx/default.base
-    
-  If you need per-environment configuration, you can use:
-    RAILS_ROOT}/config/ultrasphinx/development.base
-    
-  etc. This file sets up the basic Sphinx and Ultrasphinx options such as ports, hosts, etc.
-  
-  Now, in your models, use the is_indexed() macro to configure a model as searchable. For example:
-    
-    class Post
-      is_indexed :fields => ["created_at", "title", "body"]
-    end
+Install the plugin, and also Sphinx itself (http://www.sphinxsearch.com).
 
-  Next, for your particular environment, run:
-    rake ultrasphinx:configure 
+Next, copy the <tt>example/default.base</tt> file to <tt>RAILS_ROOT/config/ultrasphinx/default.base</tt>.
   
-  Then, to index the data, run:
-    rake ultrasphinx:index
-    
-  Finally, to start the daemon, run:
-    rake ultrasphinx:daemon:start
-    
-  Query the daemon as so:
-  
-     @search = Ultrasphinx::Search.new(@query
-     @search.run
-     @search.results          
-   
-  PER-MODEL INDEXING OPTIONS
+If you need per-environment configuration, you can use <tt>RAILS_ROOT/config/ultrasphinx/development.base</tt>, etc. This file sets up the basic Sphinx and Ultrasphinx options such as ports, hosts, and index locations.
 
-  is_indexed() has many options, which are used to generate the SQL queries that the Sphinx indexer uses to extract your data directly from your database. Available are:
+Now, in your models, use the <tt>is_indexed</tt> macro to configure a model as searchable. For example:
   
-    :fields => ["", {}]
-      Fields from this model to index. Accepts an array of field names.
-      
-      Example:
-        is_indexed :fields => ["created_at", "title", "body"]
-  
-    :includes => [{}]
-
-      Fields to include from belongs_to associations. Contains a :model key (the class name of the included model), a :field key (the name of the field to include), and an optional :as key (what to name the field in the parent). You can use the optional key :association_sql if you need to pass a custom JOIN string, in which case the default JOIN will not be generated.
-
-    :conditions => ""
-      A string of SQL WHERE conditions, to scope which records are selected for indexing. 
-      
-      The :conditions key is especially useful if you delete records by marking them deleted rather than removing them from the database. Just pass a string to only select the user-visible ones. 
-      
-      Example:
-        is_indexed :conditions => "created_at < NOW() AND deleted IS NOT NULL"
-  
-    :concats => [{}]
-      MySQL only. Accepts an array of option hashes, which can be of two types. 
-      
-      To concatenate many fields within one record, use a regular concatenation. Regular concatenations contain a :fields key (again, an array of field names), and a mandatory :as key (the name of the result of the concatenation).
-    
-      For example, to concatenate the title and body into one field called text, use:
-        is_indexed :concats => [{:fields => ["title", "body"], :as => "text"}]
-  
-      To group and concatenate a field from a set of associated records, use a group concatentation. Group concatenations join into another table, and can be used to index a number of associated models as one field in a parent model. Group concatentations contain a :model key (the class name of the included model), a :field key (the field on the included model to concatenate), and an optional :as key (also the name of the result of the concatenation).
-      
-      For example, to concatenate all Post#body contents into Topic#responses, use the option (in Topic's is_indexed() call):
-        is_indexed  :concats => {:model => "Post", :field => "body", :as => "responses"}
-      
-      Optional keys are :association_name (if your has_many association can't be derived from the model name), and :association_sql, if you need to pass a custom JOIN string (for example, a double JOIN for a has_many :through), and :conditions (if you need custom WHERE conditions for this particular association).
-
-
-  Here's an example configuration using most of the options, taken from production code:
-  
-  class Story < ActiveRecord::Base  
-    is_indexed :fields => ["title", "published_at"],
-      :includes => [{:model => "Category", :field => "name", :as => "category"}],
-      :concats => [{:fields => ["title", "long_description", "short_description"], :as => "editorial"},
-        {:model => "Page", :field => "body", :as => "body", :association_name => "pages"},
-        {:model => "Comment", :field => "body", :as => "comments", 
-          :conditions => "comments.item_type = '#{base_class}'"}],
-      :conditions => live_condition_string
+  class Post
+    is_indexed :fields => ["created_at", "title", "body"]
   end
   
-  USING THE CLIENT
-  
-  To perform a search, instantiate an Ultrasphinx::Search object. Parameters are the query string, and an optional hash of query options. Example:
-  
-  @search = Ultrasphinx::Search.new(@query, :sort_mode => 'descending', :sort_by => 'created_at')
-  
-  Option keys are:
-  
-  :per_page => <FixNum>
-    How many results per page.
+For more index options, see ActiveRecord::Base .is_indexed.
 
-  :page => <FixNum>
-    Which page of the paginated results to return.
-    
-  :models => [] or ""
-    The class name of the model you want to search, an array of models names to search, or nil for all available models.    
+== Building the index
 
-  :sort_mode => 'relevance' or 'ascending' or 'descending'
-    How to order the result set. Note that 'time' and 'extended' modes are available, but not tested.
+Run:
+
+  rake ultrasphinx:configure
+  rake ultrasphinx:index
+  rake ultrasphinx:daemon:start
+
+To rotate the index, just rerun <tt>rake ultrasphinx:index</tt>. If the search daemon is running, it will have its index rotated. Otherwise the new index will be installed but the daemon will remain stopped.
+
+Make sure to manually stop and restart the daemon if you change the field configuration or model set. It will not reload the configuration file automatically.
+
+== Running queries
     
-  :sort_by => 'created_at'
-    What field to order by for 'ascending' or 'descending' mode. Has no effect for 'relevance'.
-  
-  :weights => {}
-    Key/value pairs for text-field names and associated query weighting. The default weight for every field is 1.0. Example:
-      :weights => {"title" => 2.0} # double-privilege title matches 
-    
-  :raw_filters => {}
-    Key/value pairs for numeric field names and associated required values. You can use a single value, an array of values, or a range.    
-  
-  Now, to run the query, call it's run() method. Your results will be available as ActiveRecord instances via results(). Example:
-  
+Query the daemon as so:
+
+  @search = Ultrasphinx::Search.new(@query)
   @search.run
-  @search.results
+  @search.results             
   
-  There are some other accessors available on the @search object:
+For more query options, including excerpt mode, see Ultrasphinx::Search.
   
-    options()
-      Returns the options hash you used.
-      
-    query()
-      Returns the query string.
-      
-    results()
-      Returns an array of result objects, as above.
-      
-    response()
-      Returns the raw response from the Sphinx client.
-      
-    total()
-      Returns the total result count.
-      
-    subtotals()
-      Returns a hash of total result counts, scoped to each available model.
+== Spellcheck
 
-    page()
-      Returns the current page number of the result set. (Page indexes begin at 1.)
-      
-    per_page()
-      Returns the number of records per page.
-      
-    found()
-      Returns the number of results on this particular page, and may range from 0 up to per_page().
-      
-    last_page()
-      Returns the last available page number in the result set.
-      
-    run?
-      Returns whether the query has been run.
-      
-    time()
-      Returns the response time of the query, in milliseconds.
-      
-  Note that you can set up your own query defaults by assigning to Ultrasphinx::Search.query_defaults in environment.rb. Example:
+See Ultrasphinx::Spell.
   
-  Ultrasphinx::Search.query_defaults = {
-    :per_page => 10,
-    :sort_mode => :relevance,
-    :weights => {"title" => 2.0}
-  }
+== Available Rake tasks
 
-CACHE_FU INTEGRATION
-  
-  The get_cache() method will be used to instantiate records for models that respond to it. Otherwise, find() is used.
+These rake tasks are made available to your Rails app:
 
-INDEX ROTATION
+<tt>ultrasphinx:configure</tt>:: Rebuild the configuration file for this particular environment.
+<tt>ultrasphinx:index</tt>:: Reindex the database and send an update signal to the search daemon.
+<tt>ultrasphinx:daemon:restart</tt>:: Restart the search daemon.
+<tt>ultrasphinx:daemon:start</tt>:: Start the search daemon.
+<tt>ultrasphinx:daemon:status</tt>:: Check if the search daemon is running.
+<tt>ultrasphinx:daemon:stop</tt>:: Stop the search daemon.
+<tt>ultrasphinx:spelling:build</tt>:: Rebuild the custom spelling dictionary.
+<tt>ultrasphinx:bootstrap</tt>:: Bootstrap a full Sphinx environment by running configure, index, then daemon:start.
 
-  Just run:
-    rake ultrasphinx:index
-    
-  If the search daemon is running, it will have its index rotated. Otherwise the new index will be installed but the daemon will remain stopped.
-  
-  Make sure to manually stop and restart the daemon if you change the field configuration or model set. It will not reload the configuration file automatically.
-  
-EXCERPTING
+== Further resources
 
-  You can have Sphinx highlight the matched sections in the associated fields. Instead of calling run(), call excerpt(). The returned models will be frozen and have their field contents temporarily changed to the excerpted and highlighted results. Example:
-  
-  @search.excerpt()
-  
-  You need to set the 'content_methods' key on Ultrasphinx::Search.excerpting_options to whatever methods you need the excerpter to try to excerpt. This way Ruby-only methods are supported (for example, a metadata method which combines various model fields, or an aliased field so that the original record contents are still available).
-  
-  There are some other keys you can set, such as excerpt size, HTML tags to highlight with, and number of words on either side of each excerpt chunk. Example (in environment.rb):
-  
-    Ultrasphinx::Search.excerpting_options = {
-      'before_match' => "<strong>", 
-      'after_match' => "</strong>",
-      'chunk_separator' => "...",
-      'limit' => 256,
-      'around' => 3,
-      'content_methods' => [[:title], [:body, :description, :content], [:metadata]] 
-    }
-  
-  Note that your database is never changed by anything Ultrasphinx does.
-
-SPELLING SUPPORT
-
-  In order to spellcheck your user's query, Ultrasphinx bundles a small spelling module. First, make sure Aspell 0.6, an appropriate Aspell dictionary, and the Rubygem 'raspell' are all installed.
-  
-  Copy examples/app.multi into your Aspell dictionary folder. It allows you to use Sphinx to generate a custom wordlist for your app. Modify it if you don't want to also use the default American English dictionary.
-  
-  Then, to build the custom wordlist, run:  
-    rake ultrasphinx:spelling:build
-    
-  Now you can see if a query is correctly spelled as so:
-  
-    @correction = Ultrasphinx::Spell.correct(@search.query)
-    
-  If @correction is not nil, display it to the user.
-  
-AVAILABLE RAKE TASKS
-
-rake ultrasphinx:configure                     
-  Rebuild the configuration file for this particular environment.
-
-rake ultrasphinx:index                         
-  Reindex the database and send an update signal to the search daemon.
-
-rake ultrasphinx:daemon:restart                
-  Restart the search daemon
-
-rake ultrasphinx:daemon:start                 
-  Start the search daemon
-
-rake ultrasphinx:daemon:status
-  Check if the search daemon is running
-
-rake ultrasphinx:daemon:stop
-  Stop the search daemon
-
-rake ultrasphinx:spelling:build
-  Rebuild custom spelling dictionary
-  
-rake ultrasphinx:bootstrap
-  Bootstrap a full Sphinx environment by running configure, index, then daemon:start.
-
-FURTHER RESOURCES
-
-http://blog.evanweaver.com/articles/2007/07/09/ultrasphinx-searching-the-world-in-231-seconds
-
+http://blog.evanweaver.com/pages/code#ultrasphinx
