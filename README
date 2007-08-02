@@ -73,7 +73,7 @@ Query the daemon as so:
   
 For more query options, including excerpt mode, see Ultrasphinx::Search.
   
-=== Pagination
+== Pagination
 
 Once the <tt>@search</tt> object has been <tt>run</tt>, it is directly compatible with the <tt>will_paginate</tt> view helper.
   
