@@ -38,6 +38,12 @@ Note that you can set up your own query defaults in <tt>environment.rb</tt>:
   
 The <tt>get_cache</tt> method will be used to instantiate records for models that respond to it. Otherwise, <tt>find</tt> is used.
 
+== Will_paginate integration
+
+The Search instance responds to the same methods as a WillPaginate::Collection object, so once you have called run or excerpt) you can use it directly in your views:
+
+  will_paginate(@search)
+
 == Excerpt mode
 
 You can have Sphinx excerpt and highlight the matched sections in the associated fields. Instead of calling <tt>run</tt>, call <tt>excerpt</tt>. 
