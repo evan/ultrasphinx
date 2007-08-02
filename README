@@ -26,6 +26,7 @@ ActiveRecord-style SQL generation:
 
 Good Rails integration:
 * automatic memcached loads via cache_fu
+* will_paginate compatibility
 * query spellcheck
 * Google-style query parser
 * multiple deployment environments
