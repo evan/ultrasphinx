@@ -20,7 +20,7 @@ Now, to run the query, call its <tt>run()</tt> method. Your results will be avai
 == Query options
 <tt>:per_page</tt>:: An integer.. How many results per page.
 <tt>:page</tt>:: An integer. Which page of the results to return.
-<tt>:models</tt>:: An array or string. The class name of the model you want to search, an array of model names to search, or nil for all available models.    
+<tt>:models</tt>:: An array or string. The class name of the model you want to search, an array of model names to search, or <tt>nil</tt> for all available models.    
 <tt>:sort_mode</tt>:: 'relevance' or 'ascending' or 'descending'. How to order the result set. Note that 'time' and 'extended' modes are available, but not tested.  
 <tt>:sort_by</tt>:: A field name. What field to order by for 'ascending' or 'descending' mode. Has no effect for 'relevance'.
 <tt>:weights</tt>:: A hash. Text-field names and associated query weighting. The default weight for every field is 1.0. Example: <tt>:weights => {"title" => 2.0}</tt>
