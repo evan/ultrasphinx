@@ -7,6 +7,8 @@ module Ultrasphinx
   end  
   class DaemonError < Exception #:nodoc:
   end
+  class UsageError < Exception #:nodoc:
+  end
 
   # internal file paths
   

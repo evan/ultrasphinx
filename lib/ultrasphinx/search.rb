@@ -19,7 +19,7 @@ Now, to run the query, call its <tt>run()</tt> method. Your results will be avai
 
 == Query options
 <tt>:per_page</tt>:: An integer.. How many results per page.
-<tt>:page</tt>:: An integer. Which page of the paginated results to return.
+<tt>:page</tt>:: An integer. Which page of the results to return.
 <tt>:models</tt>:: An array or string. The class name of the model you want to search, an array of models names to search, or nil for all available models.    
 <tt>:sort_mode</tt>:: 'relevance' or 'ascending' or 'descending'. How to order the result set. Note that 'time' and 'extended' modes are available, but not tested.  
 <tt>:sort_by</tt>:: A field name. What field to order by for 'ascending' or 'descending' mode. Has no effect for 'relevance'.
@@ -139,7 +139,10 @@ Note that your database is never changed by anything Ultrasphinx does.
     def query; @query; end
     
     # Returns an array of result objects.
-    def results; @results; end
+    def results
+      raise UsageError, "Search has not yet been run" unless run?
+      @results
+    end
     
     # Returns the raw response from the Sphinx client.
     def response; @response; end
@@ -199,6 +202,7 @@ Note that your database is never changed by anything Ultrasphinx does.
     # Run the search, filling results with an array of ActiveRecord objects.
     def run(reify = true)      
       @request = build_request_with_options(@options)
+      @paginate = nil # clear cache
       tries = 0
 
       logger.info "** ultrasphinx: searching for #{query.inspect} (parsed as #{@parsed_query.inspect}), options #{@options.inspect}"
@@ -269,7 +273,25 @@ Note that your database is never changed by anything Ultrasphinx does.
       
       self
     end  
-  
+    
+    
+    # Aliases for WillPaginate compatibility
+    alias :current_page :page
+    alias :total_entries :total
+    alias :page_count :last_page
+
+    def previous_page #:nodoc:
+      page > 1 ? (page - 1) : nil
+    end
+
+    def next_page #:nodoc:
+      page < last_page ? (page + 1) : nil
+    end
+    
+    def offset #:nodoc
+      results.first.result_index
+    end
+    
   
     private
     
@@ -432,6 +454,15 @@ Note that your database is never changed by anything Ultrasphinx does.
       end
       
     end  
+    
+    # Delegates enumerable methods to @results, if possible. This allows us to behave directly like a WillPaginate::Collection.
+    def method_missing(*args)
+      if @results.respond_to? args.first
+        @results.send(*args)
+      else
+        super
+      end
+    end
   
     def logger
       RAILS_DEFAULT_LOGGER
