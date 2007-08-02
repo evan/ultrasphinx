@@ -153,7 +153,10 @@ Note that your database is never changed by anything Ultrasphinx does.
     def response; @response; end
     
     # Returns a hash of total result counts, scoped to each available model. This requires extra queries against the search daemon right now. Set <tt>Ultrasphinx::Search.client_options[:with_subtotals] = true</tt> to enable the extra queries. Most of the overhead is in instantiating the AR result sets, so the performance hit is not usually significant.
-    def subtotals; @subtotals; end
+    def subtotals
+      raise UsageError, "Subtotals are not enabled" unless self.class.client_options[:with_subtotals]
+      @subtotals
+    end
 
     # Returns the total result count.
     def total_entries
