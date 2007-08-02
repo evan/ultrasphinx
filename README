@@ -5,7 +5,7 @@ Ruby on Rails configurator and client to the Sphinx full text search engine.
 
 == License
 
-Copyright 2007 Cloudburst, LLC. Licensed under the AFL 3. See included LICENSE file. Portions copyright Dmytro Shteflyuk and Alexey Kovyrin, distributed under the Ruby License, and used with permission.
+Copyright 2007 Cloudburst, LLC. Licensed under the AFL 3. See included LICENSE file. Some portions copyright Dmytro Shteflyuk and Alexey Kovyrin, distributed under the Ruby License, and used with permission. Some portions copyright PJ Hyett, Mislav Marohnić, and used with permission.
 
 == Requirements
 
@@ -73,7 +73,11 @@ Query the daemon as so:
   
 For more query options, including excerpt mode, see Ultrasphinx::Search.
   
-== Spellcheck
+=== Pagination
+
+  Once the <tt>@search</tt> object has been <tt>run</tt>, it is directly compatible with the <tt>will_paginate</tt> view helper.
+  
+== Spell checking
 
 See Ultrasphinx::Spell.
   
