@@ -2,7 +2,7 @@
 require 'rubygems'
 require 'echoe'
 
-Echoe.new("ultrasphinx", `cat CHANGELOG`[/^([\d\.]+)\. /, 1]) do |p|
+Echoe.new("ultrasphinx", `cat CHANGELOG`[/^v([\d\.]+)\. /, 1]) do |p|
   
   p.name = "ultrasphinx"
   p.rubyforge_name = "fauna"
@@ -13,7 +13,7 @@ Echoe.new("ultrasphinx", `cat CHANGELOG`[/^([\d\.]+)\. /, 1]) do |p|
   p.need_tar_gz = true
   
   p.rdoc_pattern = /is_indexed.rb|search.rb|spell.rb|ultrasphinx.rb|README|CHANGELOG|LICENSE/
-  if File.exist?(template = "/Users/eweaver/p/allison/trunk/allison/allison.rb")
+  if File.exist?(template = "/Users/eweaver/p/allison/trunk/allison.rb")
     p.rdoc_template = template
   end
   
