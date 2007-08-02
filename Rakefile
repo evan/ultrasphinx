@@ -10,6 +10,7 @@ Echoe.new("ultrasphinx", `cat CHANGELOG`[/^v([\d\.]+)\. /, 1]) do |p|
   p.url = "http://blog.evanweaver.com/pages/code#ultrasphinx"
   p.changes = `cat CHANGELOG`[/^v([\d\.]+\. .*)/, 1]
   
+  p.docs_host = "blog.evanweaver.com:~/www/snax/public/files/doc/"
   p.need_tar = false
   p.need_tar_gz = true  
   
