@@ -8,8 +8,6 @@ module ActiveRecord
 
 The is_indexed macro configures a model for indexing. Its parameters are used to generate SQL queries for Sphinx.
 
-== Options
-
 == Indexing single fields
 
 Use the <tt>:fields</tt> key.
