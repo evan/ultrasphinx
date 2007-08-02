@@ -70,7 +70,6 @@ Note that your database is never changed by anything Ultrasphinx does.
 =end    
 
   class Search  
-    unloadable if RAILS_ENV == "development"
     
     cattr_accessor :query_defaults  
     self.query_defaults ||= {:page => 1,
