@@ -93,7 +93,7 @@ Note that your database is never changed by anything Ultrasphinx does.
     
     cattr_accessor :client_options
     self.client_options ||= { 
-      :with_subtotals => true, 
+      :with_subtotals => false, 
       :max_retries => 4,
       :retry_sleep_time => 3
     }
@@ -153,18 +153,13 @@ Note that your database is never changed by anything Ultrasphinx does.
     # Returns the raw response from the Sphinx client.
     def response; @response; end
     
-    # Returns a hash of total result counts, scoped to each available model. This requires extra queries against the search daemon right now. Set <tt>Ultrasphinx::Search.client_options[:with_subtotals] = false</tt> if you don't need them. Most of the overhead is in instantiating the AR result sets, rather than actually performing the query, so the performance hit is not usually significant.
+    # Returns a hash of total result counts, scoped to each available model. This requires extra queries against the search daemon right now. Set <tt>Ultrasphinx::Search.client_options[:with_subtotals] = true</tt> to enable the extra queries. Most of the overhead is in instantiating the AR result sets, so the performance hit is not usually significant.
     def subtotals; @subtotals; end
 
     # Returns the total result count.
-    def total
+    def total_entries
       [response['total_found'] || 0, MAX_MATCHES].min
-    end
-  
-    # Returns the number of results on this particular page, and may range from 0 up to per_page().
-    def found
-      results.size
-    end
+    end  
   
     # Returns the response time of the query, in milliseconds.
     def time
@@ -177,7 +172,7 @@ Note that your database is never changed by anything Ultrasphinx does.
     end
  
     # Returns the current page number of the result set. (Page indexes begin at 1.) 
-    def page
+    def current_page
       options[:page]
     end
   
@@ -187,9 +182,24 @@ Note that your database is never changed by anything Ultrasphinx does.
     end
     
     # Returns the last available page number in the result set.  
-    def last_page
-      (total / per_page) + (total % per_page == 0 ? 0 : 1)
+    def page_count
+      (total_entries / per_page) + (total_entries % per_page == 0 ? 0 : 1)
     end
+            
+    # Returns the previous page number.
+    def previous_page 
+      current_page > 1 ? (current_page - 1) : nil
+    end
+
+    # Returns the next page number.
+    def next_page
+      current_page < page_count ? (current_page + 1) : nil
+    end
+    
+    # Returns the global index position of the first result on this page.
+    def offset 
+      (current_page - 1) * per_page
+    end    
     
     # Builds a new command-interface Search object.
     def initialize query, opts = {}                
@@ -215,7 +225,7 @@ Note that your database is never changed by anything Ultrasphinx does.
 
       begin
         @response = @request.Query(@parsed_query)
-        logger.info "** ultrasphinx: search returned, error #{@request.GetLastError.inspect}, warning #{@request.GetLastWarning.inspect}, returned #{total}/#{response['total_found']} in #{time} seconds."  
+        logger.info "** ultrasphinx: search returned, error #{@request.GetLastError.inspect}, warning #{@request.GetLastWarning.inspect}, returned #{total_entries}/#{response['total_found']} in #{time} seconds."  
 
         @subtotals = get_subtotals(@request, @parsed_query) if self.class.client_options[:with_subtotals]
         @results = response['matches']
@@ -279,24 +289,6 @@ Note that your database is never changed by anything Ultrasphinx does.
       
       self
     end  
-    
-    
-    # Aliases for WillPaginate compatibility
-    alias :current_page :page
-    alias :total_entries :total
-    alias :page_count :last_page
-
-    def previous_page #:nodoc:
-      page > 1 ? (page - 1) : nil
-    end
-
-    def next_page #:nodoc:
-      page < last_page ? (page + 1) : nil
-    end
-    
-    def offset #:nodoc
-      results.first.result_index
-    end
     
   
     private
@@ -455,7 +447,7 @@ Note that your database is never changed by anything Ultrasphinx does.
       
       # add an accessor for absolute search rank for each record
       results.each_with_index do |r, index|
-        i = per_page * page + index
+        i = per_page * current_page + index
         r._metaclass.send(:define_method, "result_index") { i }
       end
       
