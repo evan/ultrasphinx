@@ -88,7 +88,7 @@ type = pgsql
 
   DAEMON_SETTINGS = options_for('searchd', BASE_PATH)
 
-  STOPWORDS_PATH = "#{Ultrasphinx::PLUGIN_SETTINGS['path']}/stopwords.txt}"
+  STOPWORDS_PATH = "#{Ultrasphinx::PLUGIN_SETTINGS['path']}/stopwords.txt"
 
   MODEL_CONFIGURATION = {}
 
