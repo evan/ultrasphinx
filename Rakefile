@@ -18,4 +18,3 @@ Echoe.new("ultrasphinx", `cat CHANGELOG`[/^([\d\.]+)\. /, 1]) do |p|
   end
   
 end
-
