@@ -14,6 +14,6 @@ Echoe.new("ultrasphinx", `cat CHANGELOG`[/^v([\d\.]+)\. /, 1]) do |p|
   p.need_tar = false
   p.need_tar_gz = true  
   
-  p.rdoc_pattern = /is_indexed.rb|search.rb|spell.rb|ultrasphinx.rb|\.\/README|CHANGELOG|LICENSE/
+  p.rdoc_pattern = /is_indexed.rb|search.rb|spell.rb|ultrasphinx.rb|^README|CHANGELOG|LICENSE/
     
 end
