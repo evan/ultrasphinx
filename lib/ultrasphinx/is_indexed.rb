@@ -37,10 +37,10 @@ Use the <tt>:concats</tt> key (MySQL only).
 
 Accepts an array of option hashes, which can be of two types: 
 
-1. To concatenate many fields within one record, use a regular (or horizontal) concatenation. Regular concatenations contain a <tt>:fields</tt> key (again, an array of field names), and a mandatory <tt>:as</tt> key (the name of the result of the concatenation). For example, to concatenate the <tt>title</tt> and <tt>body</tt> into one field called <tt>text</tt>: 
+First, to concatenate many fields within one record, use a regular (or horizontal) concatenation. Regular concatenations contain a <tt>:fields</tt> key (again, an array of field names), and a mandatory <tt>:as</tt> key (the name of the result of the concatenation). For example, to concatenate the <tt>title</tt> and <tt>body</tt> into one field called <tt>text</tt>: 
   :concats => [{:fields => ["title", "body"], :as => "text"}]
 
-2. To group and concatenate a field from a set of associated records, use a group (or vertical) concatenation. Group concatenations join into another table, and can be used to index a number of associated models as one field in a parent model. Group concatenations contain a <tt>:model</tt> key (the class name of the included model), a <tt>:field</tt> key (the field on the included model to concatenate), and an optional <tt>:as</tt> key (also the name of the result of the concatenation). For example, to concatenate all <tt>Post#body</tt> contents into the parent's <tt>responses</tt> field:
+Second, to concatenate a single field from a set of associated records, use a group (or vertical) concatenation. Group concatenations join into another table, and can be used to index a number of associated models as one field in a parent model. They should contain a <tt>:model</tt> key (the class name of the included model), a <tt>:field</tt> key (the field on the included model to concatenate), and an optional <tt>:as</tt> key (also the name of the result of the concatenation). For example, to concatenate all <tt>Post#body</tt> contents into the parent's <tt>responses</tt> field:
   :concats => {:model => "Post", :field => "body", :as => "responses"}
 
 Optional group concatenation keys are <tt>:association_name</tt> (if your <tt>has_many</tt> association can't be derived from the model name), <tt>:association_sql</tt>, if you need to pass a custom JOIN string (for example, a double JOIN for a <tt>has_many :through</tt>), and <tt>:conditions</tt> (if you need custom WHERE conditions for this particular association).

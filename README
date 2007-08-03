@@ -20,17 +20,17 @@ Advanced Sphinx usage:
 * field weighting
 
 ActiveRecord-style SQL generation:
-* belongs_to and has_many includes
+* <tt>belongs_to</tt> and <tt>has_many</tt> includes
 * field merging
 * field aliasing
 
 Good Rails integration:
-* automatic memcached loads via cache_fu
-* will_paginate compatibility
+* automatic memcached loads via <tt>cache_fu</tt>
+* <tt>will_paginate</tt> compatibility
 * query spellcheck
 * Google-style query parser
 * multiple deployment environments
-* comprehensive rake tasks
+* comprehensive Rake tasks
 
 And some other things.
 
