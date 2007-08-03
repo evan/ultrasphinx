@@ -40,7 +40,7 @@ The <tt>get_cache</tt> method will be used to instantiate records for models tha
 
 == Will_paginate integration
 
-The Search instance responds to the same methods as a WillPaginate::Collection object, so once you have called run or excerpt) you can use it directly in your views:
+The Search instance responds to the same methods as a WillPaginate::Collection object, so once you have called <tt>run</tt> or <tt>excerpt</tt> you can use it directly in your views:
 
   will_paginate(@search)
 
@@ -52,7 +52,7 @@ You can have Sphinx excerpt and highlight the matched sections in the associated
 
 The returned models will be frozen and have their field contents temporarily changed to the excerpted and highlighted results. 
   
-You need to set the <tt>content_methods</tt> key on Ultrasphinx::Search.excerpting_options to whatever methods you need the excerpter to try to excerpt. This way Ruby-only methods are supported (for example, a metadata method which combines various model fields, or an aliased field so that the original record contents are still available).
+You need to set the <tt>content_methods</tt> key on Ultrasphinx::Search.excerpting_options to whatever groups of methods you need the excerpter to try to excerpt. The first responding method in each group for each record will be excerpted. This way Ruby-only methods are supported (for example, a metadata method which combines various model fields, or an aliased field so that the original record contents are still available).
   
 There are some other keys you can set, such as excerpt size, HTML tags to highlight with, and number of words on either side of each excerpt chunk. Example (in <tt>environment.rb</tt>):
   
@@ -62,7 +62,7 @@ There are some other keys you can set, such as excerpt size, HTML tags to highli
     'chunk_separator' => "...",
     'limit' => 256,
     'around' => 3,
-    'content_methods' => [[:title], [:body, :description, :content], [:metadata]] 
+    'content_methods' => [['title'], ['body', 'description', 'content'], ['metadata']] 
   }
   
 Note that your database is never changed by anything Ultrasphinx does.
