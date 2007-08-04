@@ -6,24 +6,26 @@ module ActiveRecord
 
 =begin rdoc
 
-The is_indexed macro configures a model for indexing. Its parameters are used to generate SQL queries for Sphinx.
+The is_indexed method configures a model for indexing. Its parameters are used to generate SQL queries for Sphinx.
 
-== Indexing single fields
+= Options
+
+== Including regular fields
 
 Use the <tt>:fields</tt> key.
 
 Accepts an array of field names. 
   :fields => ["created_at", "title", "body"]
 
-== Indexing fields from belongs_to associations
+== Including a field from an association
 
 Use the <tt>:includes</tt> key.
 
 Accepts an array of hashes. 
 
-Each should contain a <tt>:model</tt> key (the class name of the included model), a <tt>:field</tt> key (the name of the field to include), and an optional <tt>:as</tt> key (what to name the field in the parent). You can use the optional key <tt>:association_sql</tt> if you need to pass a custom JOIN string, in which case the default JOIN will not be generated.
+Each should contain a <tt>:model</tt> key (the class name of the included model), a <tt>:field</tt> key (the name of the field to include), and an optional <tt>:as</tt> key (what to name the field in the parent). You can use the optional key <tt>:association_sql</tt> if you need to pass a custom JOIN string, in which case the default JOIN for <tt>belongs_to</tt> will not be generated.
 
-== Scoping the searchable records
+== Requiring conditions
 
 Use the <tt>:conditions</tt> key.
 
@@ -31,21 +33,29 @@ SQL conditions, to scope which records are selected for indexing. Accepts a stri
   :conditions => "created_at < NOW() AND deleted IS NOT NULL"
 The <tt>:conditions</tt> key is especially useful if you delete records by marking them deleted rather than removing them from the database.
 
-== Concatenating multiple fields
+== Concatenating several fields within a record
 
 Use the <tt>:concats</tt> key (MySQL only).
 
-Accepts an array of option hashes, which can be of two types: 
+Accepts an array of option hashes. 
 
-First, to concatenate many fields within one record, use a regular (or horizontal) concatenation. Regular concatenations contain a <tt>:fields</tt> key (again, an array of field names), and a mandatory <tt>:as</tt> key (the name of the result of the concatenation). For example, to concatenate the <tt>title</tt> and <tt>body</tt> into one field called <tt>text</tt>: 
+To concatenate several fields within one record as a combined field, use a regular (or horizontal) concatenation. Regular concatenations contain a <tt>:fields</tt> key (again, an array of field names), and a mandatory <tt>:as</tt> key (the name of the result of the concatenation). For example, to concatenate the <tt>title</tt> and <tt>body</tt> into one field called <tt>text</tt>: 
   :concats => [{:fields => ["title", "body"], :as => "text"}]
 
-Second, to concatenate a single field from a set of associated records, use a group (or vertical) concatenation. Group concatenations join into another table, and can be used to index a number of associated models as one field in a parent model. They should contain a <tt>:model</tt> key (the class name of the included model), a <tt>:field</tt> key (the field on the included model to concatenate), and an optional <tt>:as</tt> key (also the name of the result of the concatenation). For example, to concatenate all <tt>Post#body</tt> contents into the parent's <tt>responses</tt> field:
-  :concats => {:model => "Post", :field => "body", :as => "responses"}
+== Concatenating one field from a set of associated records 
+
+Also use the <tt>:concats</tt> key.
+
+To concatenate one field from a set of associated records as a combined field in the parent record, use a group (or vertical) concatenation. A group concatenation should contain a <tt>:model</tt> key (the class name of the included model), a <tt>:field</tt> key (the field on the included model to concatenate), and an optional <tt>:as</tt> key (also the name of the result of the concatenation). For example, to concatenate all <tt>Post#body</tt> contents into the parent's <tt>responses</tt> field:
+  :concats => [{:model => "Post", :field => "body", :as => "responses"}]
 
 Optional group concatenation keys are <tt>:association_name</tt> (if your <tt>has_many</tt> association can't be derived from the model name), <tt>:association_sql</tt>, if you need to pass a custom JOIN string (for example, a double JOIN for a <tt>has_many :through</tt>), and <tt>:conditions</tt> (if you need custom WHERE conditions for this particular association).
 
-== Example
+Ultrasphinx is not an object-relational mapper, and the association generation is intended to stay minimal--don't be afraid of <tt>:association_sql</tt>.
+
+= Examples
+
+== Complex configuration
 
 Here's an example configuration using most of the options, taken from production code:
 
@@ -65,6 +75,22 @@ Here's an example configuration using most of the options, taken from production
       ],
       :conditions => self.live_condition_string
   end  
+
+== Association scoping
+
+A common use case is to only search records that belong to a particular parent model. Ultrasphinx configures Sphinx to support a <tt>:raw_filter</tt> on any date or numeric field, so any <tt>*_id</tt> fields you have will be filterable.
+
+For example, say a Company <tt>has_many :users</tt> and each User <tt>has_many :articles</tt>. If you want to to filter Articles by Company, add <tt>company_id</tt> to the Article's <tt>is_indexed</tt> method. The best way is to grab it from the User association:
+
+  class Article < ActiveRecord::Base 
+     is_indexed :includes => [{:model => "User", :field => "company_id"}]
+  end
+ 
+Now you can run:
+
+ @search = Ultrasphinx::Search.new("something", :raw_filters => {"company_id" => 493})
+ 
+If the associations weren't just <tt>has_many</tt> and <tt>belongs_to</tt>, you would need to use the <tt>:association_sql</tt> key to set up a custom JOIN. 
 
 =end
   

@@ -43,7 +43,7 @@ Next, copy the <tt>example/default.base</tt> file to <tt>RAILS_ROOT/config/ultra
   
 If you need per-environment configuration, you can use <tt>RAILS_ROOT/config/ultrasphinx/development.base</tt>, etc. 
 
-Now, in your models, use the <tt>is_indexed</tt> macro to configure a model as searchable. For example:
+Now, in your models, use the <tt>is_indexed</tt> method to configure a model as searchable. For example:
   
   class Post
     is_indexed :fields => ["created_at", "title", "body"]
