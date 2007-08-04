@@ -78,7 +78,7 @@ Here's an example configuration using most of the options, taken from production
 
 == Association scoping
 
-A common use case is to only search records that belong to a particular parent model. Ultrasphinx configures Sphinx to support a <tt>:raw_filter</tt> on any date or numeric field, so any <tt>*_id</tt> fields you have will be filterable.
+A common use case is to only search records that belong to a particular parent model. Ultrasphinx configures Sphinx to support a <tt>:raw_filters</tt> element on any date or numeric field, so any <tt>*_id</tt> fields you have will be filterable.
 
 For example, say a Company <tt>has_many :users</tt> and each User <tt>has_many :articles</tt>. If you want to to filter Articles by Company, add <tt>company_id</tt> to the Article's <tt>is_indexed</tt> method. The best way is to grab it from the User association:
 
