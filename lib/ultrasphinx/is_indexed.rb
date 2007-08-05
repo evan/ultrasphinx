@@ -6,7 +6,7 @@ module ActiveRecord
 
 =begin rdoc
 
-The is_indexed method configures a model for indexing. Its parameters are used to generate SQL queries for Sphinx.
+The is_indexed method configures a model for indexing. Its parameters help generate SQL queries for Sphinx.
 
 = Options
 
@@ -68,13 +68,17 @@ Here's an example configuration using most of the options, taken from production
         {:model => "Category", :field => "name", :as => "category"}
       ],      
       :concats => [
-        {:fields => ["title", "long_description", "short_description"], :as => "editorial"},
-        {:model => "Page", :field => "body", :as => "body", :association_name => "pages"},
+        {:fields => ["title", "long_description", "short_description"], 
+          :as => "editorial"},
+        {:model => "Page", :field => "body", :as => "body", 
+          :association_name => "pages"},
         {:model => "Comment", :field => "body", :as => "comments", 
           :conditions => "comments.item_type = '#{base_class}'"}
       ],
       :conditions => self.live_condition_string
   end  
+
+Note how setting the <tt>:conditions</tt> on Comment is enough to configure a polymorphic <tt>has_many</tt>.
 
 == Association scoping
 
