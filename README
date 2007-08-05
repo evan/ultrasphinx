@@ -95,7 +95,7 @@ These rake tasks are made available to your Rails app:
 <tt>ultrasphinx:spelling:build</tt>:: Rebuild the custom spelling dictionary.
 <tt>ultrasphinx:bootstrap</tt>:: Bootstrap a full Sphinx environment by running configure, index, then daemon:start.
 
-There are shortcuts for these tasks: <tt>us:conf</tt>, <tt>us:in</tt>, <tt>us:restart</tt>, <tt>us:start</tt>, <tt>us:stop</tt>, <tt>us:spell</tt>, and <tt>us:boot</tt>.
+All tasks have shortcuts. Use <tt>us:conf</tt>, <tt>us:in</tt>, <tt>us:restart</tt>, <tt>us:start</tt>, <tt>us:stop</tt>, <tt>us:spell</tt>, and <tt>us:boot</tt>.
 
 == Further resources
 
