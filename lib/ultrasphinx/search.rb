@@ -4,7 +4,7 @@ module Ultrasphinx
 =begin rdoc
 Command-interface Search object.
 
-== Making a search
+== Basic usage
   
 To perform a search, instantiate an Ultrasphinx::Search object. Parameters are the query string, and an optional hash of query options.  
   @search = Ultrasphinx::Search.new(
@@ -13,18 +13,34 @@ To perform a search, instantiate an Ultrasphinx::Search object. Parameters are t
     :sort_by => 'created_at'
   )
     
-Now, to run the query, call its <tt>run()</tt> method. Your results will be available as ActiveRecord instances via <tt>results()</tt>. Example:  
+Now, to run the query, call its <tt>run()</tt> method. Your results will be available as ActiveRecord instances via the <tt>results</tt> method. Example:  
   @search.run
   @search.results
 
-== Query options
-<tt>:per_page</tt>:: An integer.. How many results per page.
+= Options
+
+== Query format
+
+The query string supports boolean operation, parentheses, phrases, and field-specific search. Query words are stemmed and joined by an implicit <tt>AND</tt> by default.
+
+* Valid boolean operators are <tt>AND</tt>, <tt>OR</tt>, and <tt>NOT</tt>.
+* Field-specific searches should be formatted as <tt>fieldname:contents</tt>
+* Phrases must be enclosed in double quotes.
+    
+A Sphinx::SphinxInternalError will be raised on invalid queries. In general, queries can only be nested to one level. 
+  @query = 'dog OR cat OR "white tigers" NOT (lions OR bears) AND title:animals'
+
+== Hash parameters
+
+The hash lets you customize internal aspects of the search.
+
+<tt>:per_page</tt>:: An integer. How many results per page.
 <tt>:page</tt>:: An integer. Which page of the results to return.
 <tt>:models</tt>:: An array or string. The class name of the model you want to search, an array of model names to search, or <tt>nil</tt> for all available models.    
 <tt>:sort_mode</tt>:: 'relevance' or 'ascending' or 'descending'. How to order the result set. Note that 'time' and 'extended' modes are available, but not tested.  
 <tt>:sort_by</tt>:: A field name. What field to order by for 'ascending' or 'descending' mode. Has no effect for 'relevance'.
 <tt>:weights</tt>:: A hash. Text-field names and associated query weighting. The default weight for every field is 1.0. Example: <tt>:weights => {"title" => 2.0}</tt>
-<tt>:raw_filters</tt>:: A hash. Field names and associated values. You can use a single value, an array of values, or a range. 
+<tt>:raw_filters</tt>:: A hash. Field names and associated numeric values. You can use a single value, an array of values, or a range. 
 
 Note that you can set up your own query defaults in <tt>environment.rb</tt>: 
   
@@ -33,6 +49,8 @@ Note that you can set up your own query defaults in <tt>environment.rb</tt>:
     :sort_mode => :relevance,
     :weights => {"title" => 2.0}
   }
+
+= Advanced features
 
 == Cache_fu integration
   

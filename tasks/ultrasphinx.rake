@@ -22,6 +22,7 @@ namespace :ultrasphinx do
     system cmd
   end
   
+  
   namespace :daemon do
     desc "Start the search daemon"
     task :start => :environment do
@@ -48,22 +49,6 @@ namespace :ultrasphinx do
     task :restart => [:environment, :stop, :start] do
     end
     
-    desc "Tail queries in the log"
-    task :tail => :environment do
-      require 'file/tail'
-      puts "Tailing #{filename = Ultrasphinx::DAEMON_SETTINGS['query_log']}"
-      File.open(filename) do |log|
-        log.extend(File::Tail)
-        log.interval = 1
-        log.backward(10)
-        last = nil
-        log.tail do |line| 
-          current = line[/\[\*\](.*)$/, 1]
-          last = current and puts current unless current == last
-        end
-      end 
-    end
-    
     desc "Check if the search daemon is running"
     task :status => :environment do
       if ultrasphinx_daemon_running?
@@ -73,8 +58,7 @@ namespace :ultrasphinx do
       end
     end      
   end
-    
-    
+          
     
   namespace :spelling do
     desc "Rebuild custom spelling dictionary"
