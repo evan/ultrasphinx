@@ -40,7 +40,7 @@ And some other things.
 First, compile and install Sphinx itself (http://www.sphinxsearch.com). Then install the plugin:
   script/plugin install --svn svn://rubyforge.org/var/svn/fauna/ultrasphinx/trunk
 
-Next, copy the <tt>example/default.base</tt> file to <tt>RAILS_ROOT/config/ultrasphinx/default.base</tt>. This file sets up the basic Sphinx and Ultrasphinx options such as ports, hosts, and index locations.
+Next, copy the <tt>example/default.base</tt> file to <tt>RAILS_ROOT/config/ultrasphinx/default.base</tt>. This file sets up the  Sphinx daemon options such as ports, hosts, and index locations.
   
 If you need per-environment configuration, you can use <tt>RAILS_ROOT/config/ultrasphinx/development.base</tt>, etc. 
 
