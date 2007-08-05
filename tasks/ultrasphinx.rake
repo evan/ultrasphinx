@@ -90,6 +90,7 @@ namespace :us do
   task :start => ["ultrasphinx:daemon:start"]
   task :restart => ["ultrasphinx:daemon:restart"]
   task :stop => ["ultrasphinx:daemon:stop"]
+  task :stat => ["ultrasphinx:daemon:status"]
   task :in => ["ultrasphinx:index"]
   task :spell => ["ultrasphinx:spelling:build"]
   task :conf => ["ultrasphinx:configure"]  
