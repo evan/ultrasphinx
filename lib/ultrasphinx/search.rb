@@ -6,7 +6,7 @@ Command-interface Search object.
 
 == Basic usage
   
-To perform a search, instantiate an Ultrasphinx::Search object. Parameters are the query string, and an optional hash of query options.  
+To set up a search, instantiate an Ultrasphinx::Search object. Parameters are the query string, and an optional hash of query options.  
   @search = Ultrasphinx::Search.new(
     @query, 
     :sort_mode => 'descending', 
