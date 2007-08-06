@@ -3,7 +3,7 @@ require 'rubygems'
 require 'echoe'
 
 Echoe.new("ultrasphinx") do |p|
-  p.rubyforge_name = "fauna"
+  p.project = "fauna"
   p.summary = "Ruby on Rails configurator and client to the Sphinx fulltext search engine."
   p.url = "http://blog.evanweaver.com/pages/code#ultrasphinx"  
   p.docs_host = "blog.evanweaver.com:~/www/snax/public/files/doc/"  

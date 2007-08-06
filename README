@@ -36,7 +36,9 @@ Good Rails integration:
 
 And some other things.
 
-== Basic setup
+= Usage
+
+== Installation
   
 First, compile and install Sphinx itself (http://www.sphinxsearch.com). Then install the plugin:
   script/plugin install --svn svn://rubyforge.org/var/svn/fauna/ultrasphinx/trunk
@@ -75,6 +77,8 @@ Query the daemon as so:
   
 For more query options, including excerpt mode, see Ultrasphinx::Search.
   
+= Extras  
+
 == Pagination
 
 Once the <tt>@search</tt> object has been <tt>run</tt>, it is directly compatible with the <tt>will_paginate</tt> view helper.
