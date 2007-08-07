@@ -11,7 +11,7 @@ Copyright 2007 Cloudburst, LLC. Licensed under the AFL 3. See the included LICEN
 
 * MySQL (or Postgres, experimental)
 * Sphinx 0.97
-* Edge rails (guaranteed on revision 7183)
+* Edge Rails (checked on revision 7183)
 
 == Features
 
