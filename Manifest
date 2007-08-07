@@ -14,6 +14,7 @@ lib/ultrasphinx/autoload.rb
 init.rb
 examples/default.base
 examples/app.multi
+TODO
 Rakefile
 README
 Manifest

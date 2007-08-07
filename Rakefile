@@ -7,5 +7,5 @@ Echoe.new("ultrasphinx") do |p|
   p.summary = "Ruby on Rails configurator and client to the Sphinx fulltext search engine."
   p.url = "http://blog.evanweaver.com/pages/code#ultrasphinx"  
   p.docs_host = "blog.evanweaver.com:~/www/snax/public/files/doc/"  
-  p.rdoc_pattern = /is_indexed.rb|search.rb|spell.rb|ultrasphinx.rb|^README|CHANGELOG|LICENSE/    
+  p.rdoc_pattern = /is_indexed.rb|search.rb|spell.rb|ultrasphinx.rb|^README|TODO|CHANGELOG|^LICENSE/    
 end

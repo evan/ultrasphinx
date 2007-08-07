@@ -5,7 +5,7 @@ Ruby on Rails configurator and client to the Sphinx full text search engine.
 
 == License
 
-Copyright 2007 Cloudburst, LLC. Licensed under the AFL 3. See the included LICENSE file. Some portions copyright Dmytro Shteflyuk and Alexey Kovyrin, distributed under the Ruby License, and used with permission. Some portions copyright PJ Hyett and Mislav Marohnić, and used with permission.
+Copyright 2007 Cloudburst, LLC. Licensed under the AFL 3. See the included LICENSE file. Some portions copyright Dmytro Shteflyuk and Alexey Kovyrin, distributed under the Ruby License, and used with permission. Some portions copyright PJ Hyett and Mislav Marohnić, distributed under the MIT license, and used with permission.
 
 == Requirements
 
