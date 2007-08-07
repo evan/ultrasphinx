@@ -1,7 +1,9 @@
+vendor/will_paginate/LICENSE
 vendor/sphinx/lib/client.rb
 vendor/sphinx/init.rb
 vendor/sphinx/Rakefile
 vendor/sphinx/README
+vendor/sphinx/LICENSE
 tasks/ultrasphinx.rake
 lib/ultrasphinx.rb
 lib/ultrasphinx/ultrasphinx.rb
