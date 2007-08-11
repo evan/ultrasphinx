@@ -17,8 +17,6 @@ init.rb
 examples/default.base
 examples/app.multi
 TODO
-Rakefile
 README
-Manifest
 LICENSE
 CHANGELOG
