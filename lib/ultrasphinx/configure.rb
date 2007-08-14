@@ -166,6 +166,10 @@ module Ultrasphinx
               
       end
       
+      def say(s) #:nodoc:
+        Ultrasphinx.say s
+      end
+      
     end 
   end
 end
