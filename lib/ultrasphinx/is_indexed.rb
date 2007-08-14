@@ -109,7 +109,7 @@ If the associations weren't just <tt>has_many</tt> and <tt>belongs_to</tt>, you 
       end
       
       Array(opts[:includes]).each do |inc|
-        inc.assert_valid_keys [:model, :field, :as]
+        inc.assert_valid_keys [:model, :field, :as, :association_sql]
       end
       
       Ultrasphinx::MODEL_CONFIGURATION[self.name] = opts
