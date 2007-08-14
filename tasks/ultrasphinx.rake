@@ -26,6 +26,7 @@ namespace :ultrasphinx do
   namespace :daemon do
     desc "Start the search daemon"
     task :start => :environment do
+      FileUtils.mkdir_p File.dirname(Ultrasphinx::DAEMON_SETTINGS["log"]) rescue nil
       raise Ultrasphinx::DaemonError, "Already running" if ultrasphinx_daemon_running?
       # remove lockfiles
       Dir[Ultrasphinx::PLUGIN_SETTINGS["path"] + "*spl"].each {|file| File.delete(file)}
