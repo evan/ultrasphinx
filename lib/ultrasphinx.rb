@@ -3,7 +3,7 @@ require "#{File.dirname(__FILE__)}/../vendor/sphinx/lib/client"
 
 require 'ultrasphinx/core_extensions'
 require 'ultrasphinx/ultrasphinx'
-require 'ultrasphinx/configurer'
+require 'ultrasphinx/configure'
 require 'ultrasphinx/autoload'
 require 'ultrasphinx/fields'
 require 'ultrasphinx/is_indexed'
