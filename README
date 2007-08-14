@@ -11,9 +11,9 @@ Copyright 2007 Cloudburst, LLC. Licensed under the AFL 3. See the included LICEN
 
 * MySQL (or Postgres, experimental)
 * Sphinx 0.97
-* possibly Edge Rails 
+* edge Rails, possibly
 
-A problem has been reported with Rails 1.2.3, but I can't verify it.
+A problem has been reported with Rails 1.2.3, but I can't verify it. It might work fine for you.
 
 == Features
 
