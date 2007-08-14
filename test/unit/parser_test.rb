@@ -67,7 +67,7 @@ context "parser" do
     
   ].in_groups_of(2).each do |query, result|
     it "should parse" do
-      @s.send(:parse_google_to_sphinx, query).should.equal(result)
+      @s.send(:parse, query).should.equal(result)
     end
   end
 

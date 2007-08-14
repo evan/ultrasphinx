@@ -9,7 +9,7 @@ namespace :ultrasphinx do
   
   desc "Rebuild the configuration file for this particular environment."
   task :configure => :environment do
-    Ultrasphinx::configure
+    Ultrasphinx::Configure.run
   end
   
   desc "Reindex the database and send an update signal to the search daemon."
