@@ -397,6 +397,8 @@ Note that your database is never changed by anything Ultrasphinx does.
       query = query.scan(/[^"() ]*["(][^")]*[")]|[^"() ]+/) 
 
       query.each_with_index do |token, index|
+
+        print query.inspect
       
         # recurse for parens, if necessary
         if token =~ /^(.*?)\((.*)\)(.*?$)/
@@ -408,20 +410,37 @@ Note that your database is never changed by anything Ultrasphinx does.
           when "OR"
             query[index] = "|"
           when "NOT"
-            query[index] = "-#{query[index+1]}"
-            query[index+1] = ""
+            query[index] = "-" 
           when "AND"
             query[index] = ""
           when /:/
-            query[query.size] = "@" + query[index].sub(":", " ")
+            # check for associated operators and flipflop, because the fields have to be at the end :/
+            if index > 0 and ['|', '-', 'NOT', 'OR'].include? query[index - 1]
+              query << query[index - 1]            
+              query[index - 1] = ""
+            elsif index < query.size - 1 and ['|', '-', 'NOT', 'OR'].include? query[index + 1]
+              query << query[index + 1]            
+              query[index + 1] = ""
+            end
+            
+            query << "@" + query[index].sub(":", " ")
             query[index] = ""
+            
         end
         
         # remove some spaces
         query[index].gsub!(/^"\s+|\s+"$/, '"')
         
+        # collapse negations
+        
+        puts " => #{query.inspect}"
+                
       end
-      query.join(" ").squeeze(" ").strip
+      
+      # conflate common fields
+      
+      
+      query.join(" ").squeeze(" ").strip.gsub(/(^| )\- /, '\1-')
     end
   
     def reify_results(sphinx_ids)
