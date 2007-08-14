@@ -62,7 +62,7 @@ namespace :ultrasphinx do
           
     
   namespace :spelling do
-    desc "Rebuild custom spelling dictionary"
+    desc "Rebuild the custom spelling dictionary. You may need to use 'sudo' if your Aspell folder is not writable by the app user."
     task :build => :environment do    
       ENV['OPTS'] = "--buildstops #{Ultrasphinx::STOPWORDS_PATH} #{Ultrasphinx::MAX_WORDS} --buildfreqs"
       Rake::Task["ultrasphinx:index"].invoke
