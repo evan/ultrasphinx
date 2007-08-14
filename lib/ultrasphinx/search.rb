@@ -417,8 +417,11 @@ Note that your database is never changed by anything Ultrasphinx does.
             query[index] = ""
         end
         
+        # remove some spaces
+        query[index].gsub!(/^"\s+|\s+"$/, '"')
+        
       end
-      query.join(" ").squeeze(" ")
+      query.join(" ").squeeze(" ").strip
     end
   
     def reify_results(sphinx_ids)

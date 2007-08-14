@@ -39,7 +39,28 @@ context "parser" do
    '@user "john mose"',
    
    'artichoke OR rhubarb NOT heart user:"john mose"', 
-   'artichoke | rhubarb -heart @user "john mose"'
+   'artichoke | rhubarb -heart @user "john mose"',
+   
+   'title:artichoke hearts', 
+   'hearts @title artichoke',
+
+   'title:artichoke AND hearts', 
+   'hearts @title artichoke',
+   
+   'title:artichoke NOT hearts', 
+   'hearts -@title artichoke',
+
+   'title:artichoke OR hearts', 
+   'hearts | @title artichoke',
+
+   'title:artichoke title:hearts', 
+   '@title (artichoke hearts)',
+
+   'title:artichoke OR title:hearts', 
+   '@title (artichoke | hearts)',
+
+   'title:artichoke NOT title:hearts "john mose" ', 
+   '"john mose" @title (artichoke -hearts)',
    
   ].in_groups_of(2).each do |query, result|
     it "should work" do

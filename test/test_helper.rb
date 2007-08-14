@@ -6,6 +6,6 @@ RAILS_ENV = "test"
 require 'rubygems'
 require 'initializer'
 require 'active_support'
-require 'test/unit'
+require 'test/spec'
 require 'ultrasphinx'
 
