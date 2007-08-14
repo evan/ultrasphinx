@@ -65,6 +65,9 @@ context "parser" do
     '"john mose" AND title:artichoke dogs OR title:hearts cats', 
     '"john mose" dogs cats @title ( artichoke | hearts )',
     
+    'board:england OR board:tristate',
+    '@board ( england | tristate )',
+    
   ].in_groups_of(2).each do |query, result|
     it "should parse" do
       @s.send(:parse, query).should.equal(result)
