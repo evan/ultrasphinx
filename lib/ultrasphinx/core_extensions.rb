@@ -47,5 +47,5 @@ class Hash
           value
         end]
       end._flatten_once]
-  end
+  end      
 end

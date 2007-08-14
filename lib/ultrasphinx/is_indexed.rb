@@ -99,7 +99,6 @@ If the associations weren't just <tt>has_many</tt> and <tt>belongs_to</tt>, you 
 =end
   
     def self.is_indexed opts = {}
-    
       opts.assert_valid_keys [:fields, :concats, :conditions, :includes, :nulls]
       
       Array(opts[:concats]).each do |concat|
@@ -109,8 +108,8 @@ If the associations weren't just <tt>has_many</tt> and <tt>belongs_to</tt>, you 
         raise Ultrasphinx::ConfigurationError, "Regular concats should have multiple fields" if concat[:fields] and !concat[:fields].is_a?(Array)
       end
       
-      Array(opts[:joins]).each do |join|
-        join.assert_valid_keys [:model, :field, :as]
+      Array(opts[:includes]).each do |inc|
+        inc.assert_valid_keys [:model, :field, :as]
       end
       
       Ultrasphinx::MODEL_CONFIGURATION[self.name] = opts
