@@ -24,7 +24,7 @@ Now, to run the query, call its <tt>run()</tt> method. Your results will be avai
 The query string supports boolean operation, parentheses, phrases, and field-specific search. Query words are stemmed and joined by an implicit <tt>AND</tt> by default.
 
 * Valid boolean operators are <tt>AND</tt>, <tt>OR</tt>, and <tt>NOT</tt>.
-* Field-specific searches should be formatted as <tt>fieldname:contents</tt>
+* Field-specific searches should be formatted as <tt>fieldname:contents</tt>. (This will only work for text fields. For numeric and date fields, see the <tt>:raw_filters</tt> parameter, below.)
 * Phrases must be enclosed in double quotes.
     
 A Sphinx::SphinxInternalError will be raised on invalid queries. In general, queries can only be nested to one level. 
@@ -40,7 +40,7 @@ The hash lets you customize internal aspects of the search.
 <tt>:sort_mode</tt>:: 'relevance' or 'ascending' or 'descending'. How to order the result set. Note that 'time' and 'extended' modes are available, but not tested.  
 <tt>:sort_by</tt>:: A field name. What field to order by for 'ascending' or 'descending' mode. Has no effect for 'relevance'.
 <tt>:weights</tt>:: A hash. Text-field names and associated query weighting. The default weight for every field is 1.0. Example: <tt>:weights => {"title" => 2.0}</tt>
-<tt>:raw_filters</tt>:: A hash. Field names and associated numeric values. You can use a single value, an array of values, or a range. 
+<tt>:raw_filters</tt>:: A hash. Names of numeric or date fields and associated values. You can use a single value, an array of values, or a range. (See the bottom of the ActiveRecord::Base page for an example.)
 
 Note that you can set up your own query defaults in <tt>environment.rb</tt>: 
   
