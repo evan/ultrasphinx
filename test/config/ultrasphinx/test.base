@@ -1,25 +1,25 @@
 
 indexer
 {
-  mem_limit = 256M
+  mem_limit = 1M
 }
 
 searchd
 {
   address = 0.0.0.0
   port = 3312
-  log = /opt/local/var/db/sphinx/log/searchd.log
-  query_log = /opt/local/var/db/sphinx/log/query.log
+  log = /tmp/log/searchd.log
+  query_log = /tmp/log/query.log
   read_timeout = 5
   max_children = 30
-  pid_file = /opt/local/var/db/sphinx/log/searchd.pid
+  pid_file = /tmp/log/searchd.pid
   max_matches = 100000
 }
 
 ultrasphinx
 {
   # indexer options
-  path = /opt/local/var/db/sphinx/
+  path = /tmp/
   docinfo = extern # just leave this alone
   morphology = stem_en
   stopwords = # /path/to/stopwords.txt

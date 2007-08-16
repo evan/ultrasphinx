@@ -1,4 +1,10 @@
 
+def silently
+  old_stdout, $stdout = $stdout, StringIO.new
+  yield
+  $stdout = old_stdout
+end 
+
 RAILS_ROOT = File.dirname(__FILE__)
 $LOAD_PATH << "#{RAILS_ROOT}/../lib" << RAILS_ROOT
 
@@ -16,8 +22,9 @@ ActiveRecord::Base.establish_connection(
   :database => ':memory:'
 )
 
-require 'schema'
+silently do
+  require 'schema'
+end
 require 'models'
-
 require 'ultrasphinx'
 #require 'stub/client'
