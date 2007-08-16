@@ -1,3 +1,2 @@
 
-* Fix query parser bug (http://rubyforge.org/forum/forum.php?thread_id=16458&forum_id=14244)
 * Support multiple spelling dictionaries per machine

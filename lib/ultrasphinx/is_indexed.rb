@@ -92,10 +92,8 @@ For example, say a Company <tt>has_many :users</tt> and each User <tt>has_many :
  
 Now you can run:
 
- @search = Ultrasphinx::Search.new(
-   "something", 
-   :raw_filters => {"company_id" => 493}
- )
+ @search = Ultrasphinx::Search.new("something", 
+   :raw_filters => {"company_id" => 493})
  
 If the associations weren't just <tt>has_many</tt> and <tt>belongs_to</tt>, you would need to use the <tt>:association_sql</tt> key to set up a custom JOIN. 
 
