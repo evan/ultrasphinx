@@ -31,7 +31,7 @@ module Ultrasphinx
       
         # extract ranged raw filters 
         # XXX some of this mangling might not be necessary
-        opts[:raw_filters].each do |field, value|
+        opts[:filters].each do |field, value|
           begin
             unless value.is_a? Range
               request.SetFilter field, Array(value)

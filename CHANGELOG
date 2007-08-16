@@ -1,4 +1,6 @@
 
+v1.x. :filters, not :raw_filters (legacy compatibility preserved).
+
 v1.1. Parser rewrite and tests.
 
 v1. Documentation; refactoring.

@@ -82,7 +82,7 @@ Note how setting the <tt>:conditions</tt> on Comment is enough to configure a po
 
 == Association scoping
 
-A common use case is to only search records that belong to a particular parent model. Ultrasphinx configures Sphinx to support a <tt>:raw_filters</tt> element on any date or numeric field, so any <tt>*_id</tt> fields you have will be filterable.
+A common use case is to only search records that belong to a particular parent model. Ultrasphinx configures Sphinx to support a <tt>:filters</tt> element on any date or numeric field, so any <tt>*_id</tt> fields you have will be filterable.
 
 For example, say a Company <tt>has_many :users</tt> and each User <tt>has_many :articles</tt>. If you want to to filter Articles by Company, add <tt>company_id</tt> to the Article's <tt>is_indexed</tt> method. The best way is to grab it from the User association:
 
@@ -93,7 +93,7 @@ For example, say a Company <tt>has_many :users</tt> and each User <tt>has_many :
 Now you can run:
 
  @search = Ultrasphinx::Search.new("something", 
-   :raw_filters => {"company_id" => 493})
+   :filters => {"company_id" => 493})
  
 If the associations weren't just <tt>has_many</tt> and <tt>belongs_to</tt>, you would need to use the <tt>:association_sql</tt> key to set up a custom JOIN. 
 
