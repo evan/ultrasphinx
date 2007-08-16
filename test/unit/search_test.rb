@@ -10,6 +10,10 @@ context "search object" do
       S.new("query", :wrong => 1)
     end    
   end
+  
+  it "parses the query" do
+    S.new("field:content").instance_variable_get("@parsed_query").should.equal("@field content")
+  end
 
 end
 
