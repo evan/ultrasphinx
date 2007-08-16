@@ -10,6 +10,14 @@ require 'active_support'
 require 'sqlite3'
 require 'active_record'
 require 'test/spec'
-require 'config/environment'
+
+ActiveRecord::Base.establish_connection(
+  :adapter => 'sqlite3',
+  :database => ':memory:'
+)
+
+require 'schema'
+require 'models'
+
 require 'ultrasphinx'
 #require 'stub/client'
