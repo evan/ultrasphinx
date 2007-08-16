@@ -1,2 +1,3 @@
 
 * Support multiple spelling dictionaries per machine
+* Figure out a more intuitive API for the <tt>is_indexed</tt> method.
