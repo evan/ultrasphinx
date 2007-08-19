@@ -22,9 +22,7 @@ ActiveRecord::Base.establish_connection(
   :database => ':memory:'
 )
 
-silently do
-  require 'schema'
-end
+silently { require 'schema' }
 require 'models'
 require 'ultrasphinx'
 #require 'stub/client'
