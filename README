@@ -44,7 +44,8 @@ And some other things.
   
 First, compile and install Sphinx itself (http://www.sphinxsearch.com). 
 
-You also need the <tt>chronic</tt> gem: <tt>sudo gem install chronic</tt>.
+You also need the <tt>chronic</tt> gem:
+  sudo gem install chronic
 
 Then, install the plugin:
   script/plugin install --svn svn://rubyforge.org/var/svn/fauna/ultrasphinx/trunk
