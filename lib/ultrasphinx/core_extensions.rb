@@ -1,6 +1,4 @@
 
-require 'chronic'
-
 class Array
   def _flatten_once
     self.inject([]) do |set, element| 

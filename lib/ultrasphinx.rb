@@ -1,5 +1,7 @@
 
 require 'fileutils'
+require 'chronic'
+
 require "#{File.dirname(__FILE__)}/../vendor/sphinx/lib/client"
 
 require 'ultrasphinx/core_extensions'

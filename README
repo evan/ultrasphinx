@@ -42,8 +42,13 @@ And some other things.
 
 == Installation
   
-First, compile and install Sphinx itself (http://www.sphinxsearch.com). Then install the plugin:
+First, compile and install Sphinx itself (http://www.sphinxsearch.com). 
+
+You also need the <tt>chronic</tt> gem: <tt>sudo gem install chronic</tt>.
+
+Then, install the plugin:
   script/plugin install --svn svn://rubyforge.org/var/svn/fauna/ultrasphinx/trunk
+ 
 
 Next, copy the <tt>example/default.base</tt> file to <tt>RAILS_ROOT/config/ultrasphinx/default.base</tt>. This file sets up the  Sphinx daemon options such as port, host, and index location.
   
