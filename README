@@ -110,7 +110,10 @@ These rake tasks are made available to your Rails app:
 
 All tasks have shortcuts. Use <tt>us:conf</tt>, <tt>us:in</tt>, <tt>us:restart</tt>, <tt>us:start</tt>, <tt>us:stop</tt>, <tt>us:stat</tt>, <tt>us:spell</tt>, and <tt>us:boot</tt>.
 
-== Further resources
+== Reporting problems
 
 * http://rubyforge.org/forum/forum.php?forum_id=14244
+
+== Further resources
+
 * http://blog.evanweaver.com/articles/2007/07/09/ultrasphinx-searching-the-world-in-231-seconds
