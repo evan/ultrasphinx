@@ -12,12 +12,12 @@ module Ultrasphinx
         request.SetServer(PLUGIN_SETTINGS['server_host'], PLUGIN_SETTINGS['server_port'])
         request.SetMatchMode Sphinx::Client::SPH_MATCH_EXTENDED # force extended query mode
       
-        offset, limit = opts[:per_page] * (opts[:page] - 1), opts[:per_page]
+        offset, limit = opts['per_page'] * (opts['page'] - 1), opts['per_page']
         
         request.SetLimits offset, limit, [offset + limit, MAX_MATCHES].min
-        request.SetSortMode SPHINX_CLIENT_PARAMS[:sort_mode][opts[:sort_mode]], opts[:sort_by].to_s
+        request.SetSortMode SPHINX_CLIENT_PARAMS['sort_mode'][opts['sort_mode']], opts['sort_by'].to_s
       
-        if weights = opts[:weights]
+        if weights = opts['weight']
           # order the weights hash according to the field order for sphinx, and set the missing fields to 1.0
           # XXX we shouldn't really have to access Fields.instance from within Ultrasphinx::Search
           request.SetWeights(Fields.instance.select{|n,t| t == 'text'}.map(&:first).sort.inject([]) do |array, field|
@@ -25,13 +25,13 @@ module Ultrasphinx
           end)
         end
       
-        unless opts[:models].compact.empty?
-          request.SetFilter 'class_id', opts[:models].map{|m| MODELS_TO_IDS[m.to_s]}
+        unless opts['class_name'].compact.empty?
+          request.SetFilter 'class_id', opts['class_name'].map{|m| MODELS_TO_IDS[m.to_s]}
         end        
       
         # extract ranged raw filters 
         # XXX some of this mangling might not be necessary
-        opts[:filters].each do |field, value|
+        opts['filter'].each do |field, value|
           begin
             unless value.is_a? Range
               request.SetFilter field, Array(value)
@@ -50,7 +50,7 @@ module Ultrasphinx
         end
         
         # request.SetIdRange # never useful
-        # request.SetGroup # never useful
+        request.SetGroup(options['facet'], SPH_GROUPBY_ATTR) if @options['facet']
         
         request
       end    
@@ -87,7 +87,7 @@ module Ultrasphinx
         results = []
         ids.each do |model, id_set|
           klass = model.constantize
-          finder = klass.respond_to?(:get_cache) ? :get_cache : :find
+          finder = klass.respond_to?('get_cache') ? 'get_cache' : 'find'
           logger.debug "** ultrasphinx: using #{klass.name}\##{finder} as finder method"
     
           begin
@@ -115,7 +115,7 @@ module Ultrasphinx
         # add an accessor for absolute search rank for each record
         results.each_with_index do |r, index|
           i = per_page * current_page + index
-          r._metaclass.send(:define_method, "result_index") { i }
+          r._metaclass.send('define_method', 'result_index') { i }
         end
         
         results        

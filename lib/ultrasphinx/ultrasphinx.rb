@@ -32,16 +32,27 @@ module Ultrasphinx
 
   MAX_WORDS = 2**16 # maximum number of stopwords built  
   
+  EMPTY_SEARCHABLE = "__empty_searchable__"
+  
   UNIFIED_INDEX_NAME = "complete"
 
-  COLUMN_TYPES = {:string => 'text', :text => 'text', :integer => 'numeric', :date => 'date', :datetime => 'date' }
+  COLUMN_TYPES = {
+    'string' => 'text', 
+    'text' => 'text', 
+    'integer' => 'numeric', 
+    'date' => 'date', 
+    'datetime' => 'date'
+  }
 
-  CONFIG_MAP = {:username => 'sql_user',
+  CONFIG_MAP = {
+    # These must be symbols for key mapping against Rails itself
+    :username => 'sql_user',
     :password => 'sql_pass',
     :host => 'sql_host',
     :database => 'sql_db',
     :port => 'sql_port',
-    :socket => 'sql_sock'}
+    :socket => 'sql_sock'
+  }
 
   OPTIONAL_SPHINX_KEYS = ['morphology', 'stopwords', 'min_word_len', 'charset_type', 'charset_table', 'docinfo']
   
@@ -55,12 +66,12 @@ sql_range_step = 20000
   )
   
   ADAPTER_DEFAULTS = {
-    "mysql" => %(
+    'mysql' => %(
 type = mysql
 sql_query_pre = SET SESSION group_concat_max_len = 65535
 sql_query_pre = SET NAMES utf8
   ), 
-    "postgresql" => %(
+    'postgresql' => %(
 type = pgsql
   )}
  
@@ -95,7 +106,7 @@ type = pgsql
   # Complain if the database names go out of sync.
   def self.verify_database_name
     if File.exist? CONF_PATH
-      if options_for("source", CONF_PATH)['sql_db'] != ActiveRecord::Base.connection.instance_variable_get("@config")[:database]
+      if options_for('source', CONF_PATH)['sql_db'] != ActiveRecord::Base.connection.instance_variable_get("@config")[:database]
           say "warning; configured database name is out-of-date"
           say "please run 'rake ultrasphinx:configure'"
       end rescue nil

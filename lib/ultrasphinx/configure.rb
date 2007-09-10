@@ -63,24 +63,26 @@ module Ultrasphinx
             table, pkey = klass.table_name, klass.primary_key
             condition_strings, join_strings = Array(options[:conditions]).map{|condition| "(#{condition})"}, []
             column_strings = ["(#{table}.#{pkey} * #{MODEL_CONFIGURATION.size} + #{class_id}) AS id", 
-                                         "#{class_id} AS class_id", "'#{klass.name}' AS class"]   
-            remaining_columns = Fields.instance.keys - ["class", "class_id"]
+                                         "#{class_id} AS class_id", "'#{klass.name}' AS class", 
+                                         "'#{EMPTY_SEARCHABLE}' AS empty_searchable"
+                                      ]
+            remaining_columns = Fields.instance.keys - ["class", "class_id", "empty_searchable"]
             
             conf.puts "\nsql_query_range = SELECT MIN(#{pkey}), MAX(#{pkey}) FROM #{table}"
             
-            options[:fields].to_a.each do |f|
-              column, as = f.is_a?(Hash) ? [f[:field], f[:as]] : [f, f]
+            options['fields'].to_a.each do |f|
+              column, as = f.is_a?(Hash) ? [f['field'], f['as']] : [f, f]
               column_strings << Fields.instance.cast("#{table}.#{column}", as)
               remaining_columns.delete(as)
             end
             
-            options[:includes].to_a.each do |join|
-              join_klass = join[:model].constantize
-              association = klass.reflect_on_association(join[:model].underscore.to_sym)
-              if not association and not join[:association_sql]
-                raise ConfigurationError, "Unknown association from #{klass} to #{join[:model]}"
-              elsif join[:association_sql]
-                join_strings << join[:association_sql]
+            options['include'].to_a.each do |join|
+              join_klass = join['class_name'].constantize
+              association = klass.reflect_on_association(join['class_name'].underscore.to_sym)
+              if not association and not join['association_sql']
+                raise ConfigurationError, "Unknown association from #{klass} to #{join['class_name']}"
+              elsif join['association_sql']
+                join_strings << join['association_sql']
               else
                 join_strings << "LEFT OUTER JOIN #{join_klass.table_name} ON " + 
                   if (macro = association.macro) == :belongs_to 
@@ -91,26 +93,26 @@ module Ultrasphinx
                     raise ConfigurationError, "Unidentified association macro #{macro.inspect}"
                   end
               end
-              column_strings << "#{join_klass.table_name}.#{join[:field]} AS #{join[:as] or join[:field]}"
-              remaining_columns.delete(join[:as] || join[:field])
+              column_strings << "#{join_klass.table_name}.#{join['field']} AS #{join['as'] or join['field']}"
+              remaining_columns.delete(join['as'] || join['field'])
             end
             
-            options[:concats].to_a.select{|concat| concat[:model] and concat[:field]}.each do |group|
+            options['concatenate'].to_a.select{|concat| concat['class_name'] and concat['field']}.each do |group|
               # only has_many's or explicit sql right now
-              join_klass = group[:model].constantize
-              if group[:association_sql]
-                join_strings << group[:association_sql]
+              join_klass = group['class_name'].constantize
+              if group['association_sql']
+                join_strings << group['association_sql']
               else
-                association = klass.reflect_on_association(group[:association_name] ? group[:association_name].to_sym :  group[:model].underscore.pluralize.to_sym)
-                join_strings << "LEFT OUTER JOIN #{join_klass.table_name} ON #{table}.#{klass.primary_key} = #{join_klass.table_name}.#{association.primary_key_name}" + (" AND (#{group[:conditions]})" if group[:conditions]).to_s # XXX make sure foreign key is right for polymorphic relationships
+                association = klass.reflect_on_association(group['association_name'] ? group['association_name'].to_sym : group['class_name'].underscore.pluralize.to_sym)
+                join_strings << "LEFT OUTER JOIN #{join_klass.table_name} ON #{table}.#{klass.primary_key} = #{join_klass.table_name}.#{association.primary_key_name}" + (" AND (#{group['conditions']})" if group['conditions']).to_s # XXX make sure foreign key is right for polymorphic relationships
               end
-              column_strings << Fields.instance.cast("GROUP_CONCAT(#{join_klass.table_name}.#{group[:field]} SEPARATOR ' ')", group[:as])
-              remaining_columns.delete(group[:as])
+              column_strings << Fields.instance.cast("GROUP_CONCAT(#{join_klass.table_name}.#{group['field']} SEPARATOR ' ')", group['as'])
+              remaining_columns.delete(group['as'])
             end
             
-            options[:concats].to_a.select{|concat| concat[:fields]}.each do |concat|
-              column_strings << Fields.instance.cast("CONCAT_WS(' ', #{concat[:fields].map{|field| "#{table}.#{field}"}.join(', ')})", concat[:as])
-              remaining_columns.delete(concat[:as])
+            options['concatenate'].to_a.select{|concat| concat['fields']}.each do |concat|
+              column_strings << Fields.instance.cast("CONCAT_WS(' ', #{concat['fields'].map{|field| "#{table}.#{field}"}.join(', ')})", concat['as'])
+              remaining_columns.delete(concat['as'])
             end
               
   #          puts "#{model} has #{remaining_columns.inspect} remaining"

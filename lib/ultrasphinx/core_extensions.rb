@@ -34,13 +34,11 @@ end
 class Hash
   def _coerce_basic_types
     Hash[*self.map do |key, value|
-      [key.to_sym,
+      [key.to_s,
         if value.respond_to?(:to_i) && value.to_i.to_s == value
           value.to_i
         elsif value == ""
           nil
-        elsif value.is_a? String
-          value.to_sym
         else
           value
         end]
