@@ -68,6 +68,12 @@ context "parser" do
     'board:england OR board:tristate',
     '@board ( england | tristate )',
     
+    '(800) 555-LOVE',
+    '(800) 555-LOVE',
+    
+    'Bend, OR',
+    'Bend, OR'
+    
   ].in_groups_of(2).each do |query, result|
     it "should parse" do
       @s.send(:parse, query).should.equal(result)

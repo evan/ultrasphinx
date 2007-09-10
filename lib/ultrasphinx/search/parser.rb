@@ -3,6 +3,8 @@ module Ultrasphinx
   class Search
     module Parser
       
+      class Error < RuntimeError; end
+      
       private
       
       def parse query
@@ -78,7 +80,7 @@ module Ultrasphinx
           end        
         end
         
-        raise Ultrasphinx::ParseError, "#{token_stream.inspect} is not a valid token stream" unless token_stream.size % 2 == 0        
+        raise Error, "#{token_stream.inspect} is not a valid token stream" unless token_stream.size % 2 == 0        
         token_stream.in_groups_of(2) 
       end
       

@@ -1,3 +1,7 @@
 
 * Support multiple spelling dictionaries per machine
 * Figure out a more intuitive API for the <tt>is_indexed</tt> method.
+* Seth's parser bugs
+* When to use symbols and when to use strings is confused
+* Unify filters and textfields
+* Search object doesn't pass the block appropriately to .select on .results

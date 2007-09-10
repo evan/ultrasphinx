@@ -28,8 +28,6 @@ namespace :ultrasphinx do
     task :start => :environment do
       FileUtils.mkdir_p File.dirname(Ultrasphinx::DAEMON_SETTINGS["log"]) rescue nil
       raise Ultrasphinx::DaemonError, "Already running" if ultrasphinx_daemon_running?
-      # remove lockfiles
-      Dir[Ultrasphinx::PLUGIN_SETTINGS["path"] + "*spl"].each {|file| File.delete(file)}
       system "searchd --config #{Ultrasphinx::CONF_PATH}"
       sleep(2) # give daemon a chance to write the pid file
       if ultrasphinx_daemon_running?
@@ -107,5 +105,11 @@ def ultrasphinx_daemon_pid
 end
 
 def ultrasphinx_daemon_running?
-  ultrasphinx_daemon_pid and `ps #{ultrasphinx_daemon_pid} | wc`.to_i > 1 
+  if ultrasphinx_daemon_pid and `ps #{ultrasphinx_daemon_pid} | wc`.to_i > 1 
+    true
+  else
+    # remove bogus lockfiles
+    Dir[Ultrasphinx::PLUGIN_SETTINGS["path"] + "*spl"].each {|file| File.delete(file)}
+    false
+  end  
 end

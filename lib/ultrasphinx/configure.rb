@@ -77,12 +77,10 @@ module Ultrasphinx
             options[:includes].to_a.each do |join|
               join_klass = join[:model].constantize
               association = klass.reflect_on_association(join[:model].underscore.to_sym)
-              if not association 
-                if not join[:association_sql]
-                  raise ConfigurationError, "Unknown association from #{klass} to #{join[:model]}"
-                else
-                  join_strings << join[:association_sql]
-                end
+              if not association and not join[:association_sql]
+                raise ConfigurationError, "Unknown association from #{klass} to #{join[:model]}"
+              elsif join[:association_sql]
+                join_strings << join[:association_sql]
               else
                 join_strings << "LEFT OUTER JOIN #{join_klass.table_name} ON " + 
                   if (macro = association.macro) == :belongs_to 
