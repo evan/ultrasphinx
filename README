@@ -13,14 +13,15 @@ Copyright 2007 Cloudburst, LLC. Licensed under the AFL 3. See the included LICEN
 * Sphinx 0.97
 * edge Rails, possibly
 
-A problem has been reported with Rails 1.2.3, but I can't verify it. It might work fine for you.
+A problem has been reported with Rails 1.2.3, but I can't verify it. It probably will work fine for you.
 
 == Features
 
 Advanced Sphinx usage:
-* multi-source merging
+* searching and ranking across orthogonal models
 * excerpt highlighting
 * field weighting
+* faceting on text and numeric fields
 
 ActiveRecord-style SQL generation:
 * <tt>belongs_to</tt> and <tt>has_many</tt> includes
@@ -58,7 +59,7 @@ If you need per-environment configuration, you can use <tt>RAILS_ROOT/config/ult
 Now, in your models, use the <tt>is_indexed</tt> method to configure a model as searchable. For example:
   
   class Post
-    is_indexed :fields => ["created_at", "title", "body"]
+    is_indexed 'fields' => ['created_at', 'title', 'body']
   end
   
 For more index options, see ActiveRecord::Base .is_indexed.
@@ -79,9 +80,9 @@ Make sure to manually stop and restart the daemon if you change the field config
     
 Query the daemon as so:
 
-  @search = Ultrasphinx::Search.new(@query)
+  @search = Ultrasphinx::Search.new(:query => @query)
   @search.run
-  @search.results             
+  @search.results
   
 For more query options, including excerpt mode, see Ultrasphinx::Search.
   

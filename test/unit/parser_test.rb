@@ -4,7 +4,7 @@ require "#{File.dirname(__FILE__)}/../test_helper.rb"
 context "parser" do
 
   def setup
-    @s = Ultrasphinx::Search.new("")
+    @s = Ultrasphinx::Search.new
   end
 
   [

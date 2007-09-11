@@ -54,7 +54,7 @@ module Ultrasphinx
         token_stream = []
         has_operator = false
         
-        query.each do |subtoken|
+        query.each_with_index do |subtoken, index|
       
           # recurse for parens, if necessary
           if subtoken =~ /^(.*?)\((.*)\)(.*?$)/

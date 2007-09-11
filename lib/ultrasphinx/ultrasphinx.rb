@@ -36,14 +36,6 @@ module Ultrasphinx
   
   UNIFIED_INDEX_NAME = "complete"
 
-  COLUMN_TYPES = {
-    'string' => 'text', 
-    'text' => 'text', 
-    'integer' => 'numeric', 
-    'date' => 'date', 
-    'datetime' => 'date'
-  }
-
   CONFIG_MAP = {
     # These must be symbols for key mapping against Rails itself
     :username => 'sql_user',

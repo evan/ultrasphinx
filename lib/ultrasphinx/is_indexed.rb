@@ -14,8 +14,19 @@ The is_indexed method configures a model for indexing. Its parameters help gener
 
 Use the <tt>'fields'</tt> key.
 
-Accepts an array of field names. 
-  'fields' => ['created_at', 'title', 'body']
+Accepts an array of field names or field hashes. 
+  'fields' => [
+    'created_at', 
+    'title', 
+    {'field' => 'body', 'as' => 'description'},
+    {'field' => 'user_category', 'facet' => true, 'as' => 'category' }
+  ]
+
+To alias a field, pass a hash instead of a string and set the <tt>'as'</tt> key. 
+
+To allow faceting support on a text field, also pass a hash and set the <tt>'facet'</tt> key to <tt>true</tt>. Faceting is off by default for text fields because there is some indexing overhead associated with it. Faceting is always on for numeric or date fields.
+
+To apply an sql function to a field before it is indexed, use the key <tt>'function_sql'</tt>. Pass a string such as <tt>"REPLACE(?, '_', ' ')"</tt>. The table and column name for your field will be interpolated into the first <tt>?</tt> in the string.
 
 == Including a field from an association
 
@@ -62,7 +73,8 @@ Here's an example configuration using most of the options, taken from production
   class Story < ActiveRecord::Base  
     is_indexed 'fields' => [
         'title', 
-        'published_at'
+        'published_at',
+        {'field' => 'author', 'facet' => true}
       ],
       'include' => [
         {'class_name' => 'Category', 'field' => 'name', 'as' => 'category'}
@@ -99,8 +111,14 @@ If the associations weren't just <tt>has_many</tt> and <tt>belongs_to</tt>, you 
 
 =end
   
-    def self.is_indexed opts = {}
+    def self.is_indexed opts = {}    
+      opts = opts._deep_stringify_keys
+          
       opts.assert_valid_keys ['fields', 'concatenate', 'conditions', 'include']
+      
+      Array(opts['fields']).each do |field|
+        field.assert_valid_keys ['field', 'as', 'facet', 'function_sql'] if field.is_a? Hash
+      end
       
       Array(opts['concatenate']).each do |concat|
         concat.assert_valid_keys ['class_name', 'conditions', 'field', 'as', 'fields', 'association_name', 'association_sql']

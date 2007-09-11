@@ -13,6 +13,11 @@ class Object
       self
     end
   end
+  
+  def _deep_dup
+    # Cause Ruby's dup sucks.
+    Marshal.load(Marshal.dump(self))
+  end
 end
 
 class String
@@ -43,5 +48,29 @@ class Hash
           value
         end]
       end._flatten_once]
-  end      
+  end
+  
+  def _deep_stringify_keys
+    Hash[*(self.map do |key, value|
+#      puts "#{key.inspect}, #{value.inspect}"
+      z = [key.to_s,
+        case value
+          when Hash
+            value._deep_stringify_keys
+          when Array
+            value.map do |subvalue|
+              if subvalue.is_a? Hash or subvalue.is_a? Array
+                subvalue._deep_stringify_keys
+              else
+                subvalue
+              end
+            end
+          else
+            value
+        end
+      ]
+#      p z
+#      z
+    end._flatten_once)]
+  end
 end

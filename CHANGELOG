@@ -1,4 +1,8 @@
 
+v1.4. is_indexed 'fields' => {'function_sql'} key for custom field mangling.
+
+v1.3. Facets; configurable finder method array; support symbolic keys very reluctantly for legacy purposes.
+
 v1.2. Support searching with empty query. Most keys are now singular strings (plural only if they *require* an Array value). Verbs have been un-nouned ('concatenate', not 'concats'; 'include', not 'includes'). 'filter', not 'raw_filters'; 'class_name', not 'model'. Finally, use a 'query' keypair instead of the first parameter to Ultrasphinx::Search.new for the query string (this simplifies form helpers).
 
 v1.1. Parser rewrite and tests.

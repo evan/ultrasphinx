@@ -45,7 +45,10 @@ namespace :ultrasphinx do
     end
 
     desc "Restart the search daemon"
-    task :restart => [:environment, :stop, :start] do
+    task :restart => [:environment] do
+      Rake::Task["ultrasphinx:daemon:stop"].invoke
+      sleep(3)
+      Rake::Task["ultrasphinx:daemon:start"].invoke
     end
     
     desc "Check if the search daemon is running"

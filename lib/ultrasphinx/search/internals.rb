@@ -3,6 +3,8 @@ module Ultrasphinx
   class Search
     module Internals
 
+      # These methods are kept stateless to ease debugging
+      
       private
       
       def build_request_with_options opts
@@ -20,7 +22,7 @@ module Ultrasphinx
         if weights = opts['weight']
           # order the weights hash according to the field order for sphinx, and set the missing fields to 1.0
           # XXX we shouldn't really have to access Fields.instance from within Ultrasphinx::Search
-          request.SetWeights(Fields.instance.select{|n,t| t == 'text'}.map(&:first).sort.inject([]) do |array, field|
+          request.SetWeights(Fields.instance.types.select{|n,t| t == 'text'}.map(&:first).sort.inject([]) do |array, field|
             array << (weights[field] || 1.0)
           end)
         end
@@ -49,23 +51,80 @@ module Ultrasphinx
           end
         end
         
-        # request.SetIdRange # never useful
-        request.SetGroup(options['facet'], SPH_GROUPBY_ATTR) if @options['facet']
+        # request.SetIdRange # never useful        
         
         request
       end    
       
-      def get_subtotals(request, query)
-        # XXX andrew says there's a better way to do this
-        subtotals, filtered_request = {}, request.dup
+      def get_subtotals(original_request, query)
+        # XXX need to move this to use the faceting API, I guess
+        request = original_request._deep_dup
+        request.instance_eval { @filters.delete_if {|f| f['attr'] == 'class_id'} }
         
-        MODELS_TO_IDS.each do |name, class_id|
-          filtered_request.instance_eval { @filters.delete_if {|f| f['attr'] == 'class_id'} }
-          filtered_request.SetFilter 'class_id', [class_id]
-          subtotals[name] = request.Query(query)['total_found']
+        facets = get_facets(request, query, 'class_id')
+        
+        # class_ids don't use the standard faceting scheme
+        Hash[*(MODELS_TO_IDS.map do |klass, id|
+          [klass, facets[id]]
+        end.flatten)]
+      end
+      
+      def get_facets(original_request, query, original_facet)
+        request, facet = original_request._deep_dup, original_facet        
+        facet += "_facet" if Fields.instance.types[original_facet] == 'text'            
+        
+        raise UsageError, "Field #{original_facet} does not exist or was not configured for faceting" unless Fields.instance.types[facet]
+
+        # set the facet query parameter and modify per-page setting so we snag all the facets
+        request.SetGroupBy(facet, Sphinx::Client::SPH_GROUPBY_ATTR, '@count desc')
+        limit = self.class.client_options['max_facets']
+        request.SetLimits 0, limit, [limit, MAX_MATCHES].min
+        
+        # run the query
+        matches = request.Query(query)['matches']
+                
+        # map the facets back to something sane
+        facets = {}
+        matches.each do |match|
+          match = match.last['attrs'] # :(
+#          debugger
+          raise ResponseError if facets[match['@groupby']]
+          facets[match['@groupby']] = match['@count']
+        end
+                
+        # invert crc's, if we have them
+        reverse_map_facets(facets, original_facet)
+      end
+      
+      def reverse_map_facets(facets, facet) 
+        facets = facets.dup
+      
+        if Fields.instance.types[facet] == 'text'        
+          unless FACET_CACHE[facet]
+            # cache the reverse CRC map for the textual facet if it hasn't been done yet
+            # XXX pretty nasty            
+            Ultrasphinx.say "caching crc reverse map for text facet #{facet}"
+            
+            Fields.instance.classes[facet].each do |klass|
+              # you can only use a facet from your own self right now; no includes allowed
+              field = (MODEL_CONFIGURATION[klass.name]['fields'].detect do |field_hash|
+                field_hash['as'] == facet
+              end)['field']
+          
+              klass.connection.execute("SELECT #{field} AS value, CRC32(#{field}) AS crc FROM #{klass.table_name} GROUP BY #{field}").each_hash do |hash|
+                (FACET_CACHE[facet] ||= {})[hash['crc'].to_i] = hash['value']
+              end              
+            end
+          end
+          
+          # apply the map
+          facets = Hash[*(facets.map do |crc, value|
+            [FACET_CACHE[facet][crc], value]
+          end.flatten)]
+          facets.delete(0) # XXX not sure about this; shouldn't it be nil?
         end
         
-        subtotals
+        facets        
       end
 
       def reify_results(sphinx_ids)
@@ -87,11 +146,16 @@ module Ultrasphinx
         results = []
         ids.each do |model, id_set|
           klass = model.constantize
-          finder = klass.respond_to?('get_cache') ? 'get_cache' : 'find'
+          
+          finder = self.class.client_options['finder_methods'].detect do |method_name|
+            klass.respond_to? method_name
+          end
+          
           logger.debug "** ultrasphinx: using #{klass.name}\##{finder} as finder method"
     
           begin
-            results += case instances = id_set.map {|id| klass.send(finder, id)} # XXX temporary until we update cache_fu
+            # XXX does not use Memcached's multiget
+            results += case instances = id_set.map {|id| klass.send(finder, id)}               
               when Hash
                 instances.values
               when Array
@@ -114,7 +178,7 @@ module Ultrasphinx
         
         # add an accessor for absolute search rank for each record
         results.each_with_index do |r, index|
-          i = per_page * current_page + index
+          i = per_page * (current_page - 1) + index
           r._metaclass.send('define_method', 'result_index') { i }
         end
         

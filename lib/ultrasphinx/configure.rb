@@ -49,7 +49,7 @@ module Ultrasphinx
             conf.puts "source #{source}\n{"
             conf.puts SOURCE_DEFAULTS
                       
-            # apparently we're supporting postgres now
+            # Tentatively supporting Postgres now
             connection_settings = klass.connection.instance_variable_get("@config")
   
             adapter_defaults = ADAPTER_DEFAULTS[connection_settings[:adapter]]
@@ -66,14 +66,29 @@ module Ultrasphinx
                                          "#{class_id} AS class_id", "'#{klass.name}' AS class", 
                                          "'#{EMPTY_SEARCHABLE}' AS empty_searchable"
                                       ]
-            remaining_columns = Fields.instance.keys - ["class", "class_id", "empty_searchable"]
+            remaining_columns = Fields.instance.types.keys - ["class", "class_id", "empty_searchable"]
             
             conf.puts "\nsql_query_range = SELECT MIN(#{pkey}), MAX(#{pkey}) FROM #{table}"
             
             options['fields'].to_a.each do |f|
               column, as = f.is_a?(Hash) ? [f['field'], f['as']] : [f, f]
-              column_strings << Fields.instance.cast("#{table}.#{column}", as)
+
+              source_string = "#{table}.#{column}"
+              if f['function_sql']
+                source_string = f['function_sql'].sub('?', source_string)
+              end
+
+              column_strings << Fields.instance.cast(source_string, as)
               remaining_columns.delete(as)
+              
+              
+              # Generate CRC integer fields for text grouping
+              if f['facet']
+                # Postgres probably doesn't handle this
+                column_strings << "CRC32(#{table}.#{column}) AS #{as}_facet"
+                remaining_columns.delete("#{as}_facet")
+              end
+                
             end
             
             options['include'].to_a.each do |join|
@@ -114,7 +129,7 @@ module Ultrasphinx
               column_strings << Fields.instance.cast("CONCAT_WS(' ', #{concat['fields'].map{|field| "#{table}.#{field}"}.join(', ')})", concat['as'])
               remaining_columns.delete(concat['as'])
             end
-              
+            
   #          puts "#{model} has #{remaining_columns.inspect} remaining"
             remaining_columns.each do |field|
               column_strings << Fields.instance.null(field)
@@ -134,7 +149,7 @@ module Ultrasphinx
             
             groups = []
             # group and date sorting params... this really only would have to be run once
-            Fields.instance.each do |field, type|
+            Fields.instance.types.each do |field, type|
               case type
                 when 'numeric'
                   groups << "sql_group_column = #{field}"

@@ -41,6 +41,7 @@ The hash lets you customize internal aspects of the search.
 <tt>'sort_by'</tt>:: A field name. What field to order by for 'ascending' or 'descending' mode. Has no effect for 'relevance'.
 <tt>'weight'</tt>:: A hash. Text-field names and associated query weighting. The default weight for every field is 1.0. Example: <tt>'weight' => {'title' => 2.0}</tt>
 <tt>'filter'</tt>:: A hash. Names of numeric or date fields and associated values. You can use a single value, an array of values, or a range. (See the bottom of the ActiveRecord::Base page for an example.)
+<tt>'facets'</tt>:: An array of fields for grouping/faceting. You can access the returned facet values and their result counts with the <tt>facets</tt> method.
 
 Note that you can set up your own query defaults in <tt>environment.rb</tt>: 
   
@@ -102,7 +103,7 @@ Note that your database is never changed by anything Ultrasphinx does.
       'sort_mode' => 'relevance',
       'weight' => nil,
       'filter' => nil,
-      'facet' => nil
+      'facets' => nil
     }
     
     cattr_accessor :excerpting_options
@@ -119,7 +120,9 @@ Note that your database is never changed by anything Ultrasphinx does.
     self.client_options ||= { 
       'with_subtotals' => false, 
       'max_retries' => 4,
-      'retry_sleep_time' => 3
+      'retry_sleep_time' => 3,
+      'max_facets' => 100,
+      'finder_methods' => ['get_cache', 'find']
     }
     
     # mode to integer mappings    
@@ -170,6 +173,8 @@ Note that your database is never changed by anything Ultrasphinx does.
       'NOT' => '-'
     }
     
+    FACET_CACHE = {} #:nodoc: 
+    
     # Returns the options hash.
     def options
       @options
@@ -183,9 +188,16 @@ Note that your database is never changed by anything Ultrasphinx does.
     
     # Returns an array of result objects.
     def results
-      raise UsageError, "Search has not yet been run" unless run?
+      run?(true)
       @results
     end
+    
+    def facets
+      raise UsageError, "No facet field was configured" unless @options['facets']
+      run?(true)
+      @facets
+    end      
+      
     
     # Returns the raw response from the Sphinx client.
     def response
@@ -209,18 +221,29 @@ Note that your database is never changed by anything Ultrasphinx does.
     end
 
     # Returns whether the query has been run.  
-    def run?
-      !response.blank?
+    def run?(should_raise = false)
+      if response.blank? and should_raise
+        raise UsageError, "Search has not yet been run" unless run?
+      else
+        !response.blank?
+      end
     end
  
     # Returns the current page number of the result set. (Page indexes begin at 1.) 
     def current_page
-      options['page']
+      @options['page']
     end
   
     # Returns the number of records per page.
     def per_page
-      options['per_page']
+      @options['per_page']
+    end
+    
+    # Clear the associated facet caches. They will be rebuilt on your next <tt>run</tt> or <tt>excerpt</tt>.
+    def clear_facet_caches
+      Array(@options['facets']).each do |facet|
+        FACET_CACHE.delete(facet)
+      end
     end
     
     # Returns the last available page number in the result set.  
@@ -245,14 +268,17 @@ Note that your database is never changed by anything Ultrasphinx does.
     
     # Builds a new command-interface Search object.
     def initialize opts = {}
+      
+      opts = opts._deep_stringify_keys
+    
       @parsed_query = parse(opts['query'])
-      @parsed_query = "empty_searchable:#{EMPTY_SEARCHABLE}" if @parsed_query.blank?
+      @parsed_query = "@empty_searchable #{EMPTY_SEARCHABLE}" if @parsed_query.blank?
         
       @options = self.class.query_defaults.merge(opts._coerce_basic_types)        
       @options['filter'] ||= @options['raw_filters'] || {} # XXX legacy name
       @options['class_name'] = Array(@options['class_name'])
   
-      @results, @subtotals, @response = [], {}, {}
+      @results, @subtotals, @facets, @response = [], {}, {}, {}
         
       extra_keys = @options.keys - (SPHINX_CLIENT_PARAMS.merge(self.class.query_defaults).keys + LEGACY_QUERY_KEYS)
       logger.warn "Discarded invalid keys: #{extra_keys * ', '}" if extra_keys.any?
@@ -267,15 +293,21 @@ Note that your database is never changed by anything Ultrasphinx does.
       logger.info "** ultrasphinx: searching for #{query.inspect} (parsed as #{@parsed_query.inspect}), options #{@options.inspect}"
 
       begin
+              
         @response = @request.Query(@parsed_query)
         logger.info "** ultrasphinx: search returned, error #{@request.GetLastError.inspect}, warning #{@request.GetLastWarning.inspect}, returned #{total_entries}/#{response['total_found']} in #{time} seconds."  
 
         @subtotals = get_subtotals(@request, @parsed_query) if self.class.client_options['with_subtotals']
+        
+        Array(@options['facets']).each do |facet|
+          @facets[facet] = get_facets(@request, @parsed_query, facet)
+        end
+        
         @results = response['matches']
         
         # if you don't reify, you'll have to do the modulus reversal yourself to get record ids
         @results = reify_results(@results) if reify
-                  
+                                
       rescue Sphinx::SphinxResponseError, Sphinx::SphinxTemporaryError, Errno::EPIPE => e
         if (tries += 1) <= self.class.client_options['max_retries']
           logger.warn "** ultrasphinx: restarting query (#{tries} attempts already) (#{e})"
@@ -341,7 +373,7 @@ Note that your database is never changed by anything Ultrasphinx does.
       if @results.respond_to? args.first
         @results.send(*args)
       elsif options.has_key? args.first.to_s
-        options[args.first.to_s]
+        @options[args.first.to_s]
       else
         super
       end
