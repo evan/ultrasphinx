@@ -26,7 +26,7 @@ To alias a field, pass a hash instead of a string and set the <tt>'as'</tt> key.
 
 To allow faceting support on a text field, also pass a hash and set the <tt>'facet'</tt> key to <tt>true</tt>. Faceting is off by default for text fields because there is some indexing overhead associated with it. Faceting is always on for numeric or date fields.
 
-To apply an sql function to a field before it is indexed, use the key <tt>'function_sql'</tt>. Pass a string such as <tt>"REPLACE(?, '_', ' ')"</tt>. The table and column name for your field will be interpolated into the first <tt>?</tt> in the string.
+To apply an SQL function to a field before it is indexed, use the key <tt>'function_sql'</tt>. Pass a string such as <tt>"REPLACE(?, '_', ' ')"</tt>. The table and column name for your field will be interpolated into the first <tt>?</tt> in the string.
 
 == Including a field from an association
 

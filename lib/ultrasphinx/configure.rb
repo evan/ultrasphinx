@@ -143,7 +143,6 @@ module Ultrasphinx
             query_strings += join_strings.uniq
             query_strings << "WHERE #{table}.#{pkey} >= $start AND #{table}.#{pkey} <= $end"
             query_strings += condition_strings.uniq.map{|s| "AND #{s}"}
-            query_strings << "GROUP BY id"
             
             conf.puts "sql_query = #{query_strings.join(" ")}"
             
