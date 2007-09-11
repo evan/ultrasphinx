@@ -144,6 +144,9 @@ module Ultrasphinx
             query_strings << "WHERE #{table}.#{pkey} >= $start AND #{table}.#{pkey} <= $end"
             query_strings += condition_strings.uniq.map{|s| "AND #{s}"}
             
+            # XXX should be configured somewhere more obvious
+            query_strings << "GROUP BY id" if connection_settings[:adapter] == 'mysql'
+            
             conf.puts "sql_query = #{query_strings.join(" ")}"
             
             groups = []
