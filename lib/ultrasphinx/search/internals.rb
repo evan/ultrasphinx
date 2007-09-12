@@ -116,13 +116,12 @@ module Ultrasphinx
               end              
             end
           end
-          
+
           # apply the map
           facets = Hash[*(facets.map do |crc, value|
             [FACET_CACHE[facet][crc], value]
           end.flatten)]
-          facets.delete(0) # XXX not sure about this; shouldn't it be nil?
-          facets.delete(nil)
+
         end
         
         facets        
