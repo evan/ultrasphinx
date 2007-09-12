@@ -122,6 +122,7 @@ module Ultrasphinx
             [FACET_CACHE[facet][crc], value]
           end.flatten)]
           facets.delete(0) # XXX not sure about this; shouldn't it be nil?
+          facets.delete(nil)
         end
         
         facets        
