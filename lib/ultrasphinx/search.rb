@@ -138,7 +138,9 @@ Note that your database is never changed by anything Ultrasphinx does.
       }
     }
     
-    LEGACY_QUERY_KEYS = ['raw_filters']
+    LEGACY_QUERY_KEYS = ['raw_filters'] #:nodoc:
+    
+    INTERNAL_KEYS = ['parsed_query'] #:nodoc:
 
     def self.get_models_to_class_ids #:nodoc:
       # reading the conf file makes sure that we are in sync with the actual sphinx index,
@@ -288,7 +290,7 @@ Note that your database is never changed by anything Ultrasphinx does.
   
       @results, @subtotals, @facets, @response = [], {}, {}, {}
         
-      extra_keys = @options.keys - (SPHINX_CLIENT_PARAMS.merge(self.class.query_defaults).keys + LEGACY_QUERY_KEYS)
+      extra_keys = @options.keys - (SPHINX_CLIENT_PARAMS.merge(self.class.query_defaults).keys + LEGACY_QUERY_KEYS + INTERNAL_KEYS)
       logger.warn "Discarded invalid keys: #{extra_keys * ', '}" if extra_keys.any?
     end
     
@@ -298,7 +300,7 @@ Note that your database is never changed by anything Ultrasphinx does.
       @paginate = nil # clear cache
       tries = 0
 
-      logger.info "** ultrasphinx: searching for #{query.inspect} (parsed as #{parsed_query.inspect}), options #{@options.inspect}"
+      logger.info "** ultrasphinx: searching for #{@options.inspect}"
 
       begin
               
@@ -377,9 +379,9 @@ Note that your database is never changed by anything Ultrasphinx does.
     
             
     # Delegates enumerable methods to @results, if possible. This allows us to behave directly like a WillPaginate::Collection. Failing that, we delegate to the options hash if a key is set. This lets us use the <tt>self</tt> directly in view helpers.
-    def method_missing(*args)
+    def method_missing(*args, &block)
       if @results.respond_to? args.first
-        @results.send(*args)
+        @results.send(*args, &block)
       elsif options.has_key? args.first.to_s
         @options[args.first.to_s]
       else
