@@ -1,5 +1,5 @@
 
-v1.4. is_indexed 'fields' => {'function_sql'} key for custom field mangling.
+v1.4. New is_indexed 'fields' => {'function_sql'} key for custom field mangling; support setting textual keys in the 'filters'.
 
 v1.3. Facets; configurable finder method array; support symbolic keys very reluctantly for legacy purposes.
 

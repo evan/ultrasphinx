@@ -186,6 +186,11 @@ Note that your database is never changed by anything Ultrasphinx does.
       @options['query']
     end
     
+    def parsed_query #:nodoc:
+      # redundant with method_missing
+      @options['parsed_query']
+    end
+    
     # Returns an array of result objects.
     def results
       run?(true)
@@ -271,12 +276,15 @@ Note that your database is never changed by anything Ultrasphinx does.
       
       opts = opts._deep_stringify_keys
     
-      @parsed_query = parse(opts['query'])
-      @parsed_query = "@empty_searchable #{EMPTY_SEARCHABLE}" if @parsed_query.blank?
         
       @options = self.class.query_defaults.merge(opts._coerce_basic_types)        
       @options['filter'] ||= @options['raw_filters'] || {} # XXX legacy name
       @options['class_name'] = Array(@options['class_name'])
+      @options['parsed_query'] = if query.blank? 
+         "@empty_searchable #{EMPTY_SEARCHABLE}"
+        else
+          parse(query)
+        end
   
       @results, @subtotals, @facets, @response = [], {}, {}, {}
         
@@ -290,17 +298,17 @@ Note that your database is never changed by anything Ultrasphinx does.
       @paginate = nil # clear cache
       tries = 0
 
-      logger.info "** ultrasphinx: searching for #{query.inspect} (parsed as #{@parsed_query.inspect}), options #{@options.inspect}"
+      logger.info "** ultrasphinx: searching for #{query.inspect} (parsed as #{parsed_query.inspect}), options #{@options.inspect}"
 
       begin
               
-        @response = @request.Query(@parsed_query)
+        @response = @request.Query(parsed_query)
         logger.info "** ultrasphinx: search returned, error #{@request.GetLastError.inspect}, warning #{@request.GetLastWarning.inspect}, returned #{total_entries}/#{response['total_found']} in #{time} seconds."  
 
-        @subtotals = get_subtotals(@request, @parsed_query) if self.class.client_options['with_subtotals']
+        @subtotals = get_subtotals(@request, parsed_query) if self.class.client_options['with_subtotals']
         
         Array(@options['facets']).each do |facet|
-          @facets[facet] = get_facets(@request, @parsed_query, facet)
+          @facets[facet] = get_facets(@request, parsed_query, facet)
         end
         
         @results = response['matches']
@@ -348,7 +356,7 @@ Note that your database is never changed by anything Ultrasphinx does.
       responses = @request.BuildExcerpts(
         texts, 
         UNIFIED_INDEX_NAME, 
-        strip_query_commands(@parsed_query),
+        strip_query_commands(parsed_query),
         self.class.excerpting_options.except('content_methods')
       ).in_groups_of(self.class.excerpting_options['content_methods'].size)
       

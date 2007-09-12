@@ -35,16 +35,21 @@ module Ultrasphinx
         # XXX some of this mangling might not be necessary
         opts['filter'].each do |field, value|
           begin
-            unless value.is_a? Range
-              request.SetFilter field, Array(value)
-            else
-              min, max = [value.first, value.last].map do |x|
-                x._to_numeric if x.is_a? String
-              end
-              unless min.class != max.class
-                min, max = max, min if min > max
-                request.SetFilterRange field, min, max
-              end
+            case value
+              when Range
+                request.SetFilter field, Array(value)
+              when Fixnum, Float, BigDecimal
+                min, max = [value.first, value.last].map do |x|
+                  x._to_numeric if x.is_a? String
+                end
+                unless min.class != max.class
+                  min, max = max, min if min > max
+                  request.SetFilterRange field, min, max
+                end
+              when String
+                opts['parsed_query'] << " @#{field} #{value}"
+              else
+                raise NoMethodError
             end
           rescue NoMethodError => e
             raise Sphinx::SphinxArgumentError, "filter: #{field.inspect}:#{value.inspect} is invalid"
