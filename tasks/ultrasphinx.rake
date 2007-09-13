@@ -4,7 +4,7 @@ ENV['RAILS_ENV'] ||= "development"
 namespace :ultrasphinx do  
   
   desc "Bootstrap a full Sphinx environment"
-  task :bootstrap => [:environment, :configure, :index, :start] do
+  task :bootstrap => [:environment, :configure, :index, :"daemon:restart"] do
   end
   
   desc "Rebuild the configuration file for this particular environment."
@@ -46,7 +46,7 @@ namespace :ultrasphinx do
 
     desc "Restart the search daemon"
     task :restart => [:environment] do
-      Rake::Task["ultrasphinx:daemon:stop"].invoke
+      Rake::Task["ultrasphinx:daemon:stop"].invoke if ultrasphinx_daemon_running?
       sleep(3)
       Rake::Task["ultrasphinx:daemon:start"].invoke
     end
