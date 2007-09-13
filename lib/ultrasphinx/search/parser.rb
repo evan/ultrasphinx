@@ -4,7 +4,16 @@ module Ultrasphinx
     module Parser
       
       class Error < RuntimeError; end
-      
+
+      OPERATORS = {
+        'OR' => '|',
+        'AND' => '',
+        'NOT' => '-',
+        'or' => '|',
+        'and' => '',
+        'not' => '-'
+      }
+            
       private
       
       def parse query
@@ -39,7 +48,7 @@ module Ultrasphinx
         end
         
         # XXX swap the first pair if the order is reversed
-        if [OPERATORS['NOT'], OPERATORS['OR']].include? query.first 
+        if [OPERATORS['NOT'], OPERATORS['OR']].include? query.first.upcase
           query[0], query[1] = query[1], query[0]
         end
         

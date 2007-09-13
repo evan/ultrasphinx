@@ -169,12 +169,6 @@ Note that your database is never changed by anything Ultrasphinx does.
       
     MAX_MATCHES = DAEMON_SETTINGS["max_matches"].to_i 
     
-    OPERATORS = {
-      'OR' => '|',
-      'AND' => '',
-      'NOT' => '-'
-    }
-    
     FACET_CACHE = {} #:nodoc: 
     
     # Returns the options hash.

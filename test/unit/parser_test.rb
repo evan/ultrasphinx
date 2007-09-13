@@ -31,6 +31,15 @@ context "parser" do
     
     'artichoke NOT heart', 
     'artichoke - heart',
+
+    'artichoke and hearts', 
+    'artichoke hearts',
+    
+    'artichoke or hearts', 
+    'artichoke | hearts',
+    
+    'artichoke not heart', 
+    'artichoke - heart',
     
     'title:artichoke', 
     '@title artichoke',
