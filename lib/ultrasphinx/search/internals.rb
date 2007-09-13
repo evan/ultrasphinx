@@ -119,15 +119,14 @@ module Ultrasphinx
           
               klass.connection.execute("SELECT #{field} AS value, CRC32(#{field}) AS crc FROM #{klass.table_name} GROUP BY #{field}").each_hash do |hash|
                 (FACET_CACHE[facet] ||= {})[hash['crc'].to_i] = hash['value']
-              end              
+              end                            
             end
           end
-
+          
           # apply the map
           facets = Hash[*(facets.map do |crc, value|
             [FACET_CACHE[facet][crc], value]
           end.flatten)]
-
         end
         
         facets        

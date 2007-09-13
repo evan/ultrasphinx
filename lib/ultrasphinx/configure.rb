@@ -56,7 +56,7 @@ module Ultrasphinx
             raise ConfigurationError, "Unsupported database adapter" unless adapter_defaults
             conf.puts adapter_defaults
                       
-            connection_settings.each do |key, value|
+            connection_settings.reverse_merge(CONNECTION_DEFAULTS).each do |key, value|
               conf.puts "#{CONFIG_MAP[key]} = #{value}" if CONFIG_MAP[key]          
             end          
             

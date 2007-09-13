@@ -45,6 +45,10 @@ module Ultrasphinx
     :port => 'sql_port',
     :socket => 'sql_sock'
   }
+  
+  CONNECTION_DEFAULTS = {
+    :host => 'localhost'
+  }
 
   OPTIONAL_SPHINX_KEYS = ['morphology', 'stopwords', 'min_word_len', 'charset_type', 'charset_table', 'docinfo']
   
