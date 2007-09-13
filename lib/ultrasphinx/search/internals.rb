@@ -71,7 +71,7 @@ module Ultrasphinx
         
         # class_ids don't use the standard faceting scheme
         Hash[*(MODELS_TO_IDS.map do |klass, id|
-          [klass, facets[id]]
+          [klass, facets[id] || 0]
         end.flatten)]
       end
       
