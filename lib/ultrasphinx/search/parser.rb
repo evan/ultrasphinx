@@ -63,7 +63,7 @@ module Ultrasphinx
           
           # add to the stream, converting the operator
           if !has_operator
-            if OPERATORS.to_a.flatten.include? subtoken
+            if OPERATORS.to_a.flatten.include? subtoken and index != (query.size - 1) # operators at the end of the string are not parsed
               token_stream << OPERATORS[subtoken] || subtoken
               has_operator = true # flip
             else
