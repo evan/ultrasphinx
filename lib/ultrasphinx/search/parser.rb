@@ -20,7 +20,7 @@ module Ultrasphinx
         # Alters a Google query string into Sphinx 0.97 style
         return "" if query.blank?
         # Parse
-        token_hash = token_stream_to_hash(query_to_token_stream(query))                
+        token_hash = token_stream_to_hash(query_to_token_stream(query))  
         # Join everything up and remove some spaces
         token_hash_to_array(token_hash).join(" ").squeeze(" ").strip
       end
@@ -58,7 +58,7 @@ module Ultrasphinx
 
       def query_to_token_stream(query)      
         # First, split query on spaces that are not inside sets of quotes or parens
-        query = query.scan(/[^"() ]*["(][^")]*[")]|[^"() ]+/) 
+        query = query.to_s.scan(/[^"() ]*["(][^")]*[")]|[^"() ]+/) 
       
         token_stream = []
         has_operator = false

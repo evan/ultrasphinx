@@ -112,7 +112,7 @@ def ultrasphinx_daemon_running?
     true
   else
     # remove bogus lockfiles
-    Dir[Ultrasphinx::PLUGIN_SETTINGS["path"] + "*spl"].each {|file| File.delete(file)}
+    Dir[Ultrasphinx::INDEX_SETTINGS["path"] + "*spl"].each {|file| File.delete(file)}
     false
   end  
 end

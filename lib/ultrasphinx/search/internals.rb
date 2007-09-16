@@ -11,8 +11,13 @@ module Ultrasphinx
       
         request = Sphinx::Client.new
       
-        request.SetServer(PLUGIN_SETTINGS['server_host'], PLUGIN_SETTINGS['server_port'])
-        request.SetMatchMode Sphinx::Client::SPH_MATCH_EXTENDED # force extended query mode
+        request.SetServer(
+          Ultrasphinx::CLIENT_SETTINGS['server_host'], 
+          Ultrasphinx::CLIENT_SETTINGS['server_port']
+        )
+        
+        # force extended query mode
+        request.SetMatchMode(Sphinx::Client::SPH_MATCH_EXTENDED) 
       
         offset, limit = opts['per_page'] * (opts['page'] - 1), opts['per_page']
         

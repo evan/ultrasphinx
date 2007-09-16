@@ -121,14 +121,14 @@ If the associations weren't just <tt>has_many</tt> and <tt>belongs_to</tt>, you 
       end
       
       Array(opts['concatenate']).each do |concat|
-        concat.assert_valid_keys ['class_name', 'conditions', 'field', 'as', 'fields', 'association_name', 'association_sql']
+        concat.assert_valid_keys ['class_name', 'conditions', 'field', 'as', 'fields', 'association_name', 'association_sql', 'function_sql']
         raise Ultrasphinx::ConfigurationError, "You can't mix regular concat and group concats" if concat['fields'] and (concat['field'] or concat['class_name'] or concat['association_name'])
         raise Ultrasphinx::ConfigurationError, "Group concats must not have multiple fields" if concat['field'].is_a? Array
         raise Ultrasphinx::ConfigurationError, "Regular concats should have multiple fields" if concat['fields'] and !concat['fields'].is_a?(Array)
       end
       
       Array(opts['include']).each do |inc|
-        inc.assert_valid_keys ['class_name', 'field', 'as', 'association_sql']
+        inc.assert_valid_keys ['class_name', 'field', 'as', 'association_sql', 'function_sql']
       end
       
       Ultrasphinx::MODEL_CONFIGURATION[self.name] = opts

@@ -28,10 +28,10 @@ module Ultrasphinx
         puts "Rebuilding Ultrasphinx configurations for #{ENV['RAILS_ENV']} environment" 
         puts "Available models are #{MODEL_CONFIGURATION.keys.to_sentence}"
         File.open(CONF_PATH, "w") do |conf|
-          conf.puts "\n# Auto-generated at #{Time.now}.\n# Hand modifications will be overwritten.\n"
+          conf.puts "\n# Auto-generated at #{Time.now}.\n# Hand modifications will be overwritten.\n# #{BASE_PATH}"          
           
-          conf.puts "\n# #{BASE_PATH}"
-          conf.puts open(BASE_PATH).read.sub(/^ultrasphinx.*?\{.*?\}/m, '') + "\n"
+          conf.puts INDEXER_SETTINGS._to_conf_string("indexer")
+          conf.puts DAEMON_SETTINGS._to_conf_string("searchd")
           
           sphinx_source_list = []
           
@@ -47,7 +47,7 @@ module Ultrasphinx
             sphinx_source_list << source
     
             conf.puts "source #{source}\n{"
-            conf.puts SOURCE_DEFAULTS
+            conf.puts SOURCE_SETTINGS._to_conf_string
                       
             # Tentatively supporting Postgres now
             connection_settings = klass.connection.instance_variable_get("@config")
@@ -70,64 +70,60 @@ module Ultrasphinx
             
             conf.puts "\nsql_query_range = SELECT MIN(#{pkey}), MAX(#{pkey}) FROM #{table}"
             
-            options['fields'].to_a.each do |f|
-              column, as = f.is_a?(Hash) ? [f['field'], f['as']] : [f, f]
-
-              source_string = "#{table}.#{column}"
-              if f['function_sql']
-                source_string = f['function_sql'].sub('?', source_string)
-              end
-
-              column_strings << Fields.instance.cast(source_string, as)
-              remaining_columns.delete(as)
+            # regular fields
+            options['fields'].to_a.each do |entry|
+              source_string = "#{table}.#{entry['field']}"
+              column_strings, remaining_columns = install_field(source_string, entry['as'], entry['function_sql'], entry['facet'], column_strings, remaining_columns)
+            end
+            
+            # includes
+            options['include'].to_a.each do |entry|
               
+              join_klass = entry['class_name'].constantize
+              association = klass.reflect_on_association(entry['class_name'].underscore.to_sym)
+                            
+              raise ConfigurationError, "Unknown association from #{klass} to #{entry['class_name']}" if not association and not entry['association_sql']
               
-              # Generate CRC integer fields for text grouping
-              if f['facet']
-                # Postgres probably doesn't handle this
-                column_strings << "CRC32(#{table}.#{column}) AS #{as}_facet"
-                remaining_columns.delete("#{as}_facet")
+              join_strings = install_join_unless_association_sql(entry['association_sql'], nil, join_strings) do 
+                "LEFT OUTER JOIN #{join_klass.table_name} ON " + 
+                if (macro = association.macro) == :belongs_to 
+                  "#{join_klass.table_name}.#{join_klass.primary_key} = #{table}.#{association.primary_key_name}" 
+                elsif macro == :has_one
+                  "#{table}.#{klass.primary_key} = #{join_klass.table_name}.#{association.instance_variable_get('@foreign_key_name')}" 
+                else
+                  raise ConfigurationError, "Unidentified association macro #{macro.inspect}"
+                end
               end
+              
+              source_string = "#{join_klass.table_name}.#{entry['field']}"
+              column_strings, remaining_columns = install_field(source_string, entry['as'], entry['function_sql'], entry['facet'], column_strings, remaining_columns)              
+            end
+            
+            # group concats
+            options['concatenate'].to_a.each do |entry|
+              if entry['class_name'] and entry['field']
+                # only has_many's or explicit sql right now
+                join_klass = entry['class_name'].constantize
+  
+                join_strings = install_join_unless_association_sql(entry['association_sql'], nil, join_strings) do 
+                  # XXX make sure foreign key is right for polymorphic relationships
+                  association = klass.reflect_on_association(entry['association_name'] ? entry['association_name'].to_sym : entry['class_name'].underscore.pluralize.to_sym)
+                  "LEFT OUTER JOIN #{join_klass.table_name} ON #{table}.#{klass.primary_key} = #{join_klass.table_name}.#{association.primary_key_name}" + 
+                    (entry['conditions'] ? " AND (#{entry['conditions']})" : "")
+                end
                 
-            end
-            
-            options['include'].to_a.each do |join|
-              join_klass = join['class_name'].constantize
-              association = klass.reflect_on_association(join['class_name'].underscore.to_sym)
-              if not association and not join['association_sql']
-                raise ConfigurationError, "Unknown association from #{klass} to #{join['class_name']}"
-              elsif join['association_sql']
-                join_strings << join['association_sql']
+                source_string = "GROUP_CONCAT(#{join_klass.table_name}.#{entry['field']} SEPARATOR ' ')"
+                column_strings, remaining_columns = install_field(source_string, entry['as'], entry['function_sql'], entry['facet'], column_strings, remaining_columns)
+              elsif entry['fields']
+                # regular concats
+                source_string = "CONCAT_WS(' ', " + entry['fields'].map do |subfield| 
+                  "#{table}.#{subfield}"
+                end.join(', ') + ")"
+                
+                column_strings, remaining_columns = install_field(source_string, entry['as'], entry['function_sql'], entry['facet'], column_strings, remaining_columns)              
               else
-                join_strings << "LEFT OUTER JOIN #{join_klass.table_name} ON " + 
-                  if (macro = association.macro) == :belongs_to 
-                    "#{join_klass.table_name}.#{join_klass.primary_key} = #{table}.#{association.primary_key_name}" 
-                  elsif macro == :has_one
-                    "#{table}.#{klass.primary_key} = #{join_klass.table_name}.#{association.instance_variable_get('@foreign_key_name')}" 
-                  else
-                    raise ConfigurationError, "Unidentified association macro #{macro.inspect}"
-                  end
+                raise ConfigurationError, "Invalid concatenate parameters for #{model}: #{entry.inspect}."
               end
-              column_strings << "#{join_klass.table_name}.#{join['field']} AS #{join['as'] or join['field']}"
-              remaining_columns.delete(join['as'] || join['field'])
-            end
-            
-            options['concatenate'].to_a.select{|concat| concat['class_name'] and concat['field']}.each do |group|
-              # only has_many's or explicit sql right now
-              join_klass = group['class_name'].constantize
-              if group['association_sql']
-                join_strings << group['association_sql']
-              else
-                association = klass.reflect_on_association(group['association_name'] ? group['association_name'].to_sym : group['class_name'].underscore.pluralize.to_sym)
-                join_strings << "LEFT OUTER JOIN #{join_klass.table_name} ON #{table}.#{klass.primary_key} = #{join_klass.table_name}.#{association.primary_key_name}" + (" AND (#{group['conditions']})" if group['conditions']).to_s # XXX make sure foreign key is right for polymorphic relationships
-              end
-              column_strings << Fields.instance.cast("GROUP_CONCAT(#{join_klass.table_name}.#{group['field']} SEPARATOR ' ')", group['as'])
-              remaining_columns.delete(group['as'])
-            end
-            
-            options['concatenate'].to_a.select{|concat| concat['fields']}.each do |concat|
-              column_strings << Fields.instance.cast("CONCAT_WS(' ', #{concat['fields'].map{|field| "#{table}.#{field}"}.join(', ')})", concat['as'])
-              remaining_columns.delete(concat['as'])
             end
             
   #          puts "#{model} has #{remaining_columns.inspect} remaining"
@@ -139,7 +135,8 @@ module Ultrasphinx
               # sphinx wants them always in the same order, but "id" must be first
               (field = string[/.*AS (.*)/, 1]) == "id" ? "*" : field
             end.join(", ")] 
-            query_strings << "FROM #{table}"                      
+
+            query_strings << "FROM #{table}"
             query_strings += join_strings.uniq
             query_strings << "WHERE #{table}.#{pkey} >= $start AND #{table}.#{pkey} <= $end"
             query_strings += condition_strings.uniq.map{|s| "AND #{s}"}
@@ -171,16 +168,36 @@ module Ultrasphinx
   
           conf.puts "index #{UNIFIED_INDEX_NAME}"
           conf.puts "{"
-          conf.puts sphinx_source_list.map {|s| "source = #{s}" }
-  
-          OPTIONAL_SPHINX_KEYS.each do |key|
-            conf.puts "#{key} = #{PLUGIN_SETTINGS[key]}" if PLUGIN_SETTINGS[key]
+          sphinx_source_list.each do |source| 
+            conf.puts "source = #{source}"
           end
           
-          conf.puts "path = #{PLUGIN_SETTINGS["path"]}/sphinx_index_#{UNIFIED_INDEX_NAME}"
+          conf.puts INDEX_SETTINGS.merge(
+            'path' => INDEX_SETTINGS['path'] + "/sphinx_index_#{UNIFIED_INDEX_NAME}"
+          )._to_conf_string
+  
           conf.puts "}\n\n"
         end
               
+      end
+      
+      def install_field(source_string, as, function_sql, with_facet, column_strings, remaining_columns) #:nodoc:
+        source_string = function_sql.sub('?', source_string) if function_sql
+
+        column_strings << Fields.instance.cast(source_string, as)
+        remaining_columns.delete(as)
+        
+        # Generate CRC integer fields for text grouping
+        if with_facet
+          # Postgres probably doesn't handle this
+          column_strings << "CRC32(#{source_string}) AS #{as}_facet"
+          remaining_columns.delete("#{as}_facet")
+        end
+        [column_strings, remaining_columns]
+      end
+      
+      def install_join_unless_association_sql(association_sql, join_string, join_strings) #:nodoc:
+        join_strings << (association_sql or join_string or yield)
       end
       
       def say(s) #:nodoc:

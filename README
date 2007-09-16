@@ -7,8 +7,6 @@ Ruby on Rails configurator and client to the Sphinx full text search engine.
 
 Copyright 2007 Cloudburst, LLC. Licensed under the AFL 3. See the included LICENSE file. Some portions copyright Dmytro Shteflyuk and Alexey Kovyrin, distributed under the Ruby License, and used with permission. Some portions copyright PJ Hyett and Mislav Marohnić, distributed under the MIT license, and used with permission.
 
-The public certificate for this gem is at http://rubyforge.org/frs/download.php/25331/evan_weaver-original-public_cert.pem.
-
 == Requirements
 
 * MySQL (or Postgres, experimental)

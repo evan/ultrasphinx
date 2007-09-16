@@ -50,6 +50,13 @@ class Hash
       end._flatten_once]
   end
   
+  def _to_conf_string(section = nil)
+    inner = self.map do |key, value|
+      "  #{key} = #{value}"
+    end.join("\n")
+    section ? "#{section} {\n#{inner}\n}\n" : inner
+  end
+  
   def _deep_stringify_keys
     Hash[*(self.map do |key, value|
 #      puts "#{key.inspect}, #{value.inspect}"

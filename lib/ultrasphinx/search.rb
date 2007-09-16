@@ -271,8 +271,7 @@ Note that your database is never changed by anything Ultrasphinx does.
     def initialize opts = {}
       
       opts = opts._deep_stringify_keys
-    
-        
+            
       @options = self.class.query_defaults.merge(opts._coerce_basic_types)        
       @options['filter'] ||= @options['raw_filters'] || {} # XXX legacy name
       @options['class_name'] = Array(@options['class_name'])

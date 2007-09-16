@@ -49,17 +49,6 @@ module Ultrasphinx
   CONNECTION_DEFAULTS = {
     :host => 'localhost'
   }
-
-  OPTIONAL_SPHINX_KEYS = ['morphology', 'stopwords', 'min_word_len', 'charset_type', 'charset_table', 'docinfo']
-  
-  # some default settings for the sphinx conf files
-  
-  SOURCE_DEFAULTS = %(
-strip_html = 0
-index_html_attrs =
-sql_query_post =
-sql_range_step = 20000
-  )
   
   ADAPTER_DEFAULTS = {
     'mysql' => %(
@@ -70,48 +59,53 @@ sql_query_pre = SET NAMES utf8
     'postgresql' => %(
 type = pgsql
   )}
- 
+     
+  # Logger.
+  def self.say msg
+    STDERR.puts "** ultrasphinx: #{msg}"
+  end
   
   # Configuration file parser.
   def self.options_for(heading, path)
-   
-    section = open(path).read[/^#{heading}.*?\{(.*?)\}/m, 1]    
+    section = open(path).read[/^#{heading}\s*?\{(.*?)\}/m, 1]    
+    
     unless section
-      Ultrasphinx.say "#{path} appears to be corrupted; please delete it and retry. "
-#      raise ConfigurationError, "Missing heading #{heading.inspect}" 
+      Ultrasphinx.say "warning; heading #{heading} not found in #{path}; it may be corrupted. "
+      debugger
+      {}
+    else      
+      options = section.split("\n").map do |line|
+        line =~ /\s*(.*?)\s*=\s*([^\#]*)/
+        $1 ? [$1, $2.strip] : []
+      end      
+      Hash[*options.flatten] 
     end
     
-    options = section.split("\n").map do |line|
-      line =~ /\s*(.*?)\s*=\s*([^\#]*)/
-      $1 ? [$1, $2.strip] : []
-    end
-    
-    Hash[*options.flatten] 
   end
 
   # introspect on the existing generated conf files
 
-  PLUGIN_SETTINGS = options_for('ultrasphinx', BASE_PATH)
-
+  INDEXER_SETTINGS = options_for('indexer', BASE_PATH)
+  CLIENT_SETTINGS = options_for('client', BASE_PATH)
   DAEMON_SETTINGS = options_for('searchd', BASE_PATH)
+  SOURCE_SETTINGS = options_for('source', BASE_PATH)
+  INDEX_SETTINGS = options_for('index', BASE_PATH)
 
-  STOPWORDS_PATH = "#{Ultrasphinx::PLUGIN_SETTINGS['path']}/stopwords.txt"
+  STOPWORDS_PATH = "#{Ultrasphinx::INDEX_SETTINGS['path']}/stopwords.txt"
 
-  MODEL_CONFIGURATION = {}
-      
+  MODEL_CONFIGURATION = {}     
+
   # Complain if the database names go out of sync.
   def self.verify_database_name
     if File.exist? CONF_PATH
-      if options_for('source', CONF_PATH)['sql_db'] != ActiveRecord::Base.connection.instance_variable_get("@config")[:database]
-          say "warning; configured database name is out-of-date"
-          say "please run 'rake ultrasphinx:configure'"
+      if options_for(
+        "source #{MODEL_CONFIGURATION.keys.first.constantize.table_name}", 
+        CONF_PATH
+      )['sql_db'] != ActiveRecord::Base.connection.instance_variable_get("@config")[:database]
+        say "warning; configured database name is out-of-date"
+        say "please run 'rake ultrasphinx:configure'"
       end rescue nil
     end
-  end
-    
-  # Logger.
-  def self.say msg
-    STDERR.puts "** ultrasphinx: #{msg}"
   end
         
 end
