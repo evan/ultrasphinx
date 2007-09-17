@@ -89,6 +89,9 @@ type = pgsql
   DAEMON_SETTINGS = options_for('searchd', BASE_PATH)
   SOURCE_SETTINGS = options_for('source', BASE_PATH)
   INDEX_SETTINGS = options_for('index', BASE_PATH)
+  
+  # Make sure there's a trailing slash
+  INDEX_SETTINGS['path'] = INDEX_SETTINGS['path'].chomp("/") + "/" 
 
   STOPWORDS_PATH = "#{Ultrasphinx::INDEX_SETTINGS['path']}/stopwords.txt"
 
