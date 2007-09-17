@@ -98,7 +98,7 @@ type = pgsql
   def self.verify_database_name
     if File.exist? CONF_PATH
       if options_for(
-        "source #{MODEL_CONFIGURATION.keys.first.constantize.table_name}", 
+        "source #{MODEL_CONFIGURATION.keys.first.tableize}", 
         CONF_PATH
       )['sql_db'] != ActiveRecord::Base.connection.instance_variable_get("@config")[:database]
         say "warning; configured database name is out-of-date"
