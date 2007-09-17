@@ -8,13 +8,14 @@
 
 indexer
 {
-  # indexer options
-  mem_limit = 256M
+  # Indexer running options
+  mem_limit = 256M 
 }
 
 searchd
 {
-  # daemon options
+  # Daemon options
+  # What interface the search daemon should listen on and where to store its logs
   address = 0.0.0.0
   port = 3312
   log = /opt/local/var/db/sphinx/log/searchd.log
@@ -27,14 +28,15 @@ searchd
 
 client
 {
-  # client options
+  # Client options
+  # How your application connects to the search daemon (not necessarily the same as above)
   server_host = localhost
   server_port = 3312
 }
 
 source
 {
-  # source options
+  # Individual SQL source options
   sql_range_step = 20000   
   strip_html = 0
   index_html_attrs =
@@ -43,7 +45,7 @@ source
 
 index
 {
-  # indexer options
+  # Index building options
   path = /opt/local/var/db/sphinx/
   docinfo = extern # just leave this alone
   morphology = stem_en
