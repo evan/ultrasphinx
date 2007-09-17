@@ -71,7 +71,6 @@ type = pgsql
     
     unless section
       Ultrasphinx.say "warning; heading #{heading} not found in #{path}; it may be corrupted. "
-      debugger
       {}
     else      
       options = section.split("\n").map do |line|

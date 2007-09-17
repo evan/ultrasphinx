@@ -17,22 +17,39 @@ module Ultrasphinx
     attr_accessor :classes, :types
     
     def initialize
-      @types = {
-        "class_id" => "numeric",
-        "class" => "text"
-      }
+      @types = {}
       @classes = Hash.new([])
+      @groups = []
+    end
+    
+    def groups
+      @groups.compact.sort_by do |string| 
+        string[/= (.*)/, 1]
+      end
     end
   
-    def save_and_verify_type(field, new_type, klass)
-      # tries to smoosh fields together by name in the sphinx query schema; raises if their types don't match
+    def save_and_verify_type(field, new_type, string_sortable, klass)
+      # Smoosh fields together based on their name in the Sphinx query schema
       field, new_type = field.to_s, TYPE_MAP[new_type.to_s]
+
       if types[field]
+        # Existing field name; verify its type
         raise ConfigurationError, "Column type mismatch for #{field.inspect}; was already #{types[field].inspect}, but is now #{new_type.inspect}." unless types[field] == new_type
         classes[field] = (classes[field] + [klass]).uniq
+
       else
+        # New field      
         types[field] = new_type
         classes[field] = [klass]
+
+        @groups << case new_type
+          when 'numeric'
+            "sql_group_column = #{field}"
+          when 'date'
+            "sql_date_column = #{field}"
+          when 'text' 
+            "sql_str2ordinal_column = #{field}" if string_sortable
+        end
       end
     end
     
@@ -64,8 +81,8 @@ module Ultrasphinx
       configuration.each do |model, options|        
 
         klass = model.constantize        
-        classes['class_id'] += [model]
-        classes['class'] += [model]
+        save_and_verify_type('class_id', 'integer', nil, klass)
+        save_and_verify_type('class', 'string', nil, klass)
                 
         begin
         
@@ -78,25 +95,25 @@ module Ultrasphinx
             unless klass.columns_hash[entry['field']]
               ActiveRecord::Base.logger.warn "ultrasphinx: WARNING: field #{entry['field']} is not present in #{model}"
             else
-              save_and_verify_type(entry['as'], klass.columns_hash[entry['field']].type, klass)
+              save_and_verify_type(entry['as'], klass.columns_hash[entry['field']].type, entry['sortable'], klass)
             end
             
             if entry['facet']
-              save_and_verify_type(entry['as'], 'text', klass) # source must be a string
-              save_and_verify_type("#{entry['as']}_facet", 'integer', klass)
+              save_and_verify_type(entry['as'], 'text', nil, klass) # source must be a string
+              save_and_verify_type("#{entry['as']}_facet", 'integer', nil, klass)
             end
             
             entry
           end  
           
           # Joins are whatever they are in the target       
-          options['include'].to_a.each do |join|
-            save_and_verify_type(join['as'] || join['field'], join['class_name'].constantize.columns_hash[join['field']].type, klass)
+          options['include'].to_a.each do |entry|
+            save_and_verify_type(entry['as'] || entry['field'], entry['class_name'].constantize.columns_hash[entry['field']].type, entry['sortable'], klass)
           end  
           
           # Regular concats are CHAR (I think), group_concats are BLOB and need to be cast to CHAR, e.g. :text
-          options['concatenate'].to_a.each do |concats|
-            save_and_verify_type(concats['as'], 'text', klass)
+          options['concatenate'].to_a.each do |entry|
+            save_and_verify_type(entry['as'], 'text', entry['sortable'], klass)
           end          
         rescue ActiveRecord::StatementInvalid
           ActiveRecord::Base.logger.warn "ultrasphinx: WARNING: model #{model} does not exist in the database yet"

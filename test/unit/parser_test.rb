@@ -1,7 +1,7 @@
 
 require "#{File.dirname(__FILE__)}/../test_helper.rb"
 
-context "parser" do
+describe "parser" do
 
   def setup
     @s = Ultrasphinx::Search.new
