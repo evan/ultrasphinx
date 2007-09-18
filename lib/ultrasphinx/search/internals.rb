@@ -41,9 +41,9 @@ module Ultrasphinx
         opts['filter'].each do |field, value|
           begin
             case value
-              when Fixnum, Float, BigDecimal, NilClass
+              when Fixnum, Float, BigDecimal, NilClass, Array
                 request.SetFilter field, Array(value)
-              when Range, Array
+              when Range
                 value = [value.begin, value.end] if value.is_a? Range
                 min, max = [value.first, value.last].map do |x|
                   x._to_numeric if x.is_a? String
