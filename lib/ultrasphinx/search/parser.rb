@@ -58,7 +58,7 @@ module Ultrasphinx
 
       def query_to_token_stream(query)      
         # First, split query on spaces that are not inside sets of quotes or parens
-        query = query.to_s.scan(/[^"() ]*["(][^")]*[")]|[^"() ]+/) 
+        query = query.scan(/[^"() ]*["(][^")]*[")]|[^"() ]+/) 
       
         token_stream = []
         has_operator = false

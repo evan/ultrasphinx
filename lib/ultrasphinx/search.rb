@@ -272,9 +272,13 @@ Note that your database is never changed by anything Ultrasphinx does.
       
       opts = opts._deep_stringify_keys
             
-      @options = self.class.query_defaults.merge(opts._coerce_basic_types)        
+      @options = self.class.query_defaults.merge(opts._coerce_basic_types)
+
       @options['filter'] ||= @options['raw_filters'] || {} # XXX legacy name
+
+      @options['query'] = @options['query'].to_s
       @options['class_name'] = Array(@options['class_name'])
+      
       @options['parsed_query'] = if query.blank? 
          "@empty_searchable #{EMPTY_SEARCHABLE}"
         else
