@@ -44,14 +44,12 @@ module Ultrasphinx
               when Fixnum, Float, BigDecimal, NilClass, Array
                 request.SetFilter field, Array(value)
               when Range
-                value = [value.begin, value.end] if value.is_a? Range
-                min, max = [value.first, value.last].map do |x|
+                min, max = [value.begin, value.end].map do |x|
                   x._to_numeric if x.is_a? String
                 end
-                unless min.class != max.class
-                  min, max = max, min if min > max
-                  request.SetFilterRange field, min, max
-                end
+                raise NoMethodError if min.class != max.class
+                min, max = max, min if min > max
+                request.SetFilterRange field, min, max
               when String
                 opts['parsed_query'] << " @#{field} #{value}"
               else
