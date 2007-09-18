@@ -105,7 +105,7 @@ module Ultrasphinx
       def build_source(model, options, class_id, klass, source, groups)
                 
         column_strings, join_strings, condition_strings, remaining_columns = 
-          setup_source_arrays(klass, class_id, options[:conditions])
+          setup_source_arrays(klass, class_id, options['conditions'])
 
         column_strings, join_strings, remaining_columns = 
           build_regular_fields(klass, options['fields'], column_strings, join_strings, remaining_columns)

@@ -41,7 +41,7 @@ module Ultrasphinx
         opts['filter'].each do |field, value|
           begin
             case value
-              when Fixnum, Float, BigDecimal
+              when Fixnum, Float, BigDecimal, NilClass
                 request.SetFilter field, Array(value)
               when Range, Array
                 value = [value.begin, value.end] if value.is_a? Range
@@ -161,11 +161,11 @@ module Ultrasphinx
             klass.respond_to? method_name
           end
           
-          logger.debug "** ultrasphinx: using #{klass.name}\##{finder} as finder method"
+          logger.debug "** ultrasphinx: using #{klass.name}.#{finder} as finder method"
     
           begin
             # XXX does not use Memcached's multiget
-            results += case instances = id_set.map {|id| klass.send(finder, id)}               
+            results += case instances = id_set.map { |id| klass.send(finder, id) }
               when Hash
                 instances.values
               when Array
@@ -173,7 +173,7 @@ module Ultrasphinx
               else
                 Array(instances)
             end
-          rescue ActiveRecord:: ActiveRecordError => e
+          rescue ActiveRecord::ActiveRecordError => e
             raise Sphinx::SphinxResponseError, e.inspect
           end
         end

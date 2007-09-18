@@ -1,5 +1,6 @@
 
-* Use sql_str2ordinal_column to allow sorting by text.
 * Support multiple spelling dictionaries per machine
-* Figure out a more intuitive API for the <tt>is_indexed</tt> method.
-* Unify filters and textfields
+* Finish unifying filters and textfields
+* Support exclude filters
+* Make sure filters can be set to nil
+
