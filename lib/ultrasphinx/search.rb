@@ -272,7 +272,7 @@ Note that your database is never changed by anything Ultrasphinx does.
       
       opts = opts._deep_stringify_keys
             
-      @options = self.class.query_defaults.merge(opts._coerce_basic_types)
+      @options = self.class.query_defaults.merge(opts._deep_dup._coerce_basic_types)
 
       @options['filter'] ||= @options['raw_filters'] || {} # XXX legacy name
 
