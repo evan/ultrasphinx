@@ -195,7 +195,8 @@ module Ultrasphinx
       
       def strip_query_commands(s)
         # XXX Hack for query commands, since sphinx doesn't intelligently parse the query in excerpt mode
-        s.gsub(/(^|\s)(AND|OR|NOT|\@\w+)(\s|$)/i, "")
+        # Also removes apostrophes in the middle of words so that they don't get split in two.
+        s.gsub(/(^|\s)(AND|OR|NOT|\@\w+)(\s|$)/i, "").gsub(/(\w)\'(\w)/, '\1\2')
       end 
     
     end
