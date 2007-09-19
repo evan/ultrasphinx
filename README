@@ -57,7 +57,7 @@ If you need per-environment configuration, you can use <tt>RAILS_ROOT/config/ult
 Now, in your models, use the <tt>is_indexed</tt> method to configure a model as searchable. For example:
   
   class Post
-    is_indexed 'fields' => ['created_at', 'title', 'body']
+    is_indexed :fields => ['created_at', 'title', 'body']
   end
   
 For more index options, see ActiveRecord::Base .is_indexed.

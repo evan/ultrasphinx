@@ -1,23 +1,121 @@
 
 require "#{File.dirname(__FILE__)}/../test_helper.rb"
 
-describe "a complex configuration" do
+describe "a realistic configuration" do
   def setup
-    @conf = {'fields' => [
-          {'field'=> 'name', 'function_sql' => "replace(?,E'\\'','')"}
-        ],
-        'include' => [
-        {'class_name' => 'Artist', 'field' => 'name', 'as' => 'artist_name', 'association_sql'=>'MOO MO'},
-        {'class_name' => 'Album', 'field' => 'name', 'as'=>'album_name','association_sql' => 'LEFT OUTER JOIN public.albumjoin ON public.albumjoin.track = public.track.id LEFT OUTER JOIN public.album ON public.albumjoin.album=public.album.id LEFT OUTER JOIN public.artist ON public.artist.id = public.track.artist', 'as'=>'album_name'}
-        ]
-      }
-      
+    @models_configuration = {"Restaurant"=>
+  {:conditions=>"restaurants.name NOT LIKE '%duplicate%'",
+   :fields=>
+    [{:field=>"name", :as=>"title"},
+     {:field=>"updated_at", :as=>"published_at"},
+     {:field=>"description", :as=>"body"},
+     {:field=>"specific_cuisine", :as=>"specific_cuisine"},
+     {:field=>"general_cuisine", :facet=>true, :as=>"general_cuisine"},
+     {:field=>"neighborhood", :facet=>true, :as=>"neighborhood"}],
+   :concatenate=>
+    [{:fields=>["general_cuisine", "specific_cuisine"], :as=>"cuisine"},
+     {:fields=>
+       ["phone",
+        "url",
+        "location",
+        "service",
+        "street",
+        "city",
+        "zip",
+        "state",
+        "country",
+        "atmosphere",
+        "hours",
+        "place_type"],
+      :as=>"hidden"},
+     {:class_name=>"Board",
+      :field=>"name",
+      :association_sql=>
+       "LEFT OUTER JOIN restaurants_topics ON restaurants.id = restaurants_topics.restaurant_id LEFT OUTER JOIN topics ON topics.id = restaurants_topics.topic_id LEFT OUTER JOIN boards ON boards.id = topics.board_id",
+      :as=>"board"}],
+   :include=>
+    [{:class_name=>"Board",
+      :field=>"id",
+      :association_sql=>"",
+      :as=>"board_id"}]},
+ "BlogPost"=>
+  {:conditions=>"blog_posts.state = 50 and blog_posts.published_at <= now()",
+   :fields=>
+    [{:field=>"title", :as=>"title"},
+     {:field=>"body", :as=>"body"},
+     {:field=>"blog_type", :as=>"blog_type"},
+     {:field=>"published_at", :as=>"published_at"}],
+   :concatenate=>
+    [{:fields=>["title", "description", "excerpt"], :as=>"editorial"},
+     {:class_name=>"Comment",
+      :conditions=>"comments.item_type = 'BlogPost'",
+      :field=>"body",
+      :as=>"comments"}],
+   :include=>[{:class_name=>"Category", :field=>"name", :as=>"category"}]},
+ "Recipe"=>
+  {:conditions=>"recipes.state = 50 and recipes.published_at <= now()",
+   :fields=>
+    [{:field=>"title", :as=>"title"},
+     {:field=>"published_at", :as=>"published_at"},
+     {:field=>"total_time", :as=>"total_time"},
+     {:field=>"active_time", :as=>"active_time"},
+     {:field=>"parent_id", :as=>"recipe_parent_id"}],
+   :concatenate=>
+    [{:fields=>["instructions", "introduction"], :as=>"body"},
+     {:fields=>["title", "long_description", "short_description"],
+      :as=>"editorial"},
+     {:class_name=>"Comment",
+      :conditions=>"comments.item_type = 'Recipe'",
+      :field=>"body",
+      :as=>"comments"}]},
+ "Topic"=>
+  {:conditions=>"topics.state = 0 OR topics.state = 3",
+   :fields=>
+    [{:field=>"title", :as=>"title"},
+     {:field=>"post_last_created_at", :as=>"published_at"},
+     {:field=>"board_id", :as=>"board_id"}],
+   :concatenate=>
+    [{:class_name=>"Post",
+      :conditions=>"posts.state = 0",
+      :field=>"content",
+      :as=>"body"},
+     {:class_name=>"Post",
+      :conditions=>"posts.state = 0",
+      :field=>"user_name",
+      :as=>"user"}],
+   :include=>[{:class_name=>"Board", :field=>"name", :as=>"board"}]},
+ "Story"=>
+  {:conditions=>"stories.state = 50 and stories.published_at <= now()",
+   :fields=>
+    [{:field=>"title", :as=>"title"},
+     {:field=>"published_at", :as=>"published_at"}],
+   :concatenate=>
+    [{:fields=>["title", "long_description", "short_description"],
+      :as=>"editorial"},
+     {:class_name=>"StoryPage",
+      "association_name"=>"pages",
+      :field=>"body",
+      :as=>"body"},
+     {:class_name=>"Comment",
+      :conditions=>"comments.item_type = 'Story'",
+      :field=>"body",
+      :as=>"comments"}],
+   :include=>[{:class_name=>"Category", :field=>"name", :as=>"category"}]},
+ "Ingredient"=>
+  {:fields=>
+    [{:field=>"title", :as=>"title"},
+     {:field=>"published_at", :as=>"published_at"},
+     {:field=>"body", :as=>"body"}]}}      
+   @sources = @models_configuration.keys.map(&:tableize)
   end
   
   it "should build the unified index" do
-    sources = ["restaurants", "blog_posts", "recipes", "topics", "stories", "ingredients"]
-    result = ["\n# Index configuration\n\n", "index complete\n{", "source = restaurants\nsource = blog_posts\nsource = recipes\nsource = topics\nsource = stories\nsource = ingredients", "  charset_type = utf-8\n  charset_table = 0..9, A..Z->a..z, -, _, ., &, a..z,\n  min_word_len = 1\n  stopwords = \n  path = /opt/local/var/db/sphinx//sphinx_index_complete\n  docinfo = extern\n  morphology = stem_en", "}\n\n"]
-    Ultrasphinx::Configure.send(:build_index, sources).should.equal(result)  
+    Ultrasphinx::Configure.send(:build_index, @sources)[1..-1].should.equal(
+      ["index complete\n{",
+ "source = blog_posts\nsource = ingredients\nsource = recipes\nsource = restaurants\nsource = stories\nsource = topics",
+ "  charset_type = utf-8\n  charset_table = 0..9, A..Z->a..z, -, _, ., &, a..z,\n  min_word_len = 1\n  stopwords = \n  path = /opt/local/var/db/sphinx//sphinx_index_complete\n  docinfo = extern\n  morphology = stem_en",
+ "}\n\n"]
+    )  
   end    
   
 end

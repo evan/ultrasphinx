@@ -38,7 +38,7 @@ module Ultrasphinx
           MODEL_CONFIGURATION.each_with_index do |model_options, class_id|
             model, options = model_options
             klass, source = model.constantize, model.tableize    
-            sources << source              
+            sources << source
             conf.puts build_source(Fields.instance, model, options, class_id, klass, source, cached_groups)
           end
           
@@ -228,7 +228,7 @@ module Ultrasphinx
       def build_index(sources)
         ["\n# Index configuration\n\n",
           "index #{UNIFIED_INDEX_NAME}\n{",
-          sources.map do |source| 
+          sources.sort.map do |source| 
             "source = #{source}"
           end.join("\n"),          
           INDEX_SETTINGS.merge('path' => INDEX_SETTINGS['path'] + "/sphinx_index_#{UNIFIED_INDEX_NAME}")._to_conf_string,
