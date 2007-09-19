@@ -26,7 +26,7 @@ module Ultrasphinx
 
         load_constants
               
-        puts "Rebuilding Ultrasphinx configurations for #{ENV['RAILS_ENV']} environment" 
+        puts "Rebuilding Ultrasphinx configurations for #{RAILS_ENV} environment" 
         puts "Available models are #{MODEL_CONFIGURATION.keys.to_sentence}"
         File.open(CONF_PATH, "w") do |conf|
         

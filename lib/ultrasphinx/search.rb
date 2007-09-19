@@ -146,7 +146,7 @@ Note that your database is never changed by anything Ultrasphinx does.
       # reading the conf file makes sure that we are in sync with the actual sphinx index,
       # not whatever you happened to change your models to most recently
       unless File.exist? CONF_PATH
-        Ultrasphinx.say "configuration file not found for #{ENV['RAILS_ENV'].inspect} environment"
+        Ultrasphinx.say "configuration file not found for #{RAILS_ENV.inspect} environment"
         Ultrasphinx.say "please run 'rake ultrasphinx:configure'"
       else
         begin  

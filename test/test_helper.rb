@@ -1,4 +1,6 @@
 
+RAILS_ENV = "test"
+
 def silently
   old_stdout, $stdout = $stdout, StringIO.new
   yield
@@ -7,8 +9,6 @@ end
 
 RAILS_ROOT = File.dirname(__FILE__)
 $LOAD_PATH << "#{RAILS_ROOT}/../lib" << RAILS_ROOT
-
-RAILS_ENV = "test"
 
 require 'rubygems'
 require 'initializer'
