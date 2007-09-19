@@ -39,7 +39,7 @@ module Ultrasphinx
             model, options = model_options
             klass, source = model.constantize, model.tableize    
             sources << source              
-            conf.puts build_source(model, options, class_id, klass, source, cached_groups)
+            conf.puts build_source(Fields.instance, model, options, class_id, klass, source, cached_groups)
           end
           
           conf.puts build_index(sources)
@@ -75,46 +75,43 @@ module Ultrasphinx
       end
       
       
-      def setup_source_arrays(klass, class_id, conditions)        
+      def setup_source_arrays(klass, fields, class_id, conditions)        
         condition_strings = Array(conditions).map do |condition| 
           "(#{condition})"
         end
         
-        table, pkey = klass.table_name, klass.primary_key
         column_strings = [
-          "(#{table}.#{pkey} * #{MODEL_CONFIGURATION.size} + #{class_id}) AS id", 
+          "(#{klass.table_name}.#{klass.primary_key} * #{MODEL_CONFIGURATION.size} + #{class_id}) AS id", 
           "#{class_id} AS class_id", "'#{klass.name}' AS class", 
           "'#{EMPTY_SEARCHABLE}' AS empty_searchable"]
-        remaining_columns = Fields.instance.types.keys - ["class", "class_id", "empty_searchable"]        
+        remaining_columns = fields.types.keys - ["class", "class_id", "empty_searchable"]        
         [column_strings, [], condition_strings, remaining_columns]
       end
       
       
       def range_select_string(klass)
-        table, pkey = klass.table_name, klass.primary_key
-        "\nsql_query_range = SELECT MIN(#{pkey}), MAX(#{pkey}) FROM #{table}"
+        "\nsql_query_range = SELECT MIN(#{klass.primary_key}), MAX(#{klass.primary_key}) FROM #{klass.table_name}"
       end
       
       
       def query_info_string(klass, class_id)
-        table, pkey = klass.table_name, klass.primary_key
-        "\nsql_query_info = SELECT * FROM #{table} WHERE #{table}.#{pkey} = (($id - #{class_id}) / #{MODEL_CONFIGURATION.size})"
+        "\nsql_query_info = SELECT * FROM #{klass.table_name} WHERE #{klass.table_name}.#{klass.primary_key} = (($id - #{class_id}) / #{MODEL_CONFIGURATION.size})"
       end      
       
             
-      def build_source(model, options, class_id, klass, source, groups)
+      def build_source(fields, model, options, class_id, klass, source, groups)
                 
         column_strings, join_strings, condition_strings, remaining_columns = 
-          setup_source_arrays(klass, class_id, options['conditions'])
+          setup_source_arrays(klass, fields, class_id, options['conditions'])
 
         column_strings, join_strings, remaining_columns = 
-          build_regular_fields(klass, options['fields'], column_strings, join_strings, remaining_columns)
+          build_regular_fields(klass, fields, options['fields'], column_strings, join_strings, remaining_columns)
         column_strings, join_strings, remaining_columns = 
-          build_includes(klass, options['include'], column_strings, join_strings, remaining_columns)
+          build_includes(klass, fields, options['include'], column_strings, join_strings, remaining_columns)
         column_strings, join_strings, remaining_columns = 
-          build_concatenations(klass, options['concatenate'], column_strings, join_strings, remaining_columns)
+          build_concatenations(klass, fields, options['concatenate'], column_strings, join_strings, remaining_columns)
         
-        column_strings = add_missing_columns(remaining_columns, column_strings)
+        column_strings = add_missing_columns(fields, remaining_columns, column_strings)
        
         ["\n# Source configuration\n\n",
          "source #{source}\n{",
@@ -131,7 +128,6 @@ module Ultrasphinx
       def build_query(klass, column_strings, join_strings, condition_strings)
 
         connection_settings = klass.connection.instance_variable_get("@config")
-        table, pkey = klass.table_name, klass.primary_key
 
         ["sql_query =", 
           "SELECT", 
@@ -141,7 +137,7 @@ module Ultrasphinx
           end.join(", "),
           "FROM #{klass.table_name}",
           join_strings.uniq,
-          "WHERE #{table}.#{pkey} >= $start AND #{table}.#{pkey} <= $end",
+          "WHERE #{klass.table_name}.#{klass.primary_key} >= $start AND #{klass.table_name}.#{klass.primary_key} <= $end",
           condition_strings.uniq.map do |condition| 
             "AND #{condition}"
           end,
@@ -150,25 +146,25 @@ module Ultrasphinx
       end
       
       
-      def add_missing_columns(remaining_columns, column_strings)
+      def add_missing_columns(fields, remaining_columns, column_strings)
         remaining_columns.each do |field|
-          column_strings << Fields.instance.null(field)
+          column_strings << fields.null(field)
         end
         column_strings
       end
       
 
-      def build_regular_fields(klass, entries, column_strings, join_strings, remaining_columns)          
+      def build_regular_fields(klass, fields, entries, column_strings, join_strings, remaining_columns)          
         entries.to_a.each do |entry|
           source_string = "#{klass.table_name}.#{entry['field']}"
-          column_strings, remaining_columns = install_field(source_string, entry['as'], entry['function_sql'], entry['facet'], column_strings, remaining_columns)
+          column_strings, remaining_columns = install_field(fields, source_string, entry['as'], entry['function_sql'], entry['facet'], column_strings, remaining_columns)
         end
         
         [column_strings, join_strings, remaining_columns]
       end
       
 
-      def build_includes(klass, entries, column_strings, join_strings, remaining_columns)                  
+      def build_includes(klass, fields, entries, column_strings, join_strings, remaining_columns)                  
         entries.to_a.each do |entry|
           
           join_klass = entry['class_name'].constantize
@@ -188,14 +184,14 @@ module Ultrasphinx
           end
           
           source_string = "#{join_klass.table_name}.#{entry['field']}"
-          column_strings, remaining_columns = install_field(source_string, entry['as'], entry['function_sql'], entry['facet'], column_strings, remaining_columns)                         
+          column_strings, remaining_columns = install_field(fields, source_string, entry['as'], entry['function_sql'], entry['facet'], column_strings, remaining_columns)                         
         end
         
         [column_strings, join_strings, remaining_columns]
       end
       
         
-      def build_concatenations(klass, entries, column_strings, join_strings, remaining_columns)
+      def build_concatenations(klass, fields, entries, column_strings, join_strings, remaining_columns)
         entries.to_a.each do |entry|
           if entry['class_name'] and entry['field']
             # group concats
@@ -210,7 +206,7 @@ module Ultrasphinx
             end
             
             source_string = "GROUP_CONCAT(#{join_klass.table_name}.#{entry['field']} SEPARATOR ' ')"
-            column_strings, remaining_columns = install_field(source_string, entry['as'], entry['function_sql'], entry['facet'], column_strings, remaining_columns)
+            column_strings, remaining_columns = install_field(fields, source_string, entry['as'], entry['function_sql'], entry['facet'], column_strings, remaining_columns)
             
           elsif entry['fields']
             # regular concats
@@ -218,7 +214,7 @@ module Ultrasphinx
               "#{klass.table_name}.#{subfield}"
             end.join(', ') + ")"
             
-            column_strings, remaining_columns = install_field(source_string, entry['as'], entry['function_sql'], entry['facet'], column_strings, remaining_columns)              
+            column_strings, remaining_columns = install_field(fields, source_string, entry['as'], entry['function_sql'], entry['facet'], column_strings, remaining_columns)              
 
           else
             raise ConfigurationError, "Invalid concatenate parameters for #{model}: #{entry.inspect}."
@@ -240,10 +236,10 @@ module Ultrasphinx
       end
       
     
-      def install_field(source_string, as, function_sql, with_facet, column_strings, remaining_columns)
+      def install_field(fields, source_string, as, function_sql, with_facet, column_strings, remaining_columns)
         source_string = function_sql.sub('?', source_string) if function_sql
 
-        column_strings << Fields.instance.cast(source_string, as)
+        column_strings << fields.cast(source_string, as)
         remaining_columns.delete(as)
         
         # Generate CRC integer fields for text grouping
