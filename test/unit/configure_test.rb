@@ -2,6 +2,11 @@
 require "#{File.dirname(__FILE__)}/../test_helper.rb"
 
 describe "a realistic configuration" do
+
+  def _ *args
+    Ultrasphinx::Configure.send(args.first, *(args[1..-1]))
+  end
+
   def setup
     @models_configuration = {"Restaurant"=>
   {:conditions=>"restaurants.name NOT LIKE '%duplicate%'",
@@ -110,12 +115,71 @@ describe "a realistic configuration" do
   end
   
   it "should build the unified index" do
-    Ultrasphinx::Configure.send(:build_index, @sources)[1..-1].should.equal(
-      ["index complete\n{",
- "source = blog_posts\nsource = ingredients\nsource = recipes\nsource = restaurants\nsource = stories\nsource = topics",
- "  charset_type = utf-8\n  charset_table = 0..9, A..Z->a..z, -, _, ., &, a..z,\n  min_word_len = 1\n  stopwords = \n  path = /opt/local/var/db/sphinx//sphinx_index_complete\n  docinfo = extern\n  morphology = stem_en",
- "}\n\n"]
-    )  
-  end    
+    _(:build_index, @sources)[1..-1].join("\n").should.equal(
+%[index complete
+{
+  source = blog_posts
+  source = ingredients
+  source = recipes
+  source = restaurants
+  source = stories
+  source = topics
+  charset_type = utf-8
+  charset_table = 0..9, A..Z->a..z, -, _, ., &, a..z,
+  min_word_len = 1
+  stopwords = 
+  path = /opt/local/var/db/sphinx//sphinx_index_complete
+  docinfo = extern
+  morphology = stem_en
+}
+
+])  
+  end  
+  
+  it "should fail for unsupported databases" do        
+    should.raise(Ultrasphinx::ConfigurationError) do
+      _(:setup_source_database, Dog)
+    end
+  end
+
+  it "should configure the database for a source" do
+    Dog.connection.instance_variable_get('@config').merge!(:adapter => 'mysql')    
+    _(:setup_source_database, Dog).should.equal(%[
+type = mysql
+sql_query_pre = SET SESSION group_concat_max_len = 65535
+sql_query_pre = SET NAMES utf8
+  
+sql_db = :memory:
+sql_host = localhost])
+  end
+  
+  it "should setup the global header" do
+    _(:global_header)[3..-1].join("\n").should.equal(
+%[indexer {
+  mem_limit = 256M
+}
+
+searchd {
+  read_timeout = 5
+  max_children = 300
+  log = /opt/local/var/db/sphinx/log/searchd.log
+  port = 3312
+  max_matches = 100000
+  query_log = /opt/local/var/db/sphinx/log/query.log
+  pid_file = /opt/local/var/db/sphinx/log/searchd.pid
+  address = 0.0.0.0
+}
+])
+  end
+  
+  it "should generate the range select" do
+   _(:range_select_string, Dog).should.equal("sql_query_range = SELECT MIN(id), MAX(id) FROM dogs")
+  end
+
+  it "should generate the query info select" do
+    # This is not very useful since it only affects the command-line client, and can't 
+    # retrieve the correct row anyway
+   _(:query_info_string, Dog, 1).should.equal("sql_query_info = SELECT * FROM dogs WHERE dogs.id = (($id - 1) / 0)")
+  end
   
 end

@@ -71,7 +71,7 @@ module Ultrasphinx
         connection_settings.reverse_merge(CONNECTION_DEFAULTS).each do |key, value|
           conf << "#{CONFIG_MAP[key]} = #{value}" if CONFIG_MAP[key]          
         end                 
-        conf.join("\n")
+        conf.sort.join("\n")
       end
       
       
@@ -90,12 +90,12 @@ module Ultrasphinx
       
       
       def range_select_string(klass)
-        "\nsql_query_range = SELECT MIN(#{klass.primary_key}), MAX(#{klass.primary_key}) FROM #{klass.table_name}"
+        "sql_query_range = SELECT MIN(#{klass.primary_key}), MAX(#{klass.primary_key}) FROM #{klass.table_name}"
       end
       
       
       def query_info_string(klass, class_id)
-        "\nsql_query_info = SELECT * FROM #{klass.table_name} WHERE #{klass.table_name}.#{klass.primary_key} = (($id - #{class_id}) / #{MODEL_CONFIGURATION.size})"
+        "sql_query_info = SELECT * FROM #{klass.table_name} WHERE #{klass.table_name}.#{klass.primary_key} = (($id - #{class_id}) / #{MODEL_CONFIGURATION.size})"
       end      
       
             
@@ -229,7 +229,7 @@ module Ultrasphinx
         ["\n# Index configuration\n\n",
           "index #{UNIFIED_INDEX_NAME}\n{",
           sources.sort.map do |source| 
-            "source = #{source}"
+            "  source = #{source}"
           end.join("\n"),          
           INDEX_SETTINGS.merge('path' => INDEX_SETTINGS['path'] + "/sphinx_index_#{UNIFIED_INDEX_NAME}")._to_conf_string,
          "}\n\n"]

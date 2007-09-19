@@ -16,13 +16,17 @@ require 'active_support'
 require 'sqlite3'
 require 'active_record'
 require 'test/spec'
+require 'ruby-debug'
 
 ActiveRecord::Base.establish_connection(
-  :adapter => 'sqlite3',
-  :database => ':memory:'
-)
+  config = {
+    :adapter => 'sqlite3',
+    :database => ':memory:'
+  })
+ActiveRecord::Base.connection.instance_variable_set('@config', config)
 
 silently { require 'schema' }
 require 'models'
 require 'ultrasphinx'
-#require 'stub/client'
+
+Debugger.start
