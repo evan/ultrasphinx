@@ -104,30 +104,32 @@ module Ultrasphinx
         facets = facets.dup
       
         if Fields.instance.types[facet] == 'text'        
-          unless FACET_CACHE[facet]
-            # Cache the reverse CRC map for the textual facet if it hasn't been done yet
-            # XXX not necessarily optimal since it requires a direct DB hit once per mongrel
-            Ultrasphinx.say "caching crc reverse map for text facet #{facet}"
-            
-            Fields.instance.classes[facet].each do |klass|
-              # you can only use a facet from your own self right now; no includes allowed
-              field = (MODEL_CONFIGURATION[klass.name]['fields'].detect do |field_hash|
-                field_hash['as'] == facet
-              end)['field']
-          
-              klass.connection.execute("SELECT #{field} AS value, CRC32(#{field}) AS crc FROM #{klass.table_name} GROUP BY #{field}").each_hash do |hash|
-                (FACET_CACHE[facet] ||= {})[hash['crc'].to_i] = hash['value']
-              end                            
-            end
-          end
-          
-          # Apply the map
+          # Apply the map, rebuilding if the cache is missing or out-of-date
           facets = Hash[*(facets.map do |crc, value|
+            rebuild_facet_cache(facet) unless FACET_CACHE[facet] and FACET_CACHE[facet].has_key?(crc)
             [FACET_CACHE[facet][crc], value]
           end.flatten)]
         end
         
         facets        
+      end
+      
+      def rebuild_facet_cache(facet)
+        # Cache the reverse CRC map for the textual facet if it hasn't been done yet
+        # XXX not necessarily optimal since it requires a direct DB hit once per mongrel
+        Ultrasphinx.say "caching CRC reverse map for text facet #{facet}"
+        
+        Fields.instance.classes[facet].each do |klass|
+          # you can only use a facet from your own self right now; no includes allowed
+          field = (MODEL_CONFIGURATION[klass.name]['fields'].detect do |field_hash|
+            field_hash['as'] == facet
+          end)['field']
+      
+          klass.connection.execute("SELECT #{field} AS value, CRC32(#{field}) AS crc FROM #{klass.table_name} GROUP BY #{field}").each_hash do |hash|
+            (FACET_CACHE[facet] ||= {})[hash['crc'].to_i] = hash['value']
+          end                            
+        end
+        FACET_CACHE[facet]
       end
 
       def reify_results(sphinx_ids)
@@ -153,7 +155,7 @@ module Ultrasphinx
             klass.respond_to? method_name
           end
           
-          logger.debug "** ultrasphinx: using #{klass.name}.#{finder} as finder method"
+          # Ultrasphinx.say "using #{klass.name}.#{finder} as finder method"
     
           begin
             # XXX Does not use Memcached's multiget

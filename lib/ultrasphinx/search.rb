@@ -239,14 +239,7 @@ Note that your database is never changed by anything Ultrasphinx does.
     def per_page
       @options['per_page']
     end
-    
-    # Clear the associated facet caches. They will be rebuilt on your next <tt>run</tt> or <tt>excerpt</tt>.
-    def clear_facet_caches
-      Array(@options['facets']).each do |facet|
-        FACET_CACHE.delete(facet)
-      end
-    end
-    
+        
     # Returns the last available page number in the result set.  
     def page_count
       (total_entries / per_page) + (total_entries % per_page == 0 ? 0 : 1)
@@ -288,7 +281,7 @@ Note that your database is never changed by anything Ultrasphinx does.
       @results, @subtotals, @facets, @response = [], {}, {}, {}
         
       extra_keys = @options.keys - (SPHINX_CLIENT_PARAMS.merge(self.class.query_defaults).keys + LEGACY_QUERY_KEYS + INTERNAL_KEYS)
-      logger.warn "Discarded invalid keys: #{extra_keys * ', '}" if extra_keys.any?
+      say "discarded invalid keys: #{extra_keys * ', '}" if extra_keys.any?
     end
     
     # Run the search, filling results with an array of ActiveRecord objects. Set the parameter to false if you only want the ids returned.
@@ -297,12 +290,12 @@ Note that your database is never changed by anything Ultrasphinx does.
       @paginate = nil # clear cache
       tries = 0
 
-      logger.info "** ultrasphinx: searching for #{@options.inspect}"
+      say "searching for #{@options.inspect}"
 
       begin
               
         @response = @request.Query(parsed_query)
-        logger.info "** ultrasphinx: search returned, error #{@request.GetLastError.inspect}, warning #{@request.GetLastWarning.inspect}, returned #{total_entries}/#{response['total_found']} in #{time} seconds."  
+        say "search returned, error #{@request.GetLastError.inspect}, warning #{@request.GetLastWarning.inspect}, returned #{total_entries}/#{response['total_found']} in #{time} seconds."  
 
         @subtotals = get_subtotals(@request, parsed_query) if self.class.client_options['with_subtotals']
         
@@ -317,11 +310,11 @@ Note that your database is never changed by anything Ultrasphinx does.
                                 
       rescue Sphinx::SphinxResponseError, Sphinx::SphinxTemporaryError, Errno::EPIPE => e
         if (tries += 1) <= self.class.client_options['max_retries']
-          logger.warn "** ultrasphinx: restarting query (#{tries} attempts already) (#{e})"
+          say "restarting query (#{tries} attempts already) (#{e})"
           sleep(self.class.client_options['retry_sleep_time']) if tries == self.class.client_options['max_retries']
           retry
         else
-          logger.warn "** ultrasphinx: query failed"
+          say "query failed"
           raise e
         end
       end
@@ -386,8 +379,8 @@ Note that your database is never changed by anything Ultrasphinx does.
       end
     end
   
-    def logger #:nodoc:
-      RAILS_DEFAULT_LOGGER
+    def say msg #:nodoc:
+      Ultrasphinx.say msg
     end
     
   end

@@ -62,7 +62,12 @@ type = pgsql
      
   # Logger.
   def self.say msg
-    STDERR.puts "** ultrasphinx: #{msg}"
+    msg = "** ultrasphinx: #{msg}"
+    if defined? RAILS_DEFAULT_LOGGER
+      RAILS_DEFAULT_LOGGER.warn msg
+    else
+      STDERR.puts msg
+    end
   end
   
   # Configuration file parser.

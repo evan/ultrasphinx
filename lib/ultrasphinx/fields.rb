@@ -93,7 +93,7 @@ module Ultrasphinx
             entry['as'] = entry['field'] unless entry['as']
             
             unless klass.columns_hash[entry['field']]
-              ActiveRecord::Base.logger.warn "ultrasphinx: WARNING: field #{entry['field']} is not present in #{model}"
+              Ultrasphinx.say "WARNING: field #{entry['field']} is not present in #{model}"
             else
               save_and_verify_type(entry['as'], klass.columns_hash[entry['field']].type, entry['sortable'], klass)
             end
@@ -116,7 +116,7 @@ module Ultrasphinx
             save_and_verify_type(entry['as'], 'text', entry['sortable'], klass)
           end          
         rescue ActiveRecord::StatementInvalid
-          ActiveRecord::Base.logger.warn "ultrasphinx: WARNING: model #{model} does not exist in the database yet"
+          Ultrasphinx.say "WARNING: model #{model} does not exist in the database yet"
         end  
       end
       
