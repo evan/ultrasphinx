@@ -8,13 +8,15 @@ module Ultrasphinx
   
         Dir["#{RAILS_ROOT}/app/models/**/*.rb"].each do |filename|
           next if filename =~ /\/(\.svn|CVS|\.bzr)\//
-          begin
-            open(filename) {|file| load filename if file.grep(/is_indexed/).any?}
-          rescue Object => e
-            say "warning; possibly critical autoload error on #{filename}"
-            say e.inspect
-          end
-        end 
+          open(filename) do |file| 
+            begin
+              load filename if file.grep(/is_indexed/).any?
+            rescue Object => e
+              say "warning; possibly critical autoload error on #{filename}"
+              say e.inspect
+            end
+          end 
+        end
   
         # Build the field-to-type mappings.
         Fields.instance.configure(MODEL_CONFIGURATION)

@@ -120,7 +120,7 @@ If the associations weren't just <tt>has_many</tt> and <tt>belongs_to</tt>, you 
 =end
   
     def self.is_indexed opts = {}    
-      opts = opts._deep_stringify_keys
+      opts = HashWithIndifferentAccess.new(opts)
           
       opts.assert_valid_keys ['fields', 'concatenate', 'conditions', 'include']
       

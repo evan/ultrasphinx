@@ -24,20 +24,20 @@ module Ultrasphinx
         request.SetLimits offset, limit, [offset + limit, MAX_MATCHES].min
         request.SetSortMode SPHINX_CLIENT_PARAMS['sort_mode'][opts['sort_mode']], opts['sort_by'].to_s
       
-        if weights = opts['weight']
+        if weights = opts['weights']
           # Order the weights hash according to the field order for Sphinx, and set the missing fields to 1.0
           request.SetWeights(Fields.instance.types.select{|n,t| t == 'text'}.map(&:first).sort.inject([]) do |array, field|
             array << (weights[field] || 1.0)
           end)
         end
       
-        unless opts['class_name'].compact.empty?
-          request.SetFilter 'class_id', opts['class_name'].map{|m| MODELS_TO_IDS[m.to_s]}
+        unless opts['class_names'].compact.empty?
+          request.SetFilter 'class_id', opts['class_names'].map{|m| MODELS_TO_IDS[m.to_s]}
         end        
       
         # Extract ranged raw filters 
         # Some of this mangling might not be necessary
-        opts['filter'].each do |field, value|
+        opts['filters'].each do |field, value|
           begin
             case value
               when Fixnum, Float, BigDecimal, NilClass, Array

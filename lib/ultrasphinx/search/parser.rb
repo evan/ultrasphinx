@@ -58,6 +58,7 @@ module Ultrasphinx
 
       def query_to_token_stream(query)      
         # First, split query on spaces that are not inside sets of quotes or parens
+        
         query = query.scan(/[^"() ]*["(][^")]*[")]|[^"() ]+/) 
       
         token_stream = []
@@ -68,7 +69,12 @@ module Ultrasphinx
           # recurse for parens, if necessary
           if subtoken =~ /^(.*?)\((.*)\)(.*?$)/
             subtoken = query[index] = "#{$1}(#{parse $2})#{$3}"
-          end       
+          end 
+          
+          # reappend missing closing quotes
+          if subtoken =~ /(^|\:)\"/
+            subtoken = subtoken.chomp('"') + '"'
+          end
           
           # add to the stream, converting the operator
           if !has_operator

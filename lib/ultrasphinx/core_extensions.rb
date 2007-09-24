@@ -50,34 +50,17 @@ class Hash
       end._flatten_once]
   end
   
+  def _delete(*args)
+    args.map do |key|
+      self.delete key
+    end    
+  end
+  
   def _to_conf_string(section = nil)
     inner = self.map do |key, value|
       "  #{key} = #{value}"
     end.join("\n")
     section ? "#{section} {\n#{inner}\n}\n" : inner
   end
-  
-  def _deep_stringify_keys
-    Hash[*(self.map do |key, value|
-#      puts "#{key.inspect}, #{value.inspect}"
-      z = [key.to_s,
-        case value
-          when Hash
-            value._deep_stringify_keys
-          when Array
-            value.map do |subvalue|
-              if subvalue.is_a? Hash or subvalue.is_a? Array
-                subvalue._deep_stringify_keys
-              else
-                subvalue
-              end
-            end
-          else
-            value
-        end
-      ]
-#      p z
-#      z
-    end._flatten_once)]
-  end
+
 end
