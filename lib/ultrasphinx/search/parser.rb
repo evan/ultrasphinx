@@ -76,6 +76,11 @@ module Ultrasphinx
             subtoken = subtoken.chomp('"') + '"'
           end
           
+          # strip parentheses within quoted strings
+          if subtoken =~ /\"(.*)\"/
+            subtoken.sub!($1, $1.gsub(/[()]/, ''))
+          end
+          
           # add to the stream, converting the operator
           if !has_operator
             if OPERATORS.to_a.flatten.include? subtoken and index != (query.size - 1) # operators at the end of the string are not parsed

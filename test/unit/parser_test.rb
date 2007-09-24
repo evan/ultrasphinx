@@ -84,10 +84,10 @@ describe "parser" do
     'Bend, OR',
 
     '"(traditional)"',
-    '"(traditional)"',   
+    '"traditional"',   
     
-    'cuisine:"american (traditional)"',
-    '@cuisine "american (traditional)"'    
+    'cuisine:"american (traditional"',
+    '@cuisine "american traditional"'
     
   ].in_groups_of(2).each do |query, result|
     it "should parse" do
