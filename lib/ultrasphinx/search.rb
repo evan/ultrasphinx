@@ -94,7 +94,7 @@ Note that your database is never changed by anything Ultrasphinx does.
     include Parser
     
     cattr_accessor :query_defaults  
-    self.query_defaults ||= {
+    self.query_defaults ||= HashWithIndifferentAccess.new({
       :query => nil,
       :page => 1,
       :class_names => nil,
@@ -104,7 +104,7 @@ Note that your database is never changed by anything Ultrasphinx does.
       :weights => nil,
       :filters => nil,
       :facets => nil
-    }
+    })
     
     cattr_accessor :excerpting_options
     self.excerpting_options ||= HashWithIndifferentAccess.new({
