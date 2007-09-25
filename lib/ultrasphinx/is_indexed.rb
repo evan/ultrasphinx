@@ -124,19 +124,24 @@ If the associations weren't just <tt>has_many</tt> and <tt>belongs_to</tt>, you 
           
       opts.assert_valid_keys ['fields', 'concatenate', 'conditions', 'include']
       
-      Array(opts[:fields]).each do |field|
-        field.assert_valid_keys ['field', 'as', 'facet', 'function_sql', 'sortable'] if field.is_a? Hash
+      Array(opts['fields']).each do |entry|
+        if entry.is_a? Hash
+          entry.stringify_keys!
+          entry.assert_valid_keys ['field', 'as', 'facet', 'function_sql', 'sortable']
+        end
       end
       
-      Array(opts[:concatenate]).each do |concat|
-        concat.assert_valid_keys ['class_name', 'conditions', 'field', 'as', 'fields', 'association_name', 'association_sql', 'facet', 'function_sql', 'sortable']
-        raise Ultrasphinx::ConfigurationError, "You can't mix regular concat and group concats" if concat['fields'] and (concat['field'] or concat['class_name'] or concat['association_name'])
-        raise Ultrasphinx::ConfigurationError, "Group concats must not have multiple fields" if concat['field'].is_a? Array
-        raise Ultrasphinx::ConfigurationError, "Regular concats should have multiple fields" if concat['fields'] and !concat['fields'].is_a?(Array)
+      Array(opts['concatenate']).each do |entry|
+        entry.stringify_keys!
+        entry.assert_valid_keys ['class_name', 'conditions', 'field', 'as', 'fields', 'association_name', 'association_sql', 'facet', 'function_sql', 'sortable']
+        raise Ultrasphinx::ConfigurationError, "You can't mix regular concat and group concats" if entry['fields'] and (entry['field'] or entry['class_name'] or entry['association_name'])
+        raise Ultrasphinx::ConfigurationError, "Group concats must not have multiple fields" if entry['field'].is_a? Array
+        raise Ultrasphinx::ConfigurationError, "Regular concats should have multiple fields" if entry['fields'] and !entry['fields'].is_a?(Array)
       end
       
-      Array(opts[:include]).each do |inc|
-        inc.assert_valid_keys ['class_name', 'field', 'as', 'association_sql', 'facet', 'function_sql', 'sortable']
+      Array(opts['include']).each do |entry|
+        entry.stringify_keys!
+        entry.assert_valid_keys ['class_name', 'field', 'as', 'association_sql', 'facet', 'function_sql', 'sortable']
       end
       
       Ultrasphinx::MODEL_CONFIGURATION[self.name] = opts
