@@ -66,7 +66,7 @@ module Ultrasphinx
         # Tentatively supporting Postgres now
         connection_settings = klass.connection.instance_variable_get("@config")
 
-        adapter_defaults = ADAPTER_DEFAULTS[connection_settings[:adapter]]
+        adapter_defaults = ADAPTER_DEFAULTS[ADAPTER]
         raise ConfigurationError, "Unsupported database adapter" unless adapter_defaults
 
         conf = [adapter_defaults]                  
@@ -129,8 +129,6 @@ module Ultrasphinx
       
       def build_query(klass, column_strings, join_strings, condition_strings)
 
-        connection_settings = klass.connection.instance_variable_get("@config")
-
         ["sql_query =", 
           "SELECT", 
           column_strings.sort_by do |string| 
@@ -143,7 +141,7 @@ module Ultrasphinx
           condition_strings.uniq.map do |condition| 
             "AND #{condition}"
           end,
-          ("GROUP BY id" if connection_settings[:adapter] == 'mysql') # XXX should be somewhere more obvious
+          ADAPTER_SQL_FUNCTIONS[ADAPTER]['group_by']
         ].flatten.join(" ")
       end
       

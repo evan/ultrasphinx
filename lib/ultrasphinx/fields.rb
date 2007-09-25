@@ -55,7 +55,7 @@ module Ultrasphinx
     
     def cast(source_string, field)
       if types[field] == "date"
-        "UNIX_TIMESTAMP(#{source_string})"
+        "#{ADAPTER_SQL_FUNCTIONS[ADAPTER]}#{source_string})"
       elsif source_string =~ /GROUP_CONCAT/
         "CAST(#{source_string} AS CHAR)"
       else

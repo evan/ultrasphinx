@@ -59,6 +59,19 @@ sql_query_pre = SET NAMES utf8
     'postgresql' => %(
 type = pgsql
   )}
+  
+  ADAPTER_SQL_FUNCTIONS = {
+    'mysql' => {
+      'group_by' => 'GROUP BY id',
+      'timestamp' => 'UNIX_TIMESTAMP('
+    },    
+    'postgresql' => {
+      'group_by' => '',
+      'timestamp' => 'EXTRACT(EPOCH FROM '
+    }      
+  }
+  
+  ADAPTER = ActiveRecord::Base.connection.instance_variable_get("@config")[:adapter]
      
   # Logger.
   def self.say msg
