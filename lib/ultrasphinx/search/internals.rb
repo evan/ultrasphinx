@@ -175,7 +175,9 @@ module Ultrasphinx
         # Put them back in order
         results.sort_by do |r| 
           raise Sphinx::SphinxResponseError, "Bogus ActiveRecord id for #{r.class}:#{r.id}" unless r.id
-          index = (sphinx_ids.index(sphinx_id = r.id * MODELS_TO_IDS.size + MODELS_TO_IDS[r.class.base_class.name]))
+          model_index = MODELS_TO_IDS[r.class.base_class.name]
+          raise UsageError, "#{r.class.base_class} is not an indexed class. If you are trying to index an STI child class, you should index the base class instead."
+          index = (sphinx_ids.index(sphinx_id = r.id * MODELS_TO_IDS.size + model_index))
           raise Sphinx::SphinxResponseError, "Bogus reverse id for #{r.class}:#{r.id} (Sphinx:#{sphinx_id})" unless index
           index / sphinx_ids.size.to_f
         end
