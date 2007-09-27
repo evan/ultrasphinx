@@ -53,7 +53,7 @@ class SearchTest < Test::Unit::TestCase
 
   def test_date_range_filter
     @first, @last = Seller.find(5).created_at, Seller.find(10).created_at
-    @count = Seller.count(:conditions => ['created_at >= ? AND created_at <= ?', @first, @last])
+    @count = Seller.count(:conditions => ['created_at <= ? AND created_at >= ?', @first, @last])
     assert_equal(@count,
       S.new(:class_names => 'Seller', :filters => {'created_at' => @first..@last}).run.size)
     assert_equal(@count,
