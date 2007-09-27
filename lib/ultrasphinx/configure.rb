@@ -7,7 +7,6 @@ module Ultrasphinx
       def load_constants
   
         Dir["#{RAILS_ROOT}/app/models/**/*.rb"].each do |filename|
-          next if filename =~ /\/(\.svn|CVS|\.bzr)\//
           open(filename) do |file| 
             begin
               if file.grep(/is_indexed/).any?
