@@ -1,7 +1,9 @@
 
-require 'singleton'
-
 module Ultrasphinx
+
+=begin rdoc
+This is a special singleton configuration class that stores the index field configurations. Rather than using a magic hash and including relevant behavior in Ultrasphinx::Configure and Ultrasphinx::Search, we unify it here.
+=end
 
   class Fields
     include Singleton
@@ -14,7 +16,9 @@ module Ultrasphinx
       'datetime' => 'date',
       'timestamp' => 'date',
       'float' => 'numeric'
-    }    
+    }
+    
+    VERSIONS_REQUIRED = {'float' => '0.9.9'}
     
     attr_accessor :classes, :types
     
@@ -32,6 +36,7 @@ module Ultrasphinx
   
     def save_and_verify_type(field, new_type, string_sortable, klass)
       # Smoosh fields together based on their name in the Sphinx query schema
+      check_version(new_type.to_s)
       field, new_type = field.to_s, TYPE_MAP[new_type.to_s]
 
       if types[field]
@@ -65,7 +70,7 @@ module Ultrasphinx
       end + " AS #{field}"
     end    
       
-    def null(field)
+    def null(field)      
       case types[field]
         when 'text'
           "''"
@@ -76,6 +81,17 @@ module Ultrasphinx
         else
           raise "Field #{field} does not have a valid type."
       end + " AS #{field}"
+    end
+    
+    def check_version(field)
+      # XXX Awkward location for the compatibility check
+      if VERSIONS_REQUIRED[field]
+        req = VERSIONS_REQUIRED.delete(field)
+        unless SPHINX_VERSION.include? req
+          # Will we eventually need to check version ranges?
+          Ultrasphinx.say "warning: '#{field}' type requires Sphinx #{req}, but you have #{SPHINX_VERSION}"
+        end
+      end
     end
     
     def configure(configuration)
@@ -95,7 +111,7 @@ module Ultrasphinx
             entry['as'] = entry['field'] unless entry['as']
             
             unless klass.columns_hash[entry['field']]
-              Ultrasphinx.say "WARNING: field #{entry['field']} is not present in #{model}"
+              Ultrasphinx.say "warning: field #{entry['field']} is not present in #{model}"
             else
               save_and_verify_type(entry['as'], klass.columns_hash[entry['field']].type, entry['sortable'], klass)
             end
@@ -118,7 +134,7 @@ module Ultrasphinx
             save_and_verify_type(entry['as'], 'text', entry['sortable'], klass)
           end          
         rescue ActiveRecord::StatementInvalid
-          Ultrasphinx.say "WARNING: model #{model} does not exist in the database yet"
+          Ultrasphinx.say "warning: model #{model} does not exist in the database yet"
         end  
       end
       

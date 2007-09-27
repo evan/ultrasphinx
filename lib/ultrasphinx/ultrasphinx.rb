@@ -36,6 +36,12 @@ module Ultrasphinx
   
   UNIFIED_INDEX_NAME = "complete"
 
+  SPHINX_VERSION = if `which indexer` =~ /\/indexer\n/m
+      `indexer`.split("\n").first[7..-1]
+    else
+      "unknown"
+    end 
+
   CONFIG_MAP = {
     # These must be symbols for key mapping against Rails itself
     :username => 'sql_user',
@@ -73,13 +79,19 @@ type = pgsql
   
   ADAPTER = ActiveRecord::Base.connection.instance_variable_get("@config")[:adapter]
      
+  mattr_accessor :with_rake
+     
   # Logger.
   def self.say msg
-    msg = "** ultrasphinx: #{msg}"
-    if defined? RAILS_DEFAULT_LOGGER
-      RAILS_DEFAULT_LOGGER.warn msg
+    if with_rake
+      puts msg[0..0].upcase + msg[1..-1]
     else
-      STDERR.puts msg
+      msg = "** ultrasphinx: #{msg}"
+      if defined? RAILS_DEFAULT_LOGGER
+        RAILS_DEFAULT_LOGGER.warn msg
+      else
+        STDERR.puts msg
+      end
     end
   end
   

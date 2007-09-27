@@ -2,62 +2,66 @@
 ENV['RAILS_ENV'] ||= "development"
 
 namespace :ultrasphinx do  
+
+  task :before_task => [:environment] do
+    Ultrasphinx.with_rake = true
+  end
   
   desc "Bootstrap a full Sphinx environment"
-  task :bootstrap => [:environment, :configure, :index, :"daemon:restart"] do
+  task :bootstrap => [:before_task, :configure, :index, :"daemon:restart"] do
   end
   
   desc "Rebuild the configuration file for this particular environment."
-  task :configure => :environment do
+  task :configure => [:before_task] do
     Ultrasphinx::Configure.run
   end
   
   desc "Reindex the database and send an update signal to the search daemon."
-  task :index => :environment do
+  task :index => [:before_task] do
     mkdir_p Ultrasphinx::INDEX_SETTINGS['path']
     cmd = "indexer --config #{Ultrasphinx::CONF_PATH}"
     cmd << " #{ENV['OPTS']} " if ENV['OPTS']
     cmd << " --rotate" if ultrasphinx_daemon_running?
     cmd << " #{Ultrasphinx::UNIFIED_INDEX_NAME}"
-    puts cmd
+    say cmd
     system cmd
   end
   
   
   namespace :daemon do
     desc "Start the search daemon"
-    task :start => :environment do
+    task :start => [:before_task] do
       FileUtils.mkdir_p File.dirname(Ultrasphinx::DAEMON_SETTINGS["log"]) rescue nil
       raise Ultrasphinx::DaemonError, "Already running" if ultrasphinx_daemon_running?
       system "searchd --config #{Ultrasphinx::CONF_PATH}"
       sleep(2) # give daemon a chance to write the pid file
       if ultrasphinx_daemon_running?
-        puts "Started successfully"
+        say "started successfully"
       else
-        puts "Failed to start"
+        say "failed to start"
       end
     end
     
     desc "Stop the search daemon"
-    task :stop => [:environment] do
+    task :stop => [:before_task] do
       raise Ultrasphinx::DaemonError, "Doesn't seem to be running" unless ultrasphinx_daemon_running?
       system "kill #{pid = ultrasphinx_daemon_pid}"
-      puts "Stopped #{pid}."
+      say "stopped #{pid}."
     end
 
     desc "Restart the search daemon"
-    task :restart => [:environment] do
+    task :restart => [:before_task] do
       Rake::Task["ultrasphinx:daemon:stop"].invoke if ultrasphinx_daemon_running?
       sleep(3)
       Rake::Task["ultrasphinx:daemon:start"].invoke
     end
     
     desc "Check if the search daemon is running"
-    task :status => :environment do
+    task :status => [:before_task] do
       if ultrasphinx_daemon_running?
-        puts "Daemon is running."
+        say "daemon is running."
       else
-        puts "Daemon is stopped."
+        say "daemon is stopped."
       end
     end      
   end
@@ -65,12 +69,12 @@ namespace :ultrasphinx do
     
   namespace :spelling do
     desc "Rebuild the custom spelling dictionary. You may need to use 'sudo' if your Aspell folder is not writable by the app user."
-    task :build => :environment do    
+    task :build => [:before_task] do    
       ENV['OPTS'] = "--buildstops #{Ultrasphinx::STOPWORDS_PATH} #{Ultrasphinx::MAX_WORDS} --buildfreqs"
       Rake::Task["ultrasphinx:index"].invoke
       tmpfile = "/tmp/custom_words.txt"
       words = []
-      puts "Filtering"
+      say "filtering"
       File.open(Ultrasphinx::STOPWORDS_PATH).each do |line|
         if line =~ /^([^\s\d_]{4,}) (\d+)/
           # XXX should be configurable
@@ -79,9 +83,9 @@ namespace :ultrasphinx do
           # by aspell-en, in order to not add typos to the dictionary
         end
       end
-      puts "Writing #{words.size} words"
+      say "writing #{words.size} words"
       File.open(tmpfile, 'w').write(words.join("\n"))
-      puts "Loading into aspell"
+      say "loading into aspell"
       system("aspell --lang=en create master custom.rws < #{tmpfile}")
     end
   end
@@ -117,3 +121,8 @@ def ultrasphinx_daemon_running?
     false
   end  
 end
+
+def say msg
+  Ultrasphinx.say msg
+end
+  

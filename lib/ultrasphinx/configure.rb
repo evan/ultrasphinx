@@ -14,7 +14,7 @@ module Ultrasphinx
                 Dependencies.load_missing_constant(Kernel, File.basename(filename)[0..-4].classify) 
               end
             rescue Object => e
-              say "warning; possibly critical autoload error on #{filename}"
+              say "warning: possibly critical autoload error on #{filename}"
               say e.inspect
             end
           end 
@@ -30,14 +30,14 @@ module Ultrasphinx
 
         load_constants
               
-        puts "Rebuilding Ultrasphinx configurations for #{RAILS_ENV} environment" 
-        puts "Available models are #{MODEL_CONFIGURATION.keys.to_sentence}"
+        say "rebuilding Ultrasphinx configurations for #{RAILS_ENV} environment" 
+        say "available models are #{MODEL_CONFIGURATION.keys.to_sentence}"
         File.open(CONF_PATH, "w") do |conf|
         
           conf.puts global_header            
           sources = []
           
-          puts "Generating SQL"
+          say "generating SQL"
           cached_groups = Fields.instance.groups.join("\n")
           MODEL_CONFIGURATION.each_with_index do |model_options, class_id|
             model, options = model_options

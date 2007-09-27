@@ -1,6 +1,7 @@
 
 require 'fileutils'
 require 'chronic'
+require 'singleton'
 
 require "#{File.dirname(__FILE__)}/../vendor/sphinx/lib/client"
 
@@ -24,3 +25,9 @@ Ultrasphinx.say(
   end
 )
 
+if defined? RAILS_ENV and RAILS_ENV == "development"
+  if ENV['USER'] == 'eweaver'
+    require 'ruby-debug'
+    Debugger.start
+  end
+end
