@@ -48,3 +48,11 @@ Migrating to CreateStates (4)
 ** ultrasphinx: please run 'rake ultrasphinx:configure'
 ** ultrasphinx: spelling support enabled
   [4;35;1mSQL (0.000128)[0m   [0mSET SQL_AUTO_IS_NULL=0[0m
+  [4;36;1mSQL (0.000145)[0m   [0;1mSET SQL_AUTO_IS_NULL=0[0m
+** ultrasphinx: configuration file not found for "development" environment
+** ultrasphinx: please run 'rake ultrasphinx:configure'
+** ultrasphinx: spelling support enabled
+  [4;36;1mSQL (0.000152)[0m   [0;1mSET SQL_AUTO_IS_NULL=0[0m
+** ultrasphinx: spelling support enabled
+  [4;36;1mSQL (0.000148)[0m   [0;1mSET SQL_AUTO_IS_NULL=0[0m
+** ultrasphinx: spelling support enabled
