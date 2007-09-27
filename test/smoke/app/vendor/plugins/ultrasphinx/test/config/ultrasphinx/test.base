@@ -1,0 +1,56 @@
+
+#
+# Sphinx/Ultrasphinx user-configurable options.
+#
+# Copy this file to RAILS_ROOT/config/ultrasphinx.
+# You can use individual namespaces if you want (e.g. "development.base").
+#
+
+indexer
+{
+  # Indexer running options
+  mem_limit = 256M 
+}
+
+searchd
+{
+  # Daemon options
+  # What interface the search daemon should listen on and where to store its logs
+  address = 0.0.0.0
+  port = 3312
+  log = /opt/local/var/db/sphinx/log/searchd.log
+  query_log = /opt/local/var/db/sphinx/log/query.log
+  read_timeout = 5
+  max_children = 300
+  pid_file = /opt/local/var/db/sphinx/log/searchd.pid
+  max_matches = 100000
+}
+
+client
+{
+  # Client options
+  # How your application connects to the search daemon (not necessarily the same as above)
+  server_host = localhost
+  server_port = 3312
+}
+
+source
+{
+  # Individual SQL source options
+  sql_range_step = 20000   
+  strip_html = 0
+  index_html_attrs =
+  sql_query_post =
+}
+
+index
+{
+  # Index building options
+  path = /opt/local/var/db/sphinx/
+  docinfo = extern # just leave this alone
+  morphology = stem_en
+  stopwords = # /path/to/stopwords.txt
+  min_word_len = 1
+  charset_type = utf-8 # or sbcs (Single Byte Character Set)
+  charset_table = 0..9, A..Z->a..z, -, _, ., &, a..z,
+}

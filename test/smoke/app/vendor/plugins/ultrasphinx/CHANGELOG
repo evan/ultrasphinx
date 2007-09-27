@@ -1,0 +1,14 @@
+
+v1.5. API change. Change layout of base files to allow overriding of more options, see examples/default.base. Allow sorting on text fields (use the 'sortable' key).
+
+v1.4. New is_indexed 'fields' => {'function_sql'} key for custom field mangling; support setting textual keys in the 'filters'. 
+
+v1.3. Facets; configurable finder method array; support symbolic keys very reluctantly for legacy purposes.
+
+v1.2. API change. Support searching with empty query. Most keys are now singular strings (plural only if they *require* an Array value). Verbs have been un-nouned ('concatenate', not 'concats'; 'include', not 'includes'). 'filter', not 'raw_filters'; 'class_name', not 'model'. Finally, use a 'query' keypair instead of the first parameter to Ultrasphinx::Search.new for the query string (this simplifies form helpers). 
+
+v1.1. Parser rewrite and tests.
+
+v1. Documentation; refactoring.
+
+v0. Spike.
