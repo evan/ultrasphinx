@@ -1,5 +1,5 @@
 
-require "#{File.dirname(__FILE__)}/../test_helper.rb"
+require "#{File.dirname(__FILE__)}/../test_helper"
 
 describe "parser" do
 

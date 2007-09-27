@@ -25,8 +25,6 @@ ActiveRecord::Base.establish_connection(
   })
 ActiveRecord::Base.connection.instance_variable_set('@config', config)
 
-silently { require 'schema' }
-require 'models'
 require 'ultrasphinx'
 
 Debugger.start
