@@ -37,7 +37,11 @@ module Ultrasphinx
       
         # Extract ranged raw filters 
         # Some of this mangling might not be necessary
-        opts['filters'].each do |field, value|
+        opts['filters'].each do |field, value|          
+          field = field.to_s
+          unless Fields.instance.types[field]
+            raise Sphinx::SphinxArgumentError, "field #{field.inspect} is invalid"
+          end
           begin
             case value
               when Fixnum, Float, BigDecimal, NilClass, Array
@@ -55,7 +59,7 @@ module Ultrasphinx
                 raise NoMethodError
             end
           rescue NoMethodError => e
-            raise Sphinx::SphinxArgumentError, "filter: #{field.inspect}:#{value.inspect} is invalid"
+            raise Sphinx::SphinxArgumentError, "filter value #{value.inspect} for field #{field.inspect} is invalid"
           end
         end
         
