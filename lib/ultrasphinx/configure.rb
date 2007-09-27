@@ -10,7 +10,9 @@ module Ultrasphinx
           next if filename =~ /\/(\.svn|CVS|\.bzr)\//
           open(filename) do |file| 
             begin
-              load filename if file.grep(/is_indexed/).any?
+              if file.grep(/is_indexed/).any?
+                Dependencies.load_missing_constant(Kernel, File.basename(filename)[0..-4].classify) 
+              end
             rescue Object => e
               say "warning; possibly critical autoload error on #{filename}"
               say e.inspect
