@@ -5,8 +5,8 @@ require 'singleton'
 
 require "#{File.dirname(__FILE__)}/../vendor/sphinx/lib/client"
 
-require 'ultrasphinx/core_extensions'
 require 'ultrasphinx/ultrasphinx'
+require 'ultrasphinx/core_extensions'
 require 'ultrasphinx/configure'
 require 'ultrasphinx/autoload'
 require 'ultrasphinx/fields'
