@@ -12,14 +12,14 @@ class SmokeTest < Test::Unit::TestCase
 
   S = Ultrasphinx::Search
 
-  def test_searchable
+  def test_simple_query
     assert_nothing_raised do
       @q = S.new(:query => 'seller').run
     end
     assert_equal 20, @q.results.size
   end  
   
-  def test_run_with_no_query
+  def test_empty_query
     assert_nothing_raised do
       @q = S.new.run
     end
@@ -29,6 +29,13 @@ class SmokeTest < Test::Unit::TestCase
     assert_equal(
       Seller.find(:all, :limit => 5, :order => 'created_at DESC').map(&:created_at),
       S.new(:class_names => 'Seller', :sort_by => 'created_at', :sort_mode => 'descending', :per_page => 5).run.map(&:created_at)
+    )
+  end
+
+  def test_sort_by_float
+    assert_equal(
+      Seller.find(:all, :limit => 5, :order => 'capitalization ASC').map(&:capitalization),
+      S.new(:class_names => 'Seller', :sort_by => 'capitalization', :sort_mode => 'ascending', :per_page => 5).run.map(&:capitalization)
     )
   end
  
@@ -48,8 +55,8 @@ class SmokeTest < Test::Unit::TestCase
   
   def test_text_filter
     assert_equal(
-      Seller.count(:conditions => "name = 'seller17'"),
-      S.new(:class_names => 'Seller', :filters => {'name' => 'seller17'}).run.size
+      Seller.count(:conditions => "company_name = 'seller17'"),
+      S.new(:class_names => 'Seller', :filters => {'company_name' => 'seller17'}).run.size
     )  
   end
   
