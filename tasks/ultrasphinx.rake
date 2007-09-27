@@ -14,6 +14,7 @@ namespace :ultrasphinx do
   
   desc "Reindex the database and send an update signal to the search daemon."
   task :index => :environment do
+    mkdir_p Ultrasphinx::INDEX_SETTINGS['path']
     cmd = "indexer --config #{Ultrasphinx::CONF_PATH}"
     cmd << " #{ENV['OPTS']} " if ENV['OPTS']
     cmd << " --rotate" if ultrasphinx_daemon_running?

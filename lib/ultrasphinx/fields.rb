@@ -11,7 +11,9 @@ module Ultrasphinx
       'text' => 'text', 
       'integer' => 'numeric', 
       'date' => 'date', 
-      'datetime' => 'date'
+      'datetime' => 'date',
+      'timestamp' => 'date',
+      'float' => 'numeric'
     }    
     
     attr_accessor :classes, :types
