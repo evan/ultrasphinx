@@ -1,14 +1,7 @@
 
-require 'rubygems'
-require 'test/spec'
-require 'ruby-debug'
+require "#{File.dirname(__FILE__)}/../integration_helper"
 
-Dir.chdir "#{File.dirname(__FILE__)}/app/" do
-  system("rake db:migrate db:fixtures:load us:boot") if ENV['REINDEX']
-  require 'config/environment'
-end
-
-class SmokeTest < Test::Unit::TestCase
+class SearchTest < Test::Unit::TestCase
 
   S = Ultrasphinx::Search
 
