@@ -85,8 +85,7 @@ This is a special singleton configuration class that stores the index field conf
     
     def check_version(field)
       # XXX Awkward location for the compatibility check
-      if VERSIONS_REQUIRED[field]
-        req = VERSIONS_REQUIRED.delete(field)
+      if req = VERSIONS_REQUIRED[field]
         unless SPHINX_VERSION.include? req
           # Will we eventually need to check version ranges?
           Ultrasphinx.say "warning: '#{field}' type requires Sphinx #{req}, but you have #{SPHINX_VERSION}"
