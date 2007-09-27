@@ -39,6 +39,20 @@ class SmokeTest < Test::Unit::TestCase
     )
   end
   
+  def test_float_range_filter
+    assert_equal(
+      Seller.count(:conditions => 'capitalization <= 100'),
+      S.new(:class_names => 'Seller', :filters => {'capitalization' => 0..100}).run.size
+    )
+  end
+  
+  def test_text_filter
+    assert_equal(
+      Seller.count(:conditions => "name = 'seller17'"),
+      S.new(:class_names => 'Seller', :filters => {'name' => 'seller17'}).run.size
+    )  
+  end
+  
   def test_invalid_filter
     assert_raises(Sphinx::SphinxArgumentError) do
       S.new(:class_names => 'Seller', :filters => {'bogus' => 17}).run
