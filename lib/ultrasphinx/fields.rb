@@ -18,7 +18,7 @@ This is a special singleton configuration class that stores the index field conf
       'float' => 'numeric'
     }
     
-    VERSIONS_REQUIRED = {'float' => '0.9.9'}
+    VERSIONS_REQUIRED = {'float' => '0.9.8'}
     
     attr_accessor :classes, :types
     
