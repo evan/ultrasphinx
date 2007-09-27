@@ -58,3 +58,71 @@ Migrating to CreateStates (4)
 ** ultrasphinx: spelling support enabled
   [4;36;1mSQL (0.000160)[0m   [0;1mSET SQL_AUTO_IS_NULL=0[0m
 ** ultrasphinx: spelling support enabled
+  [4;36;1mSQL (0.000146)[0m   [0;1mSET SQL_AUTO_IS_NULL=0[0m
+** ultrasphinx: spelling support enabled
+  [4;35;1mSeller Columns (0.003661)[0m   [0mSHOW FIELDS FROM sellers[0m
+  [4;36;1mUser Columns (0.002620)[0m   [0;1mSHOW FIELDS FROM users[0m
+** ultrasphinx: warning; heading source sellers not found in /Users/eweaver/Desktop/projects/fauna/ultrasphinx/trunk/test/smoke/app/config/ultrasphinx/development.conf; it may be corrupted. 
+** ultrasphinx: warning; configured database name is out-of-date
+** ultrasphinx: please run 'rake ultrasphinx:configure'
+  [4;36;1mSQL (0.000169)[0m   [0;1mSET SQL_AUTO_IS_NULL=0[0m
+** ultrasphinx: spelling support enabled
+  [4;35;1mSeller Columns (0.003847)[0m   [0mSHOW FIELDS FROM sellers[0m
+  [4;36;1mUser Columns (0.001874)[0m   [0;1mSHOW FIELDS FROM users[0m
+  [4;36;1mSQL (0.000146)[0m   [0;1mSET SQL_AUTO_IS_NULL=0[0m
+** ultrasphinx: spelling support enabled
+  [4;35;1mSeller Columns (0.004121)[0m   [0mSHOW FIELDS FROM sellers[0m
+  [4;36;1mUser Columns (0.001855)[0m   [0;1mSHOW FIELDS FROM users[0m
+/! FAILSAFE /!  Wed Sep 26 22:58:51 -0400 2007
+  Status: 500 Internal Server Error
+  A secret is required to generate an integrity hash for cookie session data. Use config.action_controller.session = { :session_key => "_myapp_session", :secret => "some secret phrase" } in config/environment.rb
+    /Users/eweaver/Desktop/projects/fauna/ultrasphinx/trunk/test/smoke/app/vendor/rails/actionpack/lib/action_controller/session/cookie_store.rb:54:in `initialize'
+    /opt/local/lib/ruby/1.8/cgi/session.rb:273:in `new'
+    /opt/local/lib/ruby/1.8/cgi/session.rb:273:in `initialize_without_cgi_reader'
+    /Users/eweaver/Desktop/projects/fauna/ultrasphinx/trunk/test/smoke/app/vendor/rails/actionpack/lib/action_controller/cgi_ext/session.rb:29:in `initialize'
+    /Users/eweaver/Desktop/projects/fauna/ultrasphinx/trunk/test/smoke/app/vendor/rails/actionpack/lib/action_controller/cgi_process.rb:124:in `new'
+    /Users/eweaver/Desktop/projects/fauna/ultrasphinx/trunk/test/smoke/app/vendor/rails/actionpack/lib/action_controller/cgi_process.rb:124:in `session'
+    /Users/eweaver/Desktop/projects/fauna/ultrasphinx/trunk/test/smoke/app/vendor/rails/actionpack/lib/action_controller/cgi_process.rb:156:in `stale_session_check!'
+    /Users/eweaver/Desktop/projects/fauna/ultrasphinx/trunk/test/smoke/app/vendor/rails/actionpack/lib/action_controller/cgi_process.rb:111:in `session'
+    /Users/eweaver/Desktop/projects/fauna/ultrasphinx/trunk/test/smoke/app/vendor/rails/actionpack/lib/action_controller/base.rb:1078:in `assign_shortcuts_without_flash'
+    /Users/eweaver/Desktop/projects/fauna/ultrasphinx/trunk/test/smoke/app/vendor/rails/actionpack/lib/action_controller/flash.rb:168:in `assign_shortcuts'
+    /Users/eweaver/Desktop/projects/fauna/ultrasphinx/trunk/test/smoke/app/vendor/rails/actionpack/lib/action_controller/base.rb:503:in `process_without_filters'
+    /Users/eweaver/Desktop/projects/fauna/ultrasphinx/trunk/test/smoke/app/vendor/rails/actionpack/lib/action_controller/filters.rb:683:in `process_without_session_management_support'
+    /Users/eweaver/Desktop/projects/fauna/ultrasphinx/trunk/test/smoke/app/vendor/rails/actionpack/lib/action_controller/session_management.rb:122:in `process'
+    /Users/eweaver/Desktop/projects/fauna/ultrasphinx/trunk/test/smoke/app/vendor/rails/actionpack/lib/action_controller/base.rb:369:in `process'
+    /Users/eweaver/Desktop/projects/fauna/ultrasphinx/trunk/test/smoke/app/vendor/rails/actionpack/lib/action_controller/dispatcher.rb:165:in `handle_request'
+    /Users/eweaver/Desktop/projects/fauna/ultrasphinx/trunk/test/smoke/app/vendor/rails/actionpack/lib/action_controller/dispatcher.rb:114:in `dispatch'
+    /Users/eweaver/Desktop/projects/fauna/ultrasphinx/trunk/test/smoke/app/vendor/rails/actionpack/lib/action_controller/dispatcher.rb:125:in `dispatch_cgi'
+    /Users/eweaver/Desktop/projects/fauna/ultrasphinx/trunk/test/smoke/app/vendor/rails/actionpack/lib/action_controller/dispatcher.rb:9:in `dispatch'
+    /opt/local/lib/ruby/gems/1.8/gems/mongrel-1.0.2/lib/mongrel/rails.rb:78:in `process'
+    /opt/local/lib/ruby/gems/1.8/gems/mongrel-1.0.2/lib/mongrel/rails.rb:76:in `synchronize'
+    /opt/local/lib/ruby/gems/1.8/gems/mongrel-1.0.2/lib/mongrel/rails.rb:76:in `process'
+    /opt/local/lib/ruby/gems/1.8/gems/mongrel-1.0.2/lib/mongrel.rb:633:in `process_client'
+    /opt/local/lib/ruby/gems/1.8/gems/mongrel-1.0.2/lib/mongrel.rb:632:in `each'
+    /opt/local/lib/ruby/gems/1.8/gems/mongrel-1.0.2/lib/mongrel.rb:632:in `process_client'
+    /opt/local/lib/ruby/gems/1.8/gems/mongrel-1.0.2/lib/mongrel.rb:753:in `run'
+    /opt/local/lib/ruby/gems/1.8/gems/mongrel-1.0.2/lib/mongrel.rb:753:in `initialize'
+    /opt/local/lib/ruby/gems/1.8/gems/mongrel-1.0.2/lib/mongrel.rb:753:in `new'
+    /opt/local/lib/ruby/gems/1.8/gems/mongrel-1.0.2/lib/mongrel.rb:753:in `run'
+    /opt/local/lib/ruby/gems/1.8/gems/mongrel-1.0.2/lib/mongrel.rb:737:in `initialize'
+    /opt/local/lib/ruby/gems/1.8/gems/mongrel-1.0.2/lib/mongrel.rb:737:in `new'
+    /opt/local/lib/ruby/gems/1.8/gems/mongrel-1.0.2/lib/mongrel.rb:737:in `run'
+    /opt/local/lib/ruby/gems/1.8/gems/mongrel-1.0.2/lib/mongrel/configurator.rb:278:in `run'
+    /opt/local/lib/ruby/gems/1.8/gems/mongrel-1.0.2/lib/mongrel/configurator.rb:277:in `each'
+    /opt/local/lib/ruby/gems/1.8/gems/mongrel-1.0.2/lib/mongrel/configurator.rb:277:in `run'
+    /opt/local/lib/ruby/gems/1.8/gems/mongrel-1.0.2/bin/mongrel_rails:122:in `run'
+    /opt/local/lib/ruby/gems/1.8/gems/mongrel-1.0.2/lib/mongrel/command.rb:211:in `run'
+    /opt/local/lib/ruby/gems/1.8/gems/mongrel-1.0.2/bin/mongrel_rails:276
+    /Users/eweaver/Desktop/projects/fauna/ultrasphinx/trunk/test/smoke/app/vendor/rails/activesupport/lib/active_support/dependencies.rb:490:in `load'
+    /Users/eweaver/Desktop/projects/fauna/ultrasphinx/trunk/test/smoke/app/vendor/rails/activesupport/lib/active_support/dependencies.rb:490:in `load'
+    /Users/eweaver/Desktop/projects/fauna/ultrasphinx/trunk/test/smoke/app/vendor/rails/activesupport/lib/active_support/dependencies.rb:342:in `new_constants_in'
+    /Users/eweaver/Desktop/projects/fauna/ultrasphinx/trunk/test/smoke/app/vendor/rails/activesupport/lib/active_support/dependencies.rb:490:in `load'
+    /Users/eweaver/Desktop/projects/fauna/ultrasphinx/trunk/test/smoke/app/vendor/rails/railties/lib/commands/servers/mongrel.rb:64
+    /opt/local/lib/ruby/site_ruby/1.8/rubygems/custom_require.rb:27:in `gem_original_require'
+    /opt/local/lib/ruby/site_ruby/1.8/rubygems/custom_require.rb:27:in `require'
+    /Users/eweaver/Desktop/projects/fauna/ultrasphinx/trunk/test/smoke/app/vendor/rails/activesupport/lib/active_support/dependencies.rb:497:in `require'
+    /Users/eweaver/Desktop/projects/fauna/ultrasphinx/trunk/test/smoke/app/vendor/rails/activesupport/lib/active_support/dependencies.rb:342:in `new_constants_in'
+    /Users/eweaver/Desktop/projects/fauna/ultrasphinx/trunk/test/smoke/app/vendor/rails/activesupport/lib/active_support/dependencies.rb:497:in `require'
+    /Users/eweaver/Desktop/projects/fauna/ultrasphinx/trunk/test/smoke/app/vendor/rails/railties/lib/commands/server.rb:39
+    script/server:3:in `require'
+    script/server:3
