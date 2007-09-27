@@ -10,7 +10,7 @@ module Ultrasphinx
   class UsageError < Exception #:nodoc:
   end
 
-  # internal file paths
+  # Internal file paths
   
   SUBDIR = "config/ultrasphinx"
   
@@ -26,7 +26,7 @@ module Ultrasphinx
   
   raise ConfigurationError, "Please create a '#{SUBDIR}/#{RAILS_ENV}.base' or '#{SUBDIR}/default.base' file in order to use Ultrasphinx in your #{RAILS_ENV} environment." unless File.exist? BASE_PATH # XXX lame
 
-  # some miscellaneous constants
+  # Some miscellaneous constants
 
   MAX_INT = 2**32-1
 
@@ -112,8 +112,7 @@ type = pgsql
     
   end
 
-  # introspect on the existing generated conf files
-
+  # Introspect on the existing generated conf files
   INDEXER_SETTINGS = options_for('indexer', BASE_PATH)
   CLIENT_SETTINGS = options_for('client', BASE_PATH)
   DAEMON_SETTINGS = options_for('searchd', BASE_PATH)
