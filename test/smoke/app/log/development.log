@@ -7,3 +7,44 @@
   [4;35;1mSQL (0.000000)[0m   [0mMysql::Error: Table 'schema_info' already exists: CREATE TABLE schema_info (version int(11))[0m
   [4;36;1mSQL (0.107946)[0m   [0;1mSELECT version FROM schema_info[0m
 Migrating to CreateUsers (1)
+  [4;36;1mSQL (0.000146)[0m   [0;1mSET SQL_AUTO_IS_NULL=0[0m
+** ultrasphinx: configuration file not found for "development" environment
+** ultrasphinx: please run 'rake ultrasphinx:configure'
+** ultrasphinx: spelling support enabled
+  [4;35;1mSQL (0.000000)[0m   [0mMysql::Error: Table 'schema_info' already exists: CREATE TABLE schema_info (version int(11))[0m
+  [4;36;1mSQL (0.000000)[0m   [0;1mMysql::Error: Table 'schema_info' already exists: CREATE TABLE schema_info (version int(11))[0m
+  [4;35;1mSQL (0.000191)[0m   [0mSELECT version FROM schema_info[0m
+Migrating to CreateUsers (1)
+  [4;36;1mSQL (0.000000)[0m   [0;1mMysql::Error: Unknown table 'users': DROP TABLE users[0m
+  [4;35;1mSQL (0.447333)[0m   [0mCREATE TABLE users (`id` int(11) DEFAULT NULL auto_increment PRIMARY KEY, `login` varchar(64) DEFAULT '' NOT NULL, `email` varchar(255) DEFAULT '' NOT NULL, `crypted_password` varchar(64) DEFAULT '' NOT NULL, `salt` varchar(64) DEFAULT '' NOT NULL, `created_at` datetime DEFAULT NULL, `updated_at` datetime DEFAULT NULL) ENGINE=InnoDB[0m
+  [4;36;1mSQL (0.062837)[0m   [0;1mUPDATE schema_info SET version = 1[0m
+  [4;35;1mSQL (0.000332)[0m   [0mSELECT version FROM schema_info[0m
+Migrating to CreateSellers (2)
+  [4;36;1mSQL (0.000000)[0m   [0;1mMysql::Error: Unknown table 'sellers': DROP TABLE sellers[0m
+  [4;35;1mSQL (0.193937)[0m   [0mCREATE TABLE sellers (`id` int(11) DEFAULT NULL auto_increment PRIMARY KEY, `user_id` int(11) NOT NULL, `company_name` varchar(255) DEFAULT NULL, `created_at` datetime DEFAULT NULL, `updated_at` datetime DEFAULT NULL) ENGINE=InnoDB[0m
+  [4;36;1mSQL (0.000422)[0m   [0;1mUPDATE schema_info SET version = 2[0m
+  [4;35;1mSQL (0.000266)[0m   [0mSELECT version FROM schema_info[0m
+Migrating to CreateAddresses (3)
+  [4;36;1mSQL (0.000000)[0m   [0;1mMysql::Error: Unknown table 'addresses': DROP TABLE addresses[0m
+  [4;35;1mSQL (0.470909)[0m   [0mCREATE TABLE addresses (`id` int(11) DEFAULT NULL auto_increment PRIMARY KEY, `user_id` int(11) NOT NULL, `name` varchar(255) DEFAULT NULL, `line_1` varchar(255) DEFAULT '' NOT NULL, `line_2` varchar(255) DEFAULT NULL, `city` varchar(255) DEFAULT '' NOT NULL, `state_id` int(11) NOT NULL, `province_region` varchar(255) DEFAULT NULL, `zip_postal_code` varchar(255) DEFAULT NULL, `country_id` int(11) NOT NULL) ENGINE=InnoDB[0m
+  [4;36;1mSQL (0.010416)[0m   [0;1mUPDATE schema_info SET version = 3[0m
+  [4;35;1mSQL (0.000306)[0m   [0mSELECT version FROM schema_info[0m
+Migrating to CreateStates (4)
+  [4;36;1mSQL (0.000000)[0m   [0;1mMysql::Error: Unknown table 'states': DROP TABLE states[0m
+  [4;35;1mSQL (0.032538)[0m   [0mCREATE TABLE states (`id` int(11) DEFAULT NULL auto_increment PRIMARY KEY, `name` varchar(255) DEFAULT '' NOT NULL, `abbreviation` varchar(255) DEFAULT '' NOT NULL) ENGINE=InnoDB[0m
+  [4;36;1mSQL (0.000324)[0m   [0;1mUPDATE schema_info SET version = 4[0m
+  [4;35;1mSQL (0.000393)[0m   [0mSELECT * FROM schema_info[0m
+  [4;36;1mSQL (0.011766)[0m   [0;1mSHOW TABLES[0m
+  [4;35;1mSQL (0.093083)[0m   [0mSHOW FIELDS FROM addresses[0m
+  [4;36;1mSQL (0.012133)[0m   [0;1mSHOW KEYS FROM addresses[0m
+  [4;35;1mSQL (0.002721)[0m   [0mSHOW FIELDS FROM sellers[0m
+  [4;36;1mSQL (0.000664)[0m   [0;1mSHOW KEYS FROM sellers[0m
+  [4;35;1mSQL (0.018140)[0m   [0mSHOW FIELDS FROM states[0m
+  [4;36;1mSQL (0.000408)[0m   [0;1mSHOW KEYS FROM states[0m
+  [4;35;1mSQL (0.025416)[0m   [0mSHOW FIELDS FROM users[0m
+  [4;36;1mSQL (0.000952)[0m   [0;1mSHOW KEYS FROM users[0m
+  [4;36;1mSQL (0.000155)[0m   [0;1mSET SQL_AUTO_IS_NULL=0[0m
+** ultrasphinx: configuration file not found for "development" environment
+** ultrasphinx: please run 'rake ultrasphinx:configure'
+** ultrasphinx: spelling support enabled
+  [4;35;1mSQL (0.000128)[0m   [0mSET SQL_AUTO_IS_NULL=0[0m
