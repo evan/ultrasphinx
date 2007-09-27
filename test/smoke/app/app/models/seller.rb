@@ -1,6 +1,6 @@
 class Seller < ActiveRecord::Base
   # Sphinx
-  is_indexed :fields => ['company_name', 'created_at']
+  is_indexed :fields => ['company_name', 'created_at', 'capitalization']
   
   belongs_to :user
   

@@ -3,6 +3,7 @@
   id: <%= num %>
   user_id: <%= num %>
   company_name: <%= "seller#{num}" %>
+  capitalization: <%= num * 1.548 %>
   created_at: <%= (Time.now - 30).to_s :db %>
   updated_at: <%= Time.now.to_s :db %>
 <% end %>

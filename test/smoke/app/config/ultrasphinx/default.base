@@ -16,12 +16,12 @@ searchd
   # Daemon options
   # What interface the search daemon should listen on and where to store its logs
   address = 0.0.0.0
-  port = 3312
-  log = /opt/local/var/db/sphinx/log/searchd.log
-  query_log = /opt/local/var/db/sphinx/log/query.log
+  port = 3313
+  log = /tmp/sphinx/searchd.log
+  query_log = /tmp/sphinx/query.log
   read_timeout = 5
   max_children = 300
-  pid_file = /opt/local/var/db/sphinx/log/searchd.pid
+  pid_file = /tmp/sphinx/searchd.pid
   max_matches = 100000
 }
 
@@ -30,7 +30,7 @@ client
   # Client options
   # How your application connects to the search daemon (not necessarily the same as above)
   server_host = localhost
-  server_port = 3312
+  server_port = 3313
 }
 
 source
@@ -45,7 +45,7 @@ source
 index
 {
   # Index building options
-  path = /opt/local/var/db/sphinx/
+  path = /tmp/sphinx/
   docinfo = extern # just leave this alone
   morphology = stem_en
   stopwords = # /path/to/stopwords.txt
