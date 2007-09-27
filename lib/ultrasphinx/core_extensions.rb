@@ -1,5 +1,6 @@
 
 class Array
+  # Only flatten the first level of an array
   def _flatten_once
     self.inject([]) do |set, element| 
       set + Array(element)
@@ -15,10 +16,44 @@ class Object
   end
   
   def _deep_dup
-    # Cause Ruby's dup sucks.
+    # Cause Ruby's clone/dup sucks.
     Marshal.load(Marshal.dump(self))
   end
 end
+
+class Hash
+  def _coerce_basic_types
+    # XXX To remove
+    Hash[*self.map do |key, value|
+      [key.to_s,
+        if value.respond_to?(:to_i) && value.to_i.to_s == value
+          value.to_i
+        elsif value == ""
+          nil
+        else
+          value
+        end]
+      end._flatten_once]
+  end
+  
+  # Delete by multiple keys
+  def _delete(*args)
+    args.map do |key|
+      self.delete key
+    end    
+  end
+  
+  # Convert a hash to a Sphinx-style conf string
+  def _to_conf_string(section = nil)
+    inner = self.map do |key, value|
+      "  #{key} = #{value}"
+    end.join("\n")
+    section ? "#{section} {\n#{inner}\n}\n" : inner
+  end
+
+end
+
+### Filter type coercion methods
 
 class String
   def _to_numeric
@@ -36,31 +71,26 @@ class String
   end
 end
 
-class Hash
-  def _coerce_basic_types
-    Hash[*self.map do |key, value|
-      [key.to_s,
-        if value.respond_to?(:to_i) && value.to_i.to_s == value
-          value.to_i
-        elsif value == ""
-          nil
-        else
-          value
-        end]
-      end._flatten_once]
+module NumericSelf
+  def _to_numeric
+    self
   end
-  
-  def _delete(*args)
-    args.map do |key|
-      self.delete key
-    end    
-  end
-  
-  def _to_conf_string(section = nil)
-    inner = self.map do |key, value|
-      "  #{key} = #{value}"
-    end.join("\n")
-    section ? "#{section} {\n#{inner}\n}\n" : inner
-  end
+end
 
+class Fixnum
+  include NumericSelf
+end
+
+class Bignum
+  include NumericSelf
+end
+
+class Float
+  include NumericSelf
+end
+
+class Date
+  def _to_numeric
+    self.to_i
+  end
 end
