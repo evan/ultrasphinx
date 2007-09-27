@@ -71,26 +71,16 @@ class String
   end
 end
 
-module NumericSelf
-  def _to_numeric
-    self
-  end
+module Ultrasphinx::NumericSelf
+  def _to_numeric; self; end
 end
 
-class Fixnum
-  include NumericSelf
+module Ultrasphinx::DateSelf
+  def _to_numeric; self.to_i; end
 end
 
-class Bignum
-  include NumericSelf
-end
-
-class Float
-  include NumericSelf
-end
-
-class Date
-  def _to_numeric
-    self.to_i
-  end
-end
+class Fixnum; include Ultrasphinx::NumericSelf; end
+class Bignum; include Ultrasphinx::NumericSelf; end
+class Float; include Ultrasphinx::NumericSelf; end
+class Date; include Ultrasphinx::DateSelf; end
+class Time; include Ultrasphinx::DateSelf; end

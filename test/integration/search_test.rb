@@ -16,6 +16,10 @@ class SearchTest < Test::Unit::TestCase
     assert_nothing_raised do
       @q = S.new.run
     end
+    assert_equal(
+      User.count + Seller.count,
+      @q.total_entries
+    )
   end
   
   def test_sort_by_date
@@ -40,12 +44,22 @@ class SearchTest < Test::Unit::TestCase
   end
   
   def test_float_range_filter
-    assert_equal(
-      Seller.count(:conditions => 'capitalization <= 100'),
-      S.new(:class_names => 'Seller', :filters => {'capitalization' => 0..100}).run.size
-    )
+    @count = Seller.count(:conditions => 'capitalization <= 29.5 AND capitalization >= 10')
+    assert_equal(@count,
+      S.new(:class_names => 'Seller', :filters => {'capitalization' => 10..29.5}).run.size)
+    assert_equal(@count,
+      S.new(:class_names => 'Seller', :filters => {'capitalization' => 29.5..10}).run.size)
   end
-  
+
+  def test_date_range_filter
+    @first, @last = Seller.find(5).created_at, Seller.find(10).created_at
+    @count = Seller.count(:conditions => ['created_at >= ? AND created_at <= ?', @first, @last])
+    assert_equal(@count,
+      S.new(:class_names => 'Seller', :filters => {'created_at' => @first..@last}).run.size)
+    assert_equal(@count,
+      S.new(:class_names => 'Seller', :filters => {'created_at' => @last..@first}).run.size)
+  end
+    
   def test_text_filter
     assert_equal(
       Seller.count(:conditions => "company_name = 'seller17'"),
@@ -57,6 +71,14 @@ class SearchTest < Test::Unit::TestCase
     assert_raises(Sphinx::SphinxArgumentError) do
       S.new(:class_names => 'Seller', :filters => {'bogus' => 17}).run
     end
+  end
+  
+  def test_query_filter
+  
+  end
+  
+  def test_weighting
+  
   end
   
 end
