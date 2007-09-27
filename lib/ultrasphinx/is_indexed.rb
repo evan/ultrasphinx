@@ -30,6 +30,8 @@ To allow sorting by a text field, also pass a hash and set the <tt>:sortable</tt
 
 To apply an SQL function to a field before it is indexed, use the key <tt>:function_sql</tt>. Pass a string such as <tt>"REPLACE(?, '_', ' ')"</tt>. The table and column name for your field will be interpolated into the first <tt>?</tt> in the string.
 
+Note that <tt>float</tt> fields are supported, but require Sphinx 0.98.
+
 == Including a field from an association
 
 Use the <tt>:include</tt> key.
