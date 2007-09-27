@@ -1,0 +1,9 @@
+  [4;36;1mSQL (0.000150)[0m   [0;1mSET SQL_AUTO_IS_NULL=0[0m
+** ultrasphinx: configuration file not found for "development" environment
+** ultrasphinx: please run 'rake ultrasphinx:configure'
+** ultrasphinx: spelling support enabled
+  [4;35;1mSQL (4.796924)[0m   [0mCREATE TABLE schema_info (version int(11))[0m
+  [4;36;1mSQL (0.156484)[0m   [0;1mINSERT INTO schema_info (version) VALUES(0)[0m
+  [4;35;1mSQL (0.000000)[0m   [0mMysql::Error: Table 'schema_info' already exists: CREATE TABLE schema_info (version int(11))[0m
+  [4;36;1mSQL (0.107946)[0m   [0;1mSELECT version FROM schema_info[0m
+Migrating to CreateUsers (1)
