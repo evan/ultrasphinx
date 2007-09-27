@@ -6,17 +6,26 @@ module Ultrasphinx
       # Force all the indexed models to load and fill the MODEL_CONFIGURATION hash.
       def load_constants
   
-        Dir["#{RAILS_ROOT}/app/models/**/*.rb"].each do |filename|
-          open(filename) do |file| 
-            begin
-              if file.grep(/is_indexed/).any?
-                Dependencies.load_missing_constant(Kernel, File.basename(filename)[0..-4].classify) 
+        Dir.chdir "#{RAILS_ROOT}/app/models/" do
+          Dir["**/*.rb"].each do |filename|
+            open(filename) do |file| 
+              begin
+                if file.grep(/is_indexed/).any?
+                  begin                
+                    Dependencies.load_missing_constant(Kernel, filename[0..-4].classify) 
+                  rescue NameError => e
+                    unless File.basename(filename) == filename
+                      filename = File.basename(filename) and retry
+                    end
+                    raise e
+                  end
+                end
+              rescue Object => e
+                say "warning: possibly critical autoload error on #{filename}"
+                say e.inspect
               end
-            rescue Object => e
-              say "warning: possibly critical autoload error on #{filename}"
-              say e.inspect
-            end
-          end 
+            end 
+          end
         end
   
         # Build the field-to-type mappings.
