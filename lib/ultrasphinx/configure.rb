@@ -3,7 +3,7 @@ module Ultrasphinx
   class Configure  
     class << self    
   
-      # Force all the indexed models to load and fill the MODEL_CONFIGURATION hash.
+      # Force all the indexed models to load and register in the MODEL_CONFIGURATION hash.
       def load_constants
   
         Dir.chdir "#{RAILS_ROOT}/app/models/" do
@@ -12,7 +12,6 @@ module Ultrasphinx
               begin
                 if file.grep(/is_indexed/).any?
                   begin                
-                    # Force Rails to load the model so it registers its configuration  MODEL_CONFIGURATION
                     filename[0..-4].classify.constantize
                   rescue NameError => e
                     unless File.basename(filename) == filename
