@@ -12,7 +12,8 @@ module Ultrasphinx
               begin
                 if file.grep(/is_indexed/).any?
                   begin                
-                    Dependencies.load_missing_constant(Kernel, filename[0..-4].classify) 
+                    # Force Rails to load the model so it registers its configuration  MODEL_CONFIGURATION
+                    filename[0..-4].classify.constantize
                   rescue NameError => e
                     unless File.basename(filename) == filename
                       filename = File.basename(filename) and retry
