@@ -15,7 +15,6 @@ require 'initializer'
 require 'active_support'
 require 'sqlite3'
 require 'active_record'
-require 'test/spec'
 require 'ruby-debug'
 
 ActiveRecord::Base.establish_connection(
