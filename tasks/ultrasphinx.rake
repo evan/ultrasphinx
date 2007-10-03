@@ -83,7 +83,7 @@ namespace :ultrasphinx do
     task :build => [:_environment] do    
       ENV['OPTS'] = "--buildstops #{Ultrasphinx::STOPWORDS_PATH} #{Ultrasphinx::MAX_WORDS} --buildfreqs"
       Rake::Task["ultrasphinx:index"].invoke
-      tmpfile = "/tmp/custom_words.txt"
+      tmpfile = "/tmp/ultrasphinx-stopwords.txt"
       words = []
       say "filtering"
       File.open(Ultrasphinx::STOPWORDS_PATH).each do |line|
@@ -96,8 +96,8 @@ namespace :ultrasphinx do
       end
       say "writing #{words.size} words"
       File.open(tmpfile, 'w').write(words.join("\n"))
-      say "loading into aspell"
-      system("aspell --lang=en create master custom.rws < #{tmpfile}")
+      say "loading dictionary '#{Ultrasphinx::DICTIONARY}' into aspell"
+      system("aspell --lang=en create master #{Ultrasphinx::DICTIONARY}.rws < #{tmpfile}")
     end
   end
   

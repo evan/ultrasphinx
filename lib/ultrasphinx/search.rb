@@ -205,43 +205,47 @@ Note that your database is never changed by anything Ultrasphinx does.
     
     # Returns the facet map for this query, if facets were used.
     def facets
-      raise UsageError, "No facet field was configured" unless @options['facets']
       run?(true)
+      raise UsageError, "No facet field was configured" unless @options['facets']
       @facets
     end      
           
     # Returns the raw response from the Sphinx client.
     def response
+      run?(true)
       @response
     end
     
     def class_name #:nodoc:
       # Legacy accessor
-      @options['class_name']
+      @options['class_names']
     end
     
     # Returns a hash of total result counts, scoped to each available model. This requires extra queries against the search daemon right now. Set <tt>Ultrasphinx::Search.client_options[:with_subtotals] = true</tt> to enable the extra queries. Most of the overhead is in instantiating the AR result sets, so the performance hit is not usually significant.
     def subtotals
+      run?(true)
       raise UsageError, "Subtotals are not enabled" unless self.class.client_options['with_subtotals']
       @subtotals
     end
 
     # Returns the total result count.
     def total_entries
+      run?(true)
       [response['total_found'] || 0, MAX_MATCHES].min
     end  
   
     # Returns the response time of the query, in milliseconds.
     def time
+      run?(true)
       response['time']
     end
 
     # Returns whether the query has been run.  
     def run?(should_raise = false)
-      if response.blank? and should_raise
+      if @response.blank? and should_raise
         raise UsageError, "Search has not yet been run" unless run?
       else
-        !response.blank?
+        !@response.blank?
       end
     end
  
@@ -257,6 +261,7 @@ Note that your database is never changed by anything Ultrasphinx does.
         
     # Returns the last available page number in the result set.  
     def page_count
+      run?(true)    
       (total_entries / per_page) + (total_entries % per_page == 0 ? 0 : 1)
     end
             
@@ -327,14 +332,14 @@ Note that your database is never changed by anything Ultrasphinx does.
         # if you don't reify, you'll have to do the modulus reversal yourself to get record ids
         @results = reify_results(@results) if reify
                                 
-      rescue Sphinx::SphinxResponseError, Sphinx::SphinxTemporaryError, Errno::EPIPE => e
+      rescue Sphinx::SphinxConnectError, Sphinx::SphinxResponseError, Sphinx::SphinxTemporaryError, Errno::ECONNRESET, Errno::EPIPE => e
         if (tries += 1) <= self.class.client_options['max_retries']
           say "restarting query (#{tries} attempts already) (#{e})"
           sleep(self.class.client_options['retry_sleep_time']) if tries == self.class.client_options['max_retries']
           retry
         else
           say "query failed"
-          raise e
+          raise Sphinx::SphinxConnectError, e.to_s
         end
       end
       

@@ -69,11 +69,13 @@ type = pgsql
   ADAPTER_SQL_FUNCTIONS = {
     'mysql' => {
       'group_by' => 'GROUP BY id',
-      'timestamp' => 'UNIX_TIMESTAMP('
+      'timestamp' => 'UNIX_TIMESTAMP(',
+      'hash' => 'CRC32('
     },    
     'postgresql' => {
       'group_by' => '',
-      'timestamp' => 'EXTRACT(EPOCH FROM '
+      'timestamp' => 'EXTRACT(EPOCH FROM ',
+      'hash' => 'MD5('
     }      
   }
   
@@ -121,8 +123,11 @@ type = pgsql
   
   # Make sure there's a trailing slash
   INDEX_SETTINGS['path'] = INDEX_SETTINGS['path'].chomp("/") + "/" 
+  
+  DICTIONARY = CLIENT_SETTINGS['dictionary_name'] || 'ap'  
+  raise ConfigurationError, "Aspell does not support dictionary names longer than two letters" if DICTIONARY.size > 2
 
-  STOPWORDS_PATH = "#{Ultrasphinx::INDEX_SETTINGS['path']}/stopwords.txt"
+  STOPWORDS_PATH = "#{Ultrasphinx::INDEX_SETTINGS['path']}/#{DICTIONARY}-stopwords.txt"
 
   MODEL_CONFIGURATION = {}     
 

@@ -21,7 +21,7 @@ module Ultrasphinx
       
         offset, limit = opts['per_page'] * (opts['page'] - 1), opts['per_page']
         
-        request.SetLimits offset, limit, [offset + limit, MAX_MATCHES].min
+        request.SetLimits offset, limit
         request.SetSortMode SPHINX_CLIENT_PARAMS['sort_mode'][opts['sort_mode']], opts['sort_by'].to_s
       
         if weights = opts['weights']
@@ -87,10 +87,14 @@ module Ultrasphinx
         # Set the facet query parameter and modify per-page setting so we snag all the facets
         request.SetGroupBy(facet, Sphinx::Client::SPH_GROUPBY_ATTR, '@count desc')
         limit = self.class.client_options['max_facets']
-        request.SetLimits 0, limit, [limit, MAX_MATCHES].min
+        request.SetLimits 0, limit
         
         # Run the query
-        matches = request.Query(query)['matches']
+        begin
+          matches = request.Query(query)['matches']
+        rescue Sphinx::SphinxInternalError
+          raise ConfigurationError, "Index is out of date. Run 'rake ultrasphinx:index'"
+        end
                 
         # Map the facets back to something sane
         facets = {}
@@ -100,7 +104,7 @@ module Ultrasphinx
           facets[match['@groupby']] = match['@count']
         end
                 
-        # Invert crc's, if we have them
+        # Invert hash's, if we have them
         reverse_map_facets(facets, original_facet)
       end
       
@@ -109,9 +113,9 @@ module Ultrasphinx
       
         if Fields.instance.types[facet] == 'text'        
           # Apply the map, rebuilding if the cache is missing or out-of-date
-          facets = Hash[*(facets.map do |crc, value|
-            rebuild_facet_cache(facet) unless FACET_CACHE[facet] and FACET_CACHE[facet].has_key?(crc)
-            [FACET_CACHE[facet][crc], value]
+          facets = Hash[*(facets.map do |hash, value|
+            rebuild_facet_cache(facet) unless FACET_CACHE[facet] and FACET_CACHE[facet].has_key?(hash)
+            [FACET_CACHE[facet][hash], value]
           end.flatten)]
         end
         
@@ -119,18 +123,21 @@ module Ultrasphinx
       end
       
       def rebuild_facet_cache(facet)
-        # Cache the reverse CRC map for the textual facet if it hasn't been done yet
+        # Cache the reverse hash map for the textual facet if it hasn't been done yet
         # XXX not necessarily optimal since it requires a direct DB hit once per mongrel
-        Ultrasphinx.say "caching CRC reverse map for text facet #{facet}"
+        Ultrasphinx.say "caching hash reverse map for text facet #{facet}"
         
         Fields.instance.classes[facet].each do |klass|
           # you can only use a facet from your own self right now; no includes allowed
-          field = (MODEL_CONFIGURATION[klass.name]['fields'].detect do |field_hash|
+          field = MODEL_CONFIGURATION[klass.name]['fields'].detect do |field_hash|
             field_hash['as'] == facet
-          end)['field']
+          end
+                    
+          raise ConfigurationError, "Model #{klass.name} has the requested '#{facet}' field, but it was not configured for faceting" unless field
+          field = field['field']
       
-          klass.connection.execute("SELECT #{field} AS value, CRC32(#{field}) AS crc FROM #{klass.table_name} GROUP BY #{field}").each_hash do |hash|
-            (FACET_CACHE[facet] ||= {})[hash['crc'].to_i] = hash['value']
+          klass.connection.execute("SELECT #{field} AS value, #{ADAPTER_SQL_FUNCTIONS[ADAPTER]['hash']}#{field}) AS hash FROM #{klass.table_name} GROUP BY #{field}").each_hash do |hash|
+            (FACET_CACHE[facet] ||= {})[hash['hash'].to_i] = hash['value']
           end                            
         end
         FACET_CACHE[facet]

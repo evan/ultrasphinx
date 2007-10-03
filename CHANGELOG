@@ -1,4 +1,6 @@
 
+v1.5.3. 90% test coverage. Support multiple spelling dictionaries per machine (configurable in the .base file).
+
 v1.5.2. Fix association reloading issue; support float attributes on Sphinx 0.9.8; fix date range filters; import and update sample app (Mark Lane); start a comprehensive integration suite.
 
 v1.5.1. Various bugfixes.

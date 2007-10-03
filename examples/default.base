@@ -29,6 +29,8 @@ searchd
 client
 {
   # Client options
+  # Name of the Aspell dictionary (two letters max)
+  dictionary_name = ap
   # How your application connects to the search daemon (not necessarily the same as above)
   server_host = localhost
   server_port = 3312

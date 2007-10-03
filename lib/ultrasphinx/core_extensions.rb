@@ -6,6 +6,12 @@ class Array
       set + Array(element)
     end
   end
+  
+  def sum
+    self.inject(0) do |acc, element|
+      acc + element
+    end
+  end
 end
 
 class Object
@@ -66,7 +72,7 @@ class String
     elsif date = Chronic.parse(self)
       date.to_i
     else
-      self
+      raise Ultrasphinx::UsageError, "#{self.inspect} could not be coerced into a numeric value"
     end
   end
 end

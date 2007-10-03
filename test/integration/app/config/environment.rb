@@ -6,4 +6,6 @@ Rails::Initializer.run do |config|
   config.load_paths << "#{RAILS_ROOT}/app/models/person" # moduleless model path
 end
 
+Ultrasphinx::Search.client_options['with_subtotals'] = true
+
 # Dependencies.log_activity = true

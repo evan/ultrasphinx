@@ -28,6 +28,7 @@ searchd
 client
 {
   # Client options
+  dictionary_name = ts
   # How your application connects to the search daemon (not necessarily the same as above)
   server_host = localhost
   server_port = 3313

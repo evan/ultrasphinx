@@ -1,5 +1,4 @@
 
-* Support multiple spelling dictionaries per machine
 * Finish unifying filters and textfields
 * Support exclude filters
 * Make sure filters can be set to nil

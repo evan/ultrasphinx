@@ -65,7 +65,7 @@ module Ultrasphinx
       def global_header
         ["\n# Auto-generated at #{Time.now}.",
          "# Hand modifications will be overwritten.",
-         "# #{BASE_PATH}",
+         "# #{BASE_PATH}\n",
          INDEXER_SETTINGS._to_conf_string('indexer'),
          DAEMON_SETTINGS._to_conf_string("searchd")]
       end      
@@ -137,7 +137,6 @@ module Ultrasphinx
       
       
       def build_query(klass, column_strings, join_strings, condition_strings)
-
         ["sql_query =", 
           "SELECT", 
           column_strings.sort_by do |string| 
@@ -147,9 +146,7 @@ module Ultrasphinx
           "FROM #{klass.table_name}",
           join_strings.uniq,
           "WHERE #{klass.table_name}.#{klass.primary_key} >= $start AND #{klass.table_name}.#{klass.primary_key} <= $end",
-          condition_strings.uniq.map do |condition| 
-            "AND #{condition}"
-          end,
+          condition_strings.uniq.map {|condition| "AND #{condition}" },
           ADAPTER_SQL_FUNCTIONS[ADAPTER]['group_by']
         ].flatten.join(" ")
       end
@@ -253,10 +250,9 @@ module Ultrasphinx
         column_strings << fields.cast(source_string, as)
         remaining_columns.delete(as)
         
-        # Generate CRC integer fields for text grouping
+        # Generate hashed integer fields for text grouping
         if with_facet
-          # Postgres probably doesn't handle this
-          column_strings << "CRC32(#{source_string}) AS #{as}_facet"
+          column_strings << "#{ADAPTER_SQL_FUNCTIONS[ADAPTER]['hash']}#{source_string}) AS #{as}_facet"
           remaining_columns.delete("#{as}_facet")
         end
         [column_strings, remaining_columns]
