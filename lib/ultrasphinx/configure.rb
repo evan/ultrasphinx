@@ -185,7 +185,7 @@ module Ultrasphinx
             elsif macro == :has_one
               "#{klass.table_name}.#{klass.primary_key} = #{join_klass.table_name}.#{association.primary_key_name}" 
             else
-              raise ConfigurationError, "Unidentified association macro #{macro.inspect}"
+              raise ConfigurationError, "Unidentified association macro #{macro.inspect}. Please use the :association_sql key to manually specify the JOIN syntax."
             end
           end
           
