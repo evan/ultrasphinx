@@ -1,5 +1,5 @@
 
-require "#{File.dirname(__FILE__)}/../integration_helper"
+require "#{File.dirname(__FILE__)}/../test_helper"
 
 class SearchTest < Test::Unit::TestCase
 
@@ -13,11 +13,16 @@ class SearchTest < Test::Unit::TestCase
   end  
   
   def test_empty_query
+    @total = Ultrasphinx::MODEL_CONFIGURATION.keys.inject(0) do |acc, class_name| 
+      acc + class_name.constantize.count
+    end - User.count(:conditions => {:deleted => true })
+    
     assert_nothing_raised do
       @q = S.new.run
     end
+    
     assert_equal(
-      User.count + Seller.count,
+      @total,
       @q.total_entries
     )
   end

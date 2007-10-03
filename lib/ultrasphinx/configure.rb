@@ -11,18 +11,17 @@ module Ultrasphinx
             open(filename) do |file| 
               begin
                 if file.grep(/is_indexed/).any?
+                  filename = filename[0..-4]
                   begin                
-                    filename[0..-4].classify.constantize
+                    File.basename(filename).camelize.constantize
                   rescue NameError => e
-                    unless File.basename(filename) == filename
-                      filename = File.basename(filename) and retry
-                    end
-                    raise e
+                    filename.camelize.constantize
                   end
                 end
               rescue Object => e
                 say "warning: possibly critical autoload error on #{filename}"
                 say e.inspect
+                #say e.backtrace.join("\n") if RAILS_ENV == "development"
               end
             end 
           end
@@ -49,7 +48,7 @@ module Ultrasphinx
           cached_groups = Fields.instance.groups.join("\n")
           MODEL_CONFIGURATION.each_with_index do |model_options, class_id|
             model, options = model_options
-            klass, source = model.constantize, model.tableize    
+            klass, source = model.constantize, model.tableize.gsub('/', '__')   
             sources << source
             conf.puts build_source(Fields.instance, model, options, class_id, klass, source, cached_groups)
           end
@@ -176,9 +175,11 @@ module Ultrasphinx
 
       def build_includes(klass, fields, entries, column_strings, join_strings, remaining_columns)                  
         entries.to_a.each do |entry|
-          
+        
           join_klass = entry['class_name'].constantize
-          association = klass.reflect_on_association(entry['class_name'].underscore.to_sym)
+          association = klass.reflect_on_all_associations.detect do |assoc|
+            assoc.class_name == entry['class_name']
+          end
                         
           raise ConfigurationError, "Unknown association from #{klass} to #{entry['class_name']}" if not association and not entry['association_sql']
           
@@ -187,7 +188,7 @@ module Ultrasphinx
             if (macro = association.macro) == :belongs_to 
               "#{join_klass.table_name}.#{join_klass.primary_key} = #{klass.table_name}.#{association.primary_key_name}" 
             elsif macro == :has_one
-              "#{klass.table_name}.#{klass.primary_key} = #{join_klass.table_name}.#{association.instance_variable_get('@foreign_key_name')}" 
+              "#{klass.table_name}.#{klass.primary_key} = #{join_klass.table_name}.#{association.primary_key_name}" 
             else
               raise ConfigurationError, "Unidentified association macro #{macro.inspect}"
             end

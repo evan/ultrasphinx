@@ -45,11 +45,11 @@ The hash lets you customize internal aspects of the search.
 
 Note that you can set up your own query defaults in <tt>environment.rb</tt>: 
   
-  Ultrasphinx::Search.query_defaults = {
+  Ultrasphinx::Search.query_defaults = HashWithIndifferentAccess.new({
     :per_page => 10,
     :sort_mode => 'relevance',
     :weights => {'title' => 2.0}
-  }
+  })
 
 = Advanced features
 
@@ -75,14 +75,14 @@ You need to set the <tt>content_methods</tt> key on Ultrasphinx::Search.excerpti
   
 There are some other keys you can set, such as excerpt size, HTML tags to highlight with, and number of words on either side of each excerpt chunk. Example (in <tt>environment.rb</tt>):
   
-  Ultrasphinx::Search.excerpting_options = {
+  Ultrasphinx::Search.excerpting_options = HashWithIndifferentAccess.new({
     :before_match => '<strong>', 
     :after_match => '</strong>',
     :chunk_separator => "...",
     :limit => 256,
     :around => 3,
     :content_methods => [['title'], ['body', 'description', 'content'], ['metadata']] 
-  }
+  })
   
 Note that your database is never changed by anything Ultrasphinx does.
 
@@ -151,8 +151,18 @@ Note that your database is never changed by anything Ultrasphinx does.
       else
         begin  
           lines = open(CONF_PATH).readlines          
-          sources = lines.select {|s| s =~ /^source \w/ }.map {|s| s[/source ([\w\d_-]*)/, 1].classify }
-          ids = lines.select {|s| s =~ /^sql_query / }.map {|s| s[/(\d*) AS class_id/, 1].to_i }
+
+          sources = lines.select do |line| 
+            line =~ /^source \w/
+          end.map do |line| 
+            line[/source ([\w\d_-]*)/, 1].gsub('__', '/').classify
+          end
+          
+          ids = lines.select do |line| 
+            line =~ /^sql_query /
+          end.map do |line| 
+            line[/(\d*) AS class_id/, 1].to_i
+          end
           
           raise unless sources.size == ids.size          
           Hash[*sources.zip(ids).flatten]

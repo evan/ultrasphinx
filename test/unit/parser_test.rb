@@ -1,5 +1,5 @@
 
-require "#{File.dirname(__FILE__)}/../unit_helper"
+require "#{File.dirname(__FILE__)}/../test_helper"
 
 class ParserTest < Test::Unit::TestCase
 

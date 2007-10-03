@@ -38,6 +38,8 @@ Use the <tt>:include</tt> key.
 
 Accepts an array of hashes. 
 
+  :include => [{:class_name => 'Category', :field => 'name', :as => 'category'}]
+
 Each should contain a <tt>:class_name</tt> key (the class name of the included model), a <tt>:field</tt> key (the name of the field to include), and an optional <tt>:as</tt> key (what to name the field in the parent). You can use the optional key <tt>:association_sql</tt> if you need to pass a custom JOIN string, in which case the default JOIN for <tt>belongs_to</tt> will not be generated.
 
 The keys <tt>:facet</tt>, <tt>:sortable</tt>, and <tt>:function_sql</tt> are also recognized, just like for regular fields.
@@ -137,8 +139,9 @@ If the associations weren't just <tt>has_many</tt> and <tt>belongs_to</tt>, you 
         entry.stringify_keys!
         entry.assert_valid_keys ['class_name', 'conditions', 'field', 'as', 'fields', 'association_name', 'association_sql', 'facet', 'function_sql', 'sortable']
         raise Ultrasphinx::ConfigurationError, "You can't mix regular concat and group concats" if entry['fields'] and (entry['field'] or entry['class_name'] or entry['association_name'])
-        raise Ultrasphinx::ConfigurationError, "Group concats must not have multiple fields" if entry['field'].is_a? Array
-        raise Ultrasphinx::ConfigurationError, "Regular concats should have multiple fields" if entry['fields'] and !entry['fields'].is_a?(Array)
+        raise Ultrasphinx::ConfigurationError, "Concatenations must specify an :as key" unless entry['as']
+        raise Ultrasphinx::ConfigurationError, "Group concatenations must not have multiple fields" if entry['field'].is_a? Array
+        raise Ultrasphinx::ConfigurationError, "Regular concatenations should have multiple fields" if entry['fields'] and !entry['fields'].is_a?(Array)
       end
       
       Array(opts['include']).each do |entry|

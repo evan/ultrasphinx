@@ -48,7 +48,16 @@ namespace :ultrasphinx do
     task :stop => [:_environment] do
       raise Ultrasphinx::DaemonError, "Doesn't seem to be running" unless ultrasphinx_daemon_running?
       system "kill #{pid = ultrasphinx_daemon_pid}"
-      say "stopped #{pid}."
+      sleep(1)
+      if ultrasphinx_daemon_running?
+        system "kill -9 #{pid}"  
+        sleep(1)
+      end
+      if ultrasphinx_daemon_running?
+        say "#{pid} could not be stopped"
+      else
+        say "stopped #{pid}"
+      end
     end
 
     desc "Restart the search daemon"

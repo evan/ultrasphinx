@@ -1,4 +1,4 @@
-<% 1.upto(40) do |num| %>
+<% 1.upto(41) do |num| %>
 <%="user#{num}:" %>
   id: <%= num.to_s %>
   login: <%= "user#{num}" %>
@@ -7,4 +7,5 @@
   salt: "1000"
   created_at: <%= (Time.now - 30).to_s :db %>
   updated_at: <%= Time.now.to_s :db %>
+  deleted: <%= num == 41 ? true : false %>
 <% end %>

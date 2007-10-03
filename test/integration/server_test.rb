@@ -1,5 +1,5 @@
 
-require "#{File.dirname(__FILE__)}/../integration_helper"
+require "#{File.dirname(__FILE__)}/../test_helper"
 require 'open-uri'
 
 # Start the server

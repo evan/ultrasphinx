@@ -15,7 +15,8 @@ This is a special singleton configuration class that stores the index field conf
       'date' => 'date', 
       'datetime' => 'date',
       'timestamp' => 'date',
-      'float' => 'numeric'
+      'float' => 'numeric',
+      'boolean' => 'numeric'
     }
     
     VERSIONS_REQUIRED = {'float' => '0.9.8'}
@@ -78,8 +79,10 @@ This is a special singleton configuration class that stores the index field conf
           "0"
         when 'date'
           "UNIX_TIMESTAMP('1970-01-01 00:00:00')"
+        when nil
+          raise "Field #{field} is missing"
         else
-          raise "Field #{field} does not have a valid type."
+          raise "Field #{field} does not have a valid type #{types[field]}."
       end + " AS #{field}"
     end
     
@@ -103,9 +106,9 @@ This is a special singleton configuration class that stores the index field conf
                 
         begin
         
-          # Fields are from the model. We destructively canonicize them back onto the configuration hash.
+          # Fields are from the model
+          # We destructively canonicize them back onto the configuration hash
           options['fields'] = options['fields'].to_a.map do |entry|
-            
             entry = {'field' => entry} unless entry.is_a? Hash
             entry['as'] = entry['field'] unless entry['as']
             
@@ -125,10 +128,12 @@ This is a special singleton configuration class that stores the index field conf
           
           # Joins are whatever they are in the target       
           options['include'].to_a.each do |entry|
+            entry['as'] = entry['field'] unless entry['as']
+            
             save_and_verify_type(entry['as'] || entry['field'], entry['class_name'].constantize.columns_hash[entry['field']].type, entry['sortable'], klass)
           end  
           
-          # Regular concats are CHAR (I think), group_concats are BLOB and need to be cast to CHAR, e.g. :text
+          # Regular concats are CHAR, group_concats are BLOB and need to be cast to CHAR
           options['concatenate'].to_a.each do |entry|
             save_and_verify_type(entry['as'], 'text', entry['sortable'], klass)
           end          
