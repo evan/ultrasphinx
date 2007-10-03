@@ -84,7 +84,7 @@ class SearchTest < Test::Unit::TestCase
   end
   
   def test_nil_filter
-  
+    # XXX
   end
   
   def test_float_range_filter
@@ -153,7 +153,11 @@ class SearchTest < Test::Unit::TestCase
   end
   
   def test_multi_facet
+    # XXX
+  end
   
+  def test_association_sql
+    # XXX
   end
     
   def test_weights

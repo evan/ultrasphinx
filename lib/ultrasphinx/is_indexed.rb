@@ -70,7 +70,7 @@ Also use the <tt>:concatenate</tt> key.
 To concatenate one field from a set of associated records as a combined field in the parent record, use a group (or vertical) concatenation. A group concatenation should contain a <tt>:class_name</tt> key (the class name of the included model), a <tt>:field</tt> key (the field on the included model to concatenate), and an optional <tt>:as</tt> key (also the name of the result of the concatenation). For example, to concatenate all <tt>Post#body</tt> contents into the parent's <tt>responses</tt> field:
   :concatenate => [{:class_name => 'Post', :field => 'body', :as => 'responses'}]
 
-Optional group concatenation keys are <tt>:association_name</tt> (if your <tt>has_many</tt> association can't be derived from the model name), <tt>:association_sql</tt>, if you need to pass a custom JOIN string (for example, a double JOIN for a <tt>has_many :through</tt>), and <tt>:conditions</tt> (if you need custom WHERE conditions for this particular association).
+Optional group concatenation keys are <tt>:association_sql</tt>, if you need to pass a custom JOIN string (for example, a double JOIN for a <tt>has_many :through</tt>), and <tt>:conditions</tt> (if you need custom WHERE conditions for this particular association).
 
 The keys <tt>:facet</tt>, <tt>:sortable</tt>, and <tt>:function_sql</tt> are also recognized, just like for regular fields.
 
@@ -94,8 +94,7 @@ Here's an example configuration using most of the options, taken from production
       :concatenate => [
         {:fields => ['title', 'long_description', 'short_description'], 
           :as => 'editorial'},
-        {:class_name => 'Page', :field => 'body', :as => 'body', 
-          :association_name => 'pages'},
+        {:class_name => 'Page', :field => 'body', :as => 'body'},
         {:class_name => 'Comment', :field => 'body', :as => 'comments', 
           :conditions => "comments.item_type = '#{base_class}'"}
       ],
@@ -137,8 +136,8 @@ If the associations weren't just <tt>has_many</tt> and <tt>belongs_to</tt>, you 
       
       Array(opts['concatenate']).each do |entry|
         entry.stringify_keys!
-        entry.assert_valid_keys ['class_name', 'conditions', 'field', 'as', 'fields', 'association_name', 'association_sql', 'facet', 'function_sql', 'sortable']
-        raise Ultrasphinx::ConfigurationError, "You can't mix regular concat and group concats" if entry['fields'] and (entry['field'] or entry['class_name'] or entry['association_name'])
+        entry.assert_valid_keys ['class_name', 'conditions', 'field', 'as', 'fields', 'association_sql', 'facet', 'function_sql', 'sortable']
+        raise Ultrasphinx::ConfigurationError, "You can't mix regular concat and group concats" if entry['fields'] and (entry['field'] or entry['class_name'])
         raise Ultrasphinx::ConfigurationError, "Concatenations must specify an :as key" unless entry['as']
         raise Ultrasphinx::ConfigurationError, "Group concatenations must not have multiple fields" if entry['field'].is_a? Array
         raise Ultrasphinx::ConfigurationError, "Regular concatenations should have multiple fields" if entry['fields'] and !entry['fields'].is_a?(Array)

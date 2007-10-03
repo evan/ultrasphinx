@@ -174,9 +174,7 @@ module Ultrasphinx
         entries.to_a.each do |entry|
         
           join_klass = entry['class_name'].constantize
-          association = klass.reflect_on_all_associations.detect do |assoc|
-            assoc.class_name == entry['class_name']
-          end
+          association = association_by_class_name(klass, entry['class_name'])
                         
           raise ConfigurationError, "Unknown association from #{klass} to #{entry['class_name']}" if not association and not entry['association_sql']
           
@@ -208,7 +206,7 @@ module Ultrasphinx
         
             join_strings = install_join_unless_association_sql(entry['association_sql'], nil, join_strings) do 
               # XXX make sure foreign key is right for polymorphic relationships
-              association = klass.reflect_on_association(entry['association_name'] ? entry['association_name'].to_sym : entry['class_name'].underscore.pluralize.to_sym)
+              association = association_by_class_name(klass, entry['class_name'])
               "LEFT OUTER JOIN #{join_klass.table_name} ON #{klass.table_name}.#{klass.primary_key} = #{join_klass.table_name}.#{association.primary_key_name}" + 
                 (entry['conditions'] ? " AND (#{entry['conditions']})" : "")
             end
@@ -262,7 +260,12 @@ module Ultrasphinx
       def install_join_unless_association_sql(association_sql, join_string, join_strings)
         join_strings << (association_sql or join_string or yield)
       end
-      
+
+      def association_by_class_name(klass, class_name)
+        klass.reflect_on_all_associations.detect do |assoc|
+          assoc.class_name == class_name
+        end
+      end
       
       def say(s)
         Ultrasphinx.say s
