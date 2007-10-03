@@ -24,7 +24,7 @@ class SearchTest < Test::Unit::TestCase
   
   def test_subtotals
     @s = S.new.run
-    assert_equal @s.total_entries, @s.subtotals.values.sum
+    assert_equal @s.total_entries, @s.subtotals.values._sum
   end
   
   def test_query_retries_and_fails

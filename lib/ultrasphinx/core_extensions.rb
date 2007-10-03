@@ -7,7 +7,7 @@ class Array
     end
   end
   
-  def sum
+  def _sum
     self.inject(0) do |acc, element|
       acc + element
     end
