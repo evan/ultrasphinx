@@ -16,7 +16,7 @@ class ConfigureTest < Test::Unit::TestCase
     @current = open(CONF).readlines[@offset..-1]
     @canonical = open(CONF + ".canonical").readlines[@offset..-1] 
     @canonical.each_with_index do |line, index|
-      # assert_equal line, @current[index], "line #{index}:#{line.inspect} is incorrect"
+       assert_equal line, @current[index], "line #{index}:#{line.inspect} is incorrect"
     end
   end
 
