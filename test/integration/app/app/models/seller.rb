@@ -4,6 +4,7 @@ class Seller < ActiveRecord::Base
   
   is_indexed :fields => [
     {:field => 'company_name', :facet => true},
+    {:field => 'mission_statement', :sortable => true},
     'created_at', 
     'capitalization', 
     'user_id'

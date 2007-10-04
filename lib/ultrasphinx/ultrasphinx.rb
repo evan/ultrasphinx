@@ -104,7 +104,7 @@ sql_query_pre = ) + ADAPTER_SQL_FUNCTIONS['postgresql']['hash_stored_procedure']
   
   # Configuration file parser.
   def self.options_for(heading, path)
-    section = open(path).read[/^#{heading}\s*?\{(.*?)\}/m, 1]    
+    section = open(path).read[/^#{heading.gsub('/', '__')}\s*?\{(.*?)\}/m, 1]    
     
     unless section
       Ultrasphinx.say "warning; heading #{heading} not found in #{path}; it may be corrupted. "

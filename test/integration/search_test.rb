@@ -75,6 +75,13 @@ class SearchTest < Test::Unit::TestCase
       S.new(:class_names => 'Seller', :sort_by => 'capitalization', :sort_mode => 'ascending', :per_page => 5).run.map(&:capitalization)
     )
   end
+  
+  def test_sort_by_string
+    assert_equal(
+      Seller.find(:all, :limit => 5, :order => 'mission_statement DESC').map(&:mission_statement),
+      S.new(:class_names => 'Seller', :sort_by => 'mission_statement', :sort_mode => 'descending', :per_page => 5).run.map(&:mission_statement)
+    )
+  end
  
   def test_filter
     assert_equal(
@@ -140,6 +147,12 @@ class SearchTest < Test::Unit::TestCase
       Ultrasphinx::Search.new(:facets => 'bogus').run
     end
   end  
+  
+  def test_unconfigured_sortable_name
+    assert_raises(Sphinx::SphinxInternalError) do
+      S.new(:class_names => 'Seller', :sort_by => 'company_name',:per_page => 5).run
+    end
+  end
   
   def test_text_facet
     @s = Ultrasphinx::Search.new(:facets => ['company_name']).run

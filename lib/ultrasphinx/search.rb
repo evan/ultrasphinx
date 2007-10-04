@@ -317,7 +317,6 @@ Note that your database is never changed by anything Ultrasphinx does.
       say "searching for #{@options.inspect}"
 
       begin
-              
         @response = @request.Query(parsed_query)
         say "search returned, error #{@request.GetLastError.inspect}, warning #{@request.GetLastWarning.inspect}, returned #{total_entries}/#{response['total_found']} in #{time} seconds."  
 
