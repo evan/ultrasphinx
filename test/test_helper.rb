@@ -3,9 +3,14 @@ require 'rubygems'
 require 'test/unit'
 require 'ruby-debug'
 
-$LOAD_PATH << File.dirname(__FILE__)
+HERE = File.dirname(__FILE__)
+$LOAD_PATH << HERE
 
 require 'integration/app/config/environment'
+
+Dir.chdir "#{HERE}/integration/app" do
+  system("rake us:start")
+end
 
 def silently
   stderr, $stderr = $stderr, StringIO.new

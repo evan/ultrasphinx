@@ -158,7 +158,20 @@ class SearchTest < Test::Unit::TestCase
   end
   
   def test_multi_facet
-    # XXX
+    @facets = ['user_id', 'capitalization', 'company_name']
+    @s = Ultrasphinx::Search.new(:facets => @facets).run
+    @facets.each do |facet|
+      assert @s.facets[facet]
+      assert @s.facets[facet].any?
+    end
+  end
+  
+  def test_float_facet
+    @s = Ultrasphinx::Search.new(:class_name => 'Seller', :facets => 'capitalization').run
+    # XXX Requires full Sphinx 0.9.8 compatibility
+    @s.facets['capitalization'].keys.each do |key|
+      assert key.is_a?(Float)
+    end
   end
   
   def test_association_sql
