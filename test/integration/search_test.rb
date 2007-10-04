@@ -147,8 +147,13 @@ class SearchTest < Test::Unit::TestCase
   end
   
   def test_numeric_facet
+    @user_id_count = Seller.find(:all).map(&:user_id).uniq.size
+
+    @s = Ultrasphinx::Search.new(:class_name => 'Seller', :facets => 'user_id').run
+    assert_equal @user_id_count, @s.facets['user_id'].size
+
     @s = Ultrasphinx::Search.new(:facets => 'user_id').run
-    assert_equal Geo::Address.count + 1, @s.facets['user_id'].size
+    assert_equal @user_id_count + 1, @s.facets['user_id'].size
     assert @s.facets['user_id'][0] > 1
   end
   

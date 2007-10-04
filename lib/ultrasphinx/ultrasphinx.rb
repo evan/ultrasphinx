@@ -67,7 +67,6 @@ module Ultrasphinx
       'timestamp' => 'EXTRACT(EPOCH FROM ?)',
       'hash' => 'hex_to_int(SUBSTRING(MD5(?) FROM 1 FOR 8))',
       'hash_stored_procedure' => %[
-        CREATE LANGUAGE plpgsql;
         CREATE OR REPLACE FUNCTION hex_to_int(varchar) RETURNS int4 AS '
           DECLARE
             h alias for $1;
