@@ -15,6 +15,8 @@ module Ultrasphinx
   SUBDIR = "config/ultrasphinx"
   
   DIR = "#{RAILS_ROOT}/#{SUBDIR}"
+  
+  THIS_DIR = File.expand_path(File.dirname(__FILE__))
 
   CONF_PATH = "#{DIR}/#{RAILS_ENV}.conf"
   
@@ -66,22 +68,7 @@ module Ultrasphinx
       'group_by' => '',
       'timestamp' => 'EXTRACT(EPOCH FROM ?)',
       'hash' => 'hex_to_int(SUBSTRING(MD5(?) FROM 1 FOR 8))',
-      'hash_stored_procedure' => %[
-        CREATE OR REPLACE FUNCTION hex_to_int(varchar) RETURNS int4 AS '
-          DECLARE
-            h alias for $1;
-            exec varchar;
-            curs refcursor;
-            res int;
-          BEGIN
-            exec := ''SELECT x'''''' || h || ''''''::int4'';
-            OPEN curs FOR EXECUTE exec;
-            FETCH curs INTO res;
-            CLOSE curs;
-            return res;
-          END;'
-        LANGUAGE 'plpgsql' IMMUTABLE STRICT;
-      ].gsub("\n", ' ')
+      'hash_stored_procedure' => open("#{THIS_DIR}/hex_to_int.sql").read.gsub("\n", ' ')
     }      
   }
   
