@@ -15,15 +15,12 @@ require 'ultrasphinx/search/internals'
 require 'ultrasphinx/search/parser'
 require 'ultrasphinx/search'
 
-Ultrasphinx.say(
-  begin
-    require 'raspell'
-    require 'ultrasphinx/spell'
-    "spelling support enabled"
-  rescue Object => e
-    "spelling support not available (module load raised \"#{e}\")"
-  end
-)
+begin
+  require 'raspell'
+rescue Object => e
+end
+
+require 'ultrasphinx/spell'
 
 if defined? RAILS_ENV and RAILS_ENV == "development"
   if ENV['USER'] == 'eweaver'

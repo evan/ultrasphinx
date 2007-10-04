@@ -28,11 +28,19 @@ If <tt>@correction</tt> is not <tt>nil</tt>, go ahead and suggest it to the user
 =end
 
   module Spell  
-    SP = Aspell.new(Ultrasphinx::DICTIONARY)   
-    SP.suggestion_mode = Aspell::NORMAL
-    SP.set_option("ignore-case", "true")
+  
+    begin    
+      SP = Aspell.new(Ultrasphinx::DICTIONARY)   
+      SP.suggestion_mode = Aspell::NORMAL
+      SP.set_option("ignore-case", "true")
+      Ultrasphinx.say "spelling support enabled"
+    rescue Object => e      
+      SP = nil
+      Ultrasphinx.say "spelling support not available (raspell configuration raised \"#{e}\")"
+    end    
     
     def self.correct string
+      return nil unless SP
       correction = string.gsub(/[\w\']+/) do |word| 
         unless SP.check(word)
           SP.suggest(word).first
