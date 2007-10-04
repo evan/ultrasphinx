@@ -75,6 +75,10 @@ class String
       raise Ultrasphinx::UsageError, "#{self.inspect} could not be coerced into a numeric value"
     end
   end
+  
+  def _interpolate(value)
+    self.sub('?', value)
+  end
 end
 
 module Ultrasphinx::NumericSelf

@@ -33,7 +33,7 @@ module Ultrasphinx
       
         unless opts['class_names'].compact.empty?
           request.SetFilter 'class_id', opts['class_names'].map{|m| MODELS_TO_IDS[m.to_s]}
-        end        
+        end
       
         # Extract ranged raw filters 
         # Some of this mangling might not be necessary
@@ -135,8 +135,12 @@ module Ultrasphinx
                     
           raise ConfigurationError, "Model #{klass.name} has the requested '#{facet}' field, but it was not configured for faceting" unless field
           field = field['field']
-      
-          klass.connection.execute("SELECT #{field} AS value, #{ADAPTER_SQL_FUNCTIONS[ADAPTER]['hash']}#{field}) AS hash FROM #{klass.table_name} GROUP BY #{field}").each_hash do |hash|
+          
+          if hash_stored_procedure = ADAPTER_SQL_FUNCTIONS[ADAPTER]['hash_stored_procedure']
+            klass.connection.execute(hash_stored_procedure)
+          end
+                
+          klass.connection.execute("SELECT #{field} AS value, #{ADAPTER_SQL_FUNCTIONS[ADAPTER]['hash']._interpolate(field)} AS hash FROM #{klass.table_name} GROUP BY #{field}").each_hash do |hash|
             (FACET_CACHE[facet] ||= {})[hash['hash'].to_i] = hash['value']
           end                            
         end

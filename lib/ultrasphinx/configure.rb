@@ -243,14 +243,14 @@ module Ultrasphinx
       
     
       def install_field(fields, source_string, as, function_sql, with_facet, column_strings, remaining_columns)
-        source_string = function_sql.sub('?', source_string) if function_sql
+        source_string = function_sql._interpolate(source_string) if function_sql
 
         column_strings << fields.cast(source_string, as)
         remaining_columns.delete(as)
         
         # Generate hashed integer fields for text grouping
         if with_facet
-          column_strings << "#{ADAPTER_SQL_FUNCTIONS[ADAPTER]['hash']}#{source_string}) AS #{as}_facet"
+          column_strings << "#{ADAPTER_SQL_FUNCTIONS[ADAPTER]['hash']._interpolate(source_string)} AS #{as}_facet"
           remaining_columns.delete("#{as}_facet")
         end
         [column_strings, remaining_columns]

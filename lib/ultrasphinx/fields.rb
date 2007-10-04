@@ -11,12 +11,12 @@ This is a special singleton configuration class that stores the index field conf
     TYPE_MAP = {
       'string' => 'text', 
       'text' => 'text', 
-      'integer' => 'numeric', 
+      'integer' => 'integer', 
       'date' => 'date', 
       'datetime' => 'date',
       'timestamp' => 'date',
-      'float' => 'numeric',
-      'boolean' => 'numeric'
+      'float' => 'float',
+      'boolean' => 'integer'
     }
     
     VERSIONS_REQUIRED = {'float' => '0.9.8'}
@@ -51,7 +51,7 @@ This is a special singleton configuration class that stores the index field conf
         classes[field] = [klass]
 
         @groups << case new_type
-          when 'numeric'
+          when 'float', 'integer'
             "sql_group_column = #{field}"
           when 'date'
             "sql_date_column = #{field}"
@@ -63,7 +63,9 @@ This is a special singleton configuration class that stores the index field conf
     
     def cast(source_string, field)
       if types[field] == "date"
-        "#{ADAPTER_SQL_FUNCTIONS[ADAPTER]['timestamp']}#{source_string})"
+        "#{ADAPTER_SQL_FUNCTIONS[ADAPTER]['timestamp']._interpolate(source_string)}"
+      elsif types[field] == "integer"
+        source_string # "CAST(#{source_string} AS UNSIGNED)"
       elsif source_string =~ /GROUP_CONCAT/
         "CAST(#{source_string} AS CHAR)"
       else
@@ -75,7 +77,7 @@ This is a special singleton configuration class that stores the index field conf
       case types[field]
         when 'text'
           "''"
-        when 'numeric'
+        when 'integer', 'float'
           "0"
         when 'date'
           "UNIX_TIMESTAMP('1970-01-01 00:00:00')"

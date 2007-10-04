@@ -55,6 +55,36 @@ module Ultrasphinx
   CONNECTION_DEFAULTS = {
     :host => 'localhost'
   }
+
+  ADAPTER_SQL_FUNCTIONS = {
+    'mysql' => {
+      'group_by' => 'GROUP BY id',
+      'timestamp' => 'UNIX_TIMESTAMP(?)',
+      'hash' => 'CRC32(?)'
+    },    
+    'postgresql' => {
+      'group_by' => '',
+      'timestamp' => 'EXTRACT(EPOCH FROM ?)',
+      'hash' => 'hex_to_int(SUBSTRING(MD5(?) FROM 1 FOR 8))',
+      'hash_stored_procedure' => %[
+        CREATE LANGUAGE plpgsql;
+        CREATE OR REPLACE FUNCTION hex_to_int(varchar) RETURNS int4 AS '
+          DECLARE
+            h alias for $1;
+            exec varchar;
+            curs refcursor;
+            res int;
+          BEGIN
+            exec := ''SELECT x'''''' || h || ''''''::int4'';
+            OPEN curs FOR EXECUTE exec;
+            FETCH curs INTO res;
+            CLOSE curs;
+            return res;
+          END;'
+        LANGUAGE 'plpgsql' IMMUTABLE STRICT;
+      ].gsub("\n", ' ')
+    }      
+  }
   
   ADAPTER_DEFAULTS = {
     'mysql' => %(
@@ -64,21 +94,10 @@ sql_query_pre = SET NAMES utf8
   ), 
     'postgresql' => %(
 type = pgsql
-  )}
-  
-  ADAPTER_SQL_FUNCTIONS = {
-    'mysql' => {
-      'group_by' => 'GROUP BY id',
-      'timestamp' => 'UNIX_TIMESTAMP(',
-      'hash' => 'CRC32('
-    },    
-    'postgresql' => {
-      'group_by' => '',
-      'timestamp' => 'EXTRACT(EPOCH FROM ',
-      'hash' => 'MD5('
-    }      
-  }
-  
+sql_query_pre = ) + ADAPTER_SQL_FUNCTIONS['postgresql']['hash_stored_procedure'] + %(
+  )
+}
+    
   ADAPTER = ActiveRecord::Base.connection.instance_variable_get("@config")[:adapter]
      
   mattr_accessor :with_rake
