@@ -21,7 +21,7 @@ module Ultrasphinx
       
         offset, limit = opts['per_page'] * (opts['page'] - 1), opts['per_page']
         
-        request.SetLimits offset, limit, MAX_MATCHES
+        request.SetLimits offset, limit, [offset + limit, MAX_MATCHES].min
         request.SetSortMode SPHINX_CLIENT_PARAMS['sort_mode'][opts['sort_mode']], opts['sort_by'].to_s
       
         if weights = opts['weights']
@@ -87,7 +87,7 @@ module Ultrasphinx
         # Set the facet query parameter and modify per-page setting so we snag all the facets
         request.SetGroupBy(facet, Sphinx::Client::SPH_GROUPBY_ATTR, '@count desc')
         limit = self.class.client_options['max_facets']
-        request.SetLimits 0, limit, MAX_MATCHES
+        request.SetLimits 0, limit, [limit, MAX_MATCHES].min
         
         # Run the query
         begin
