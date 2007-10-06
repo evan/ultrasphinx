@@ -20,13 +20,26 @@ namespace :ultrasphinx do
   
   desc "Reindex the database and send an update signal to the search daemon."
   task :index => [:_environment] do
+    rotate = ultrasphinx_daemon_running?
     mkdir_p Ultrasphinx::INDEX_SETTINGS['path']
+    
     cmd = "indexer --config #{Ultrasphinx::CONF_PATH}"
     cmd << " #{ENV['OPTS']} " if ENV['OPTS']
-    cmd << " --rotate" if ultrasphinx_daemon_running?
+    cmd << " --rotate" if rotate
     cmd << " #{Ultrasphinx::UNIFIED_INDEX_NAME}"
+    
     say cmd
     system cmd
+    
+    if rotate
+      failed = Dir[Ultrasphinx::INDEX_SETTINGS['path'] + "/*.new.*"]
+      if failed.any?
+        say "warning; index failed to rotate! Deleting new indexes"
+        failed.each {|f| File.delete f }
+      else
+        say "index rotated ok"
+      end
+    end
   end
   
   
