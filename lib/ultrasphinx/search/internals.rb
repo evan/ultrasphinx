@@ -22,7 +22,12 @@ module Ultrasphinx
         offset, limit = opts['per_page'] * (opts['page'] - 1), opts['per_page']
         
         request.SetLimits offset, limit, [offset + limit, MAX_MATCHES].min
-        request.SetSortMode SPHINX_CLIENT_PARAMS['sort_mode'][opts['sort_mode']], opts['sort_by'].to_s
+        
+        if SPHINX_CLIENT_PARAMS['sort_mode'][opts['sort_mode']]
+          request.SetSortMode SPHINX_CLIENT_PARAMS['sort_mode'][opts['sort_mode']], opts['sort_by'].to_s
+        else
+          raise UsageError, "Sort mode #{opts['sort_mode'].inspect} is invalid"
+        end
       
         if weights = opts['weights']
           # Order the weights hash according to the field order for Sphinx, and set the missing fields to 1.0
