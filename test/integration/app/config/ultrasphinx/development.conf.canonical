@@ -29,7 +29,7 @@ type = mysql
 sql_query_pre = SET SESSION group_concat_max_len = 65535
 sql_query_pre = SET NAMES utf8
   
-sql_db = app_development
+sql_db = ultrasphinx_development
 sql_host = localhost
 sql_pass = 
 sql_user = root
@@ -59,7 +59,7 @@ type = mysql
 sql_query_pre = SET SESSION group_concat_max_len = 65535
 sql_query_pre = SET NAMES utf8
   
-sql_db = app_development
+sql_db = ultrasphinx_development
 sql_host = localhost
 sql_pass = 
 sql_user = root
@@ -89,7 +89,7 @@ type = mysql
 sql_query_pre = SET SESSION group_concat_max_len = 65535
 sql_query_pre = SET NAMES utf8
   
-sql_db = app_development
+sql_db = ultrasphinx_development
 sql_host = localhost
 sql_pass = 
 sql_user = root
@@ -119,7 +119,7 @@ type = mysql
 sql_query_pre = SET SESSION group_concat_max_len = 65535
 sql_query_pre = SET NAMES utf8
   
-sql_db = app_development
+sql_db = ultrasphinx_development
 sql_host = localhost
 sql_pass = 
 sql_user = root

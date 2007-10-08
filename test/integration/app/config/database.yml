@@ -2,20 +2,20 @@
 development:
   adapter: mysql
   host: localhost
-  database: app_development
+  database: ultrasphinx_development
   username: root
   password:
 
 test:
   adapter: mysql
   host: localhost
-  database: app_test
+  database: ultrasphinx_test
   username: root
   password:
 
 production:
   adapter: mysql
   host: localhost
-  database: app_production
+  database: ultrasphinx_production
   username: root
   password: 

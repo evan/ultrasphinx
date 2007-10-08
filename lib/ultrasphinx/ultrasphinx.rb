@@ -84,7 +84,7 @@ sql_query_pre = ) + ADAPTER_SQL_FUNCTIONS['postgresql']['hash_stored_procedure']
   )
 }
     
-  ADAPTER = ActiveRecord::Base.connection.instance_variable_get("@config")[:adapter]
+  ADAPTER = ActiveRecord::Base.connection.instance_variable_get("@config")[:adapter] rescue 'mysql'
      
   mattr_accessor :with_rake
      
