@@ -155,10 +155,15 @@ class SearchTest < Test::Unit::TestCase
   end  
   
   def test_unconfigured_sortable_name
-    debugger
     assert_raises(Sphinx::SphinxInternalError) do
       S.new(:class_names => 'Seller', :sort_by => 'company_name',:per_page => 5).run
     end
+  end
+  
+  def test_nonexistent_sortable_name
+    assert_raises(Sphinx::SphinxInternalError) do
+      S.new(:class_names => 'Seller', :sort_by => 'bogus',:per_page => 5).run
+    end  
   end
   
   def test_text_facet
