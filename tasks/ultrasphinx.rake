@@ -11,6 +11,8 @@ namespace :ultrasphinx do
   
   desc "Bootstrap a full Sphinx environment"
   task :bootstrap => [:_environment, :configure, :index, :"daemon:restart"] do
+    say "done"
+    say "please restart Mongrel"
   end
   
   desc "Rebuild the configuration file for this particular environment."
@@ -30,8 +32,9 @@ namespace :ultrasphinx do
     
     say cmd
     system cmd
-    
+        
     if rotate
+      sleep(4)
       failed = Dir[Ultrasphinx::INDEX_SETTINGS['path'] + "/*.new.*"]
       if failed.any?
         say "warning; index failed to rotate! Deleting new indexes"
@@ -49,7 +52,7 @@ namespace :ultrasphinx do
       FileUtils.mkdir_p File.dirname(Ultrasphinx::DAEMON_SETTINGS["log"]) rescue nil
       raise Ultrasphinx::DaemonError, "Already running" if ultrasphinx_daemon_running?
       system "searchd --config #{Ultrasphinx::CONF_PATH}"
-      sleep(2) # give daemon a chance to write the pid file
+      sleep(4) # give daemon a chance to write the pid file
       if ultrasphinx_daemon_running?
         say "started successfully"
       else

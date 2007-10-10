@@ -35,9 +35,13 @@ module Ultrasphinx
             array << (weights[field] || 1.0)
           end)
         end
-      
+
         unless opts['class_names'].compact.empty?
-          request.SetFilter 'class_id', opts['class_names'].map{|m| MODELS_TO_IDS[m.to_s]}
+          request.SetFilter('class_id', (opts['class_names'].map do |model| 
+            MODELS_TO_IDS[model.to_s] or 
+            MODELS_TO_IDS[model.to_s.constantize.base_class.to_s] or 
+            raise UsageError, "Invalid class name #{model.inspect}"
+          end))
         end
       
         # Extract ranged raw filters 

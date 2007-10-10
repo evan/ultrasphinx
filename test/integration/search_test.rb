@@ -104,8 +104,9 @@ class SearchTest < Test::Unit::TestCase
   end
 
   def test_date_range_filter
+    # XXX some strange boundary error in this one
     @first, @last = Seller.find(5).created_at, Seller.find(10).created_at
-    @items = Seller.find(:all, :conditions => ['created_at > ? AND created_at <= ?', @last, @first]).sort_by(&:id)
+    @items = Seller.find(:all, :conditions => ['created_at => ? AND created_at <= ?', @last, @first]).sort_by(&:id)
     @count = @items.size
     
     @search = S.new(:class_names => 'Seller', :filters => {'created_at' => @first..@last}).run.sort_by(&:id)

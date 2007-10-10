@@ -1,13 +1,13 @@
 
 module Ultrasphinx
 
-  class Exception < ::Exception #:nodoc:
+  class Error < ::StandardError #:nodoc:
   end
-  class ConfigurationError < Exception #:nodoc:
+  class ConfigurationError < Error #:nodoc:
   end  
-  class DaemonError < Exception #:nodoc:
+  class DaemonError < Error #:nodoc:
   end
-  class UsageError < Exception #:nodoc:
+  class UsageError < Error #:nodoc:
   end
 
   # Internal file paths
