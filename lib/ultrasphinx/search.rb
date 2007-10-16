@@ -199,20 +199,20 @@ Note that your database is never changed by anything Ultrasphinx does.
     
     # Returns an array of result objects.
     def results
-      run?(true)
+      require_run
       @results
     end
     
     # Returns the facet map for this query, if facets were used.
     def facets
-      run?(true)
       raise UsageError, "No facet field was configured" unless @options['facets']
+      require_run
       @facets
     end      
           
     # Returns the raw response from the Sphinx client.
     def response
-      run?(true)
+      require_run
       @response
     end
     
@@ -223,30 +223,26 @@ Note that your database is never changed by anything Ultrasphinx does.
     
     # Returns a hash of total result counts, scoped to each available model. This requires extra queries against the search daemon right now. Set <tt>Ultrasphinx::Search.client_options[:with_subtotals] = true</tt> to enable the extra queries. Most of the overhead is in instantiating the AR result sets, so the performance hit is not usually significant.
     def subtotals
-      run?(true)
       raise UsageError, "Subtotals are not enabled" unless self.class.client_options['with_subtotals']
+      require_run
       @subtotals
     end
 
     # Returns the total result count.
     def total_entries
-      run?(true)
+      require_run
       [response['total_found'] || 0, MAX_MATCHES].min
     end  
   
     # Returns the response time of the query, in milliseconds.
     def time
-      run?(true)
+      require_run
       response['time']
     end
 
     # Returns whether the query has been run.  
-    def run?(should_raise = false)
-      if @response.blank? and should_raise
-        raise UsageError, "Search has not yet been run" unless run?
-      else
-        !@response.blank?
-      end
+    def run?
+      !@response.blank?
     end
  
     # Returns the current page number of the result set. (Page indexes begin at 1.) 
@@ -261,7 +257,7 @@ Note that your database is never changed by anything Ultrasphinx does.
         
     # Returns the last available page number in the result set.  
     def page_count
-      run?(true)    
+      require_run    
       (total_entries / per_page) + (total_entries % per_page == 0 ? 0 : 1)
     end
             
@@ -350,7 +346,7 @@ Note that your database is never changed by anything Ultrasphinx does.
     # Runs run if it hasn't already been done.
     def excerpt
     
-      run unless run?         
+      require_run         
       return if results.empty?
     
       # see what fields each result might respond to for our excerpting
@@ -404,6 +400,12 @@ Note that your database is never changed by anything Ultrasphinx does.
   
     def say msg #:nodoc:
       Ultrasphinx.say msg
+    end
+    
+    private
+    
+    def require_run
+      run unless run?
     end
     
   end
