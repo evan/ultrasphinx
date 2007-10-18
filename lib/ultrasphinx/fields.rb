@@ -112,7 +112,9 @@ This is a special singleton configuration class that stores the index field conf
           # We destructively canonicize them back onto the configuration hash
           options['fields'] = options['fields'].to_a.map do |entry|
             entry = {'field' => entry} unless entry.is_a? Hash
-            entry['as'] = entry['field'] unless entry['as']
+
+            extract_table_alias!(entry, klass)
+            extract_field_alias!(entry, klass)
             
             unless klass.columns_hash[entry['field']]
               Ultrasphinx.say "warning: field #{entry['field']} is not present in #{model}"
@@ -130,21 +132,43 @@ This is a special singleton configuration class that stores the index field conf
           
           # Joins are whatever they are in the target       
           options['include'].to_a.each do |entry|
-            entry['as'] = entry['field'] unless entry['as']
-            
+            extract_table_alias!(entry, klass)
+            extract_field_alias!(entry, klass)
+
             save_and_verify_type(entry['as'] || entry['field'], entry['class_name'].constantize.columns_hash[entry['field']].type, entry['sortable'], klass)
           end  
           
           # Regular concats are CHAR, group_concats are BLOB and need to be cast to CHAR
           options['concatenate'].to_a.each do |entry|
-            save_and_verify_type(entry['as'], 'text', entry['sortable'], klass)
+            extract_table_alias!(entry, klass) # XXX Doesn't actually do anything useful
+            save_and_verify_type(entry['as'], 'text', entry['sortable'], klass) 
           end          
+          
         rescue ActiveRecord::StatementInvalid
           Ultrasphinx.say "warning: model #{model} does not exist in the database yet"
         end  
       end
       
       self
+    end
+    
+    def extract_field_alias!(entry, klass)
+      unless entry['as']    
+        entry['as'] = entry['field'] 
+      end
+    end
+    
+    def extract_table_alias!(entry, klass)
+      unless entry['table']
+        # Getting run twice; don't know why
+        if entry['field'] and entry['field'].include? "."
+          # This field is referenced by a table alias
+          entry['table'], entry['field'] = entry['field'].split(".")
+        else
+          klass = entry['class_name'].constantize if entry['class_name']         
+          entry['table'] = klass.table_name
+        end
+      end
     end
     
   end
