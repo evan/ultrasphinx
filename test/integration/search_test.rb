@@ -200,8 +200,8 @@ class SearchTest < Test::Unit::TestCase
     end
   end
   
-  def test_association_sql
-    # XXX
+  def test_table_aliasing_and_association_sql
+    assert_equal 1, Ultrasphinx::Search.new(:class_name => 'User', :query => 'company_two:1').run.size
   end
     
   def test_weights

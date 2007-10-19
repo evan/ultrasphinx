@@ -69,7 +69,7 @@ class String
       zeroless.to_i
     elsif zeroless.to_f.to_s == zeroless
       zeroless.to_f
-    elsif date = Chronic.parse(self)
+    elsif date = Chronic.parse(self.gsub(/(\d)([^\d\s])/, '\1 \2'))
       date.to_i
     else
       raise Ultrasphinx::UsageError, "#{self.inspect} could not be coerced into a numeric value"
