@@ -204,13 +204,13 @@ class SearchTest < Test::Unit::TestCase
   end
     
   def test_weights
-    @unweighted = Ultrasphinx::Search.new(:query => 'seller1', :per_page => 1).run.first
-    @weighted = Ultrasphinx::Search.new(:query => 'seller1', :weights => {'company' => 2}, :per_page => 1).run.first
-    assert_not_equal @unweighted.class, @weighted.class
+    @unweighted = Ultrasphinx::Search.new(:query => 'seller16', :per_page => 1).run.first
+    @weighted = Ultrasphinx::Search.new(:query => 'seller16', :weights => {'company' => 2}, :per_page => 1).run.first
+    assert_not_equal @unweighted, @weighted
   end
   
   def test_excerpts
-    @s = Ultrasphinx::Search.new(:query => 'seller10')
+    @s = Ultrasphinx::Search.new(:class_names => 'Seller', :query => 'seller10')
     @excerpted_item = @s.excerpt.first
     @item = @s.run.first
     assert_not_equal @item.name, @excerpted_item.name
