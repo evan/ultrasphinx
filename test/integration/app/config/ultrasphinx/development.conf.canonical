@@ -1,5 +1,5 @@
 
-# Auto-generated at Thu Oct 18 19:21:59 -0400 2007.
+# Auto-generated at Tue Oct 23 05:07:57 -0400 2007.
 # Hand modifications will be overwritten.
 # /Users/eweaver/Desktop/projects/chow/vendor/plugins/ultrasphinx/test/integration/app/config/ultrasphinx/default.base
 indexer {
@@ -127,7 +127,7 @@ sql_host = localhost
 sql_pass = 
 sql_user = root
 sql_query_range = SELECT MIN(id), MAX(id) FROM users
-sql_query = SELECT (users.id * 4 + 3) AS id, '' AS address_name, 0 AS capitalization, 'User' AS class, 3 AS class_id, sellers.company_name AS company, '' AS company_name, 0 AS company_name_facet, REPLACE(sellers_two.company_name, 'seller', '') AS company_two, '' AS content, UNIX_TIMESTAMP('1970-01-01 00:00:00') AS created_at, users.deleted AS deleted, users.email AS email, '__empty_searchable__' AS empty_searchable, users.login AS login, '' AS mission_statement, '' AS name, '' AS state, 0 AS user_id FROM users LEFT OUTER JOIN sellers AS sellers ON users.id = sellers.user_id LEFT OUTER JOIN sellers AS sellers_two ON users.id = sellers.user_id WHERE users.id >= $start AND users.id <= $end AND (deleted = 0) GROUP BY id
+sql_query = SELECT (users.id * 4 + 3) AS id, '' AS address_name, 0 AS capitalization, 'User' AS class, 3 AS class_id, sellers.company_name AS company, '' AS company_name, 0 AS company_name_facet, REPLACE(sellers_two.company_name, '6', ' replacement ') AS company_two, '' AS content, UNIX_TIMESTAMP('1970-01-01 00:00:00') AS created_at, users.deleted AS deleted, users.email AS email, '__empty_searchable__' AS empty_searchable, users.login AS login, '' AS mission_statement, '' AS name, '' AS state, 0 AS user_id FROM users LEFT OUTER JOIN sellers AS sellers ON users.id = sellers.user_id LEFT OUTER JOIN sellers AS sellers_two ON users.id = sellers_two.user_id WHERE users.id >= $start AND users.id <= $end AND (deleted = 0) GROUP BY id
 
 sql_group_column = capitalization
 sql_group_column = class_id

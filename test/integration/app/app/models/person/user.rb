@@ -4,7 +4,7 @@ class User < ActiveRecord::Base
 
   is_indexed :fields => ['login', 'email', 'deleted'], 
     :include => [{:class_name => 'Seller', :field => 'company_name', :as => 'company'},
-      {:class_name => 'Seller', :field => 'sellers_two.company_name', :as => 'company_two', 'association_sql' => 'LEFT OUTER JOIN sellers AS sellers_two ON users.id = sellers.user_id', 'function_sql' => "REPLACE(?, 'seller', '')"}],
+      {:class_name => 'Seller', :field => 'sellers_two.company_name', :as => 'company_two', 'association_sql' => 'LEFT OUTER JOIN sellers AS sellers_two ON users.id = sellers_two.user_id', 'function_sql' => "REPLACE(?, '6', ' replacement ')"}],
     :conditions => 'deleted = 0'  
   
 end
