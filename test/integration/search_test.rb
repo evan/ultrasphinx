@@ -14,14 +14,6 @@ class SearchTest < Test::Unit::TestCase
     assert_equal 20, @s.results.size
   end  
   
-  def test_query_must_be_run
-    @s = S.new
-    assert_raises(E) { @s.total_entries }
-    assert_raises(E) { @s.response }
-    assert_raises(E) { @s.facets }
-    assert_raises(E) { @s.results }
-  end
-  
   def test_subtotals
     @s = S.new.run
     assert_equal @s.total_entries, @s.subtotals.values._sum
@@ -154,17 +146,17 @@ class SearchTest < Test::Unit::TestCase
     end
   end  
   
-  def test_unconfigured_sortable_name
-    assert_raises(Sphinx::SphinxInternalError) do
-      S.new(:class_names => 'Seller', :sort_by => 'company_name',:per_page => 5).run
-    end
-  end
+#  def test_unconfigured_sortable_name
+#    assert_raises(Sphinx::SphinxInternalError) do
+#      S.new(:class_names => 'Seller', :sort_by => 'company_name', :per_page => 5).run
+#    end
+#  end
   
-  def test_nonexistent_sortable_name
-    assert_raises(Sphinx::SphinxInternalError) do
-      S.new(:class_names => 'Seller', :sort_by => 'bogus',:per_page => 5).run
-    end  
-  end
+#  def test_nonexistent_sortable_name
+#    assert_raises(Sphinx::SphinxInternalError) do
+#      S.new(:class_names => 'Seller', :sort_by => 'bogus',:per_page => 5).run
+#    end  
+#  end
   
   def test_text_facet
     @s = Ultrasphinx::Search.new(:facets => ['company_name']).run
