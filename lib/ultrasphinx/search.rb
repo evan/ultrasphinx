@@ -120,7 +120,7 @@ Note that your database is never changed by anything Ultrasphinx does.
     self.client_options ||= HashWithIndifferentAccess.new({ 
       :with_subtotals => false, 
       :max_retries => 4,
-      :retry_sleep_time => 3,
+      :retry_sleep_time => 0.5,
       :max_facets => 100,
       :finder_methods => ['get_cache', 'find']
     })
@@ -307,37 +307,25 @@ Note that your database is never changed by anything Ultrasphinx does.
     # Run the search, filling results with an array of ActiveRecord objects. Set the parameter to false if you only want the ids returned.
     def run(reify = true)
       @request = build_request_with_options(@options)
-      @paginate = nil # clear cache
-      tries = 0
 
       say "searching for #{@options.inspect}"
 
-      begin
+      perform_action_with_retries do
         @response = @request.Query(parsed_query)
-        say "search returned, error #{@request.GetLastError.inspect}, warning #{@request.GetLastWarning.inspect}, returned #{total_entries}/#{response['total_found']} in #{time} seconds."  
-
-        @subtotals = get_subtotals(@request, parsed_query) if self.class.client_options['with_subtotals']
+        say "search returned, error #{@request.GetLastError.inspect}, warning #{@request.GetLastWarning.inspect}, returned #{total_entries}/#{response['total_found']} in #{time} seconds."
+          
+        if self.class.client_options['with_subtotals']        
+          @subtotals = get_subtotals(@request, parsed_query) 
+        end
         
         Array(@options['facets']).each do |facet|
           @facets[facet] = get_facets(@request, parsed_query, facet)
-        end
+        end        
         
-        @results = response['matches']
-        
-        # if you don't reify, you'll have to do the modulus reversal yourself to get record ids
+        @results = convert_sphinx_ids(response['matches'])
         @results = reify_results(@results) if reify
-                                
-      rescue Sphinx::SphinxConnectError, Sphinx::SphinxResponseError, Sphinx::SphinxTemporaryError, Errno::ECONNRESET, Errno::EPIPE => e
-        if (tries += 1) <= self.class.client_options['max_retries']
-          say "restarting query (#{tries} attempts already) (#{e})"
-          sleep(self.class.client_options['retry_sleep_time']) if tries == self.class.client_options['max_retries']
-          retry
-        else
-          say "query failed"
-          raise Sphinx::SphinxConnectError, e.to_s
-        end
-      end
-      
+        
+      end      
       self
     end
   
@@ -349,27 +337,31 @@ Note that your database is never changed by anything Ultrasphinx does.
       require_run         
       return if results.empty?
     
-      # see what fields each result might respond to for our excerpting
+      # See what fields each result might respond to for our excerpting
       results_with_content_methods = results.map do |result|
         [result] << self.class.excerpting_options['content_methods'].map do |methods|
           methods.detect { |x| result.respond_to? x }
         end
       end
   
-      # fetch the actual field contents
+      # Fetch the actual field contents
       texts = results_with_content_methods.map do |result, methods|
         methods.map do |method| 
           method and strip_bogus_characters(result.send(method)) or ""
         end
       end.flatten
-  
-      # ship to sphinx to highlight and excerpt
-      responses = @request.BuildExcerpts(
-        texts, 
-        UNIFIED_INDEX_NAME, 
-        strip_query_commands(parsed_query),
-        self.class.excerpting_options.except('content_methods')
-      ).in_groups_of(self.class.excerpting_options['content_methods'].size)
+      
+      responses = perform_action_with_retries do 
+        # Ship to sphinx to highlight and excerpt
+        @request.BuildExcerpts(
+          texts, 
+          UNIFIED_INDEX_NAME, 
+          strip_query_commands(parsed_query),
+          self.class.excerpting_options.except('content_methods')
+        )
+      end
+      
+      responses = responses.in_groups_of(self.class.excerpting_options['content_methods'].size)
       
       results_with_content_methods.each_with_index do |result_and_methods, i|
         # override the individual model accessors with the excerpted data

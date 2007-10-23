@@ -155,69 +155,73 @@ module Ultrasphinx
         end
         FACET_CACHE[facet]
       end
-
-      def reify_results(sphinx_ids)
-    
-        # Order by position and then toss the rest of the data
-        sphinx_ids = sphinx_ids.sort_by do |key, value| 
-          value['index'] or raise ConfigurationError, "Your Sphinx client is not properly patched."
-        end.map(&:first)
-    
-        # Inverse-modulus map the sphinx ids to the table-specific ids
-        ids = Hash.new([])
-        sphinx_ids.each do |id|
-          ids[MODELS_TO_IDS.invert[id % MODELS_TO_IDS.size]] += [id / MODELS_TO_IDS.size] # yay math
+      
+      # Inverse-modulus map the sphinx ids to the table-specific ids
+      def convert_sphinx_ids(sphinx_ids)    
+        # First order by position and then toss the rest of the data
+        sphinx_ids.sort_by do |key, value| 
+          value['index']
+        end.map do |array|
+          array.first
+        end.map do |id|
+          class_name = MODELS_TO_IDS.invert[id % MODELS_TO_IDS.size]
+          raise Sphinx::SphinxResponseError, "Impossible Sphinx id #{id} in query result" unless class_name
+          [class_name, id / MODELS_TO_IDS.size]
         end
-        raise Sphinx::SphinxResponseError, "impossible document id in query result" unless ids.values.flatten.size == sphinx_ids.size
-    
-        # Fetch them for real
+      end
+
+      # Fetch them for real
+      def reify_results(ids)
         results = []
-        ids.each do |model, id_set|
-          klass = model.constantize
-          
+        ids.each do |klass_name, id|
+          klass = klass_name.constantize          
           finder = self.class.client_options['finder_methods'].detect do |method_name|
             klass.respond_to? method_name
           end
           
-          # Ultrasphinx.say "using #{klass.name}.#{finder} as finder method"
-    
           begin
             # XXX Does not use Memcached's multiget
-            results += case instances = id_set.map { |id| klass.send(finder, id) }
-              when Hash
-                instances.values
-              when Array
-                instances
-              else
-                Array(instances)
+            instance = klass.send(finder, id)
+            results += if instance.is_a?(Hash) 
+              instance.values
+            else
+              Array(instance)
             end
           rescue ActiveRecord::ActiveRecordError => e
             raise Sphinx::SphinxResponseError, e.inspect
           end
         end
     
-        # Put them back in order
-        results.sort_by do |r| 
-          raise Sphinx::SphinxResponseError, "Bogus ActiveRecord id for #{r.class}:#{r.id}" unless r.id
-          
-          model_index = MODELS_TO_IDS[r.class.base_class.name]
-          raise UsageError, "#{r.class.base_class} is not an indexed class. Maybe you indexed an STI child class instead of the base class?" unless model_index
-          
-          index = (sphinx_ids.index(sphinx_id = r.id * MODELS_TO_IDS.size + model_index))
-          raise Sphinx::SphinxResponseError, "Bogus reverse id for #{r.class}:#{r.id} (Sphinx:#{sphinx_id})" unless index
-          
-          index / sphinx_ids.size.to_f
-        end
-        
         # Add an accessor for absolute search rank for each record
-        results.each_with_index do |r, index|
+        results.each_with_index do |result, index|
           i = per_page * (current_page - 1) + index
-          r._metaclass.send('define_method', 'result_index') { i }
+          result._metaclass.send('define_method', 'result_index') { i }
         end
         
         results        
       end  
-
+      
+      def perform_action_with_retries
+        tries = 0
+        begin
+          yield
+        rescue NoMethodError,
+            Sphinx::SphinxConnectError, 
+            Sphinx::SphinxResponseError, 
+            Sphinx::SphinxTemporaryError, 
+            Errno::ECONNRESET, 
+            Errno::EPIPE => e
+          tries += 1
+          if tries <= self.class.client_options['max_retries']
+            say "restarting query (#{tries} attempts already) (#{e})"            
+            sleep(self.class.client_options['retry_sleep_time']) 
+            retry
+          else
+            say "query failed"
+            raise Sphinx::SphinxConnectError, e.to_s
+          end
+        end
+      end
       
       def strip_bogus_characters(s)
         # Used to remove some garbage before highlighting
