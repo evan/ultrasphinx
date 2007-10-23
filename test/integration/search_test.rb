@@ -104,20 +104,19 @@ class SearchTest < Test::Unit::TestCase
   end
 
   def test_date_range_filter
-    # XXX some strange boundary error in this one
     @first, @last = Seller.find(5).created_at, Seller.find(10).created_at
     @items = Seller.find(:all, :conditions => ['created_at >= ? AND created_at <= ?', @last, @first]).sort_by(&:id)
     @count = @items.size
     
     @search = S.new(:class_names => 'Seller', :filters => {'created_at' => @first..@last}).run.sort_by(&:id)
     assert_equal(@count, @search.size)
-    assert_equal(@items.first, @search.first)
-    assert_equal(@items.last, @search.last)
+    assert_equal(@items.first.created_at, @search.first.created_at)
+    assert_equal(@items.last.created_at, @search.last.created_at)
     
     assert_equal(@count,
       S.new(:class_names => 'Seller', :filters => {'created_at' => @last..@first}).run.size)
     assert_equal(@count,
-      S.new(:class_names => 'Seller', :filters => {'created_at' => @last.strftime(STRFTIME)...@first.strftime(STRFTIME)}).run.size)
+      S.new(:class_names => 'Seller', :filters => {'created_at' => @last.strftime(STRFTIME)..@first.strftime(STRFTIME)}).run.size)
 
     assert_raises(Ultrasphinx::UsageError) do
       S.new(:class_names => 'Seller', :filters => {'created_at' => "bogus".."sugob"}).run.size
