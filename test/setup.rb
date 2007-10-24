@@ -6,7 +6,7 @@ puts ["Please make sure that test/integration/app/vendor/rails is symlinked",
 
 Dir.chdir "#{File.dirname(__FILE__)}/integration/app/" do
   Dir.chdir "vendor/plugins" do
-    system("ln -s ../../../../../ ultrasphinx")
+    system("rm ultrasphinx; ln -s ../../../../../ ultrasphinx")
   end
   system("rake db:create")
   system("rake db:migrate db:fixtures:load")
