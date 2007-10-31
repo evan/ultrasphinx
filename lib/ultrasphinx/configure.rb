@@ -211,7 +211,7 @@ module Ultrasphinx
                 (entry['conditions'] ? " AND (#{entry['conditions']})" : "")
             end
             
-            source_string = "GROUP_CONCAT(#{entry['table']}.#{entry['field']} SEPARATOR ' ')"
+            source_string = "GROUP_CONCAT(DISTINCT #{entry['table']}.#{entry['field']} SEPARATOR ' ')"
             column_strings, remaining_columns = install_field(fields, source_string, entry['as'], entry['function_sql'], entry['facet'], column_strings, remaining_columns)
             
           elsif entry['fields']
