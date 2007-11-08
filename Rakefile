@@ -9,5 +9,5 @@ Echoe.new("ultrasphinx") do |p|
   p.rdoc_pattern = /is_indexed.rb|search.rb|spell.rb|ultrasphinx.rb|^README|TODO|CHANGELOG|^LICENSE/
   p.dependencies = "chronic"
   p.test_pattern = ["test/integration/*.rb", "test/unit/*.rb"]
-  p.rcov_opts << '--include-file test\/integration\/app\/vendor\/plugins\/ultrasphinx\/lib\/.*\.rb'
+  p.rcov_options << '--include-file test\/integration\/app\/vendor\/plugins\/ultrasphinx\/lib\/.*\.rb'
 end
