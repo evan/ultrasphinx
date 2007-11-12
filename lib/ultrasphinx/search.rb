@@ -258,7 +258,7 @@ Note that your database is never changed by anything Ultrasphinx does.
     # Returns the last available page number in the result set.  
     def page_count
       require_run    
-      (total_entries / per_page) + (total_entries % per_page == 0 ? 0 : 1)
+      (total_entries / per_page.to_f).ceil
     end
             
     # Returns the previous page number.
