@@ -10,7 +10,8 @@ if defined? RAILS_ENV and RAILS_ENV == "development"
   end
 end
 
-require "#{File.dirname(__FILE__)}/../vendor/sphinx/lib/client"
+$LOAD_PATH << "#{File.dirname(__FILE__)}/../vendor/riddle/"
+require 'riddle'
 
 require 'ultrasphinx/ultrasphinx'
 require 'ultrasphinx/core_extensions'

@@ -97,13 +97,13 @@ Note that your database is never changed by anything Ultrasphinx does.
     self.query_defaults ||= HashWithIndifferentAccess.new({
       :query => nil,
       :page => 1,
-      :class_names => nil,
       :per_page => 20,
-      :sort_by => 'created_at',
+      :sort_by => nil,
       :sort_mode => 'relevance',
-      :weights => nil,
-      :filters => nil,
-      :facets => nil
+      :weights => {},
+      :class_names => [],
+      :filters => {},
+      :facets => []
     })
     
     cattr_accessor :excerpting_options
@@ -112,38 +112,35 @@ Note that your database is never changed by anything Ultrasphinx does.
       :chunk_separator => "...",
       :limit => 256,
       :around => 3,
-      # results should respond to one in each group of these, in precedence order, for the excerpting to fire
+      # Results should respond to one in each group of these, in precedence order, for the excerpting to fire
       :content_methods => [['title', 'name'], ['body', 'description', 'content'], ['metadata']] 
     })
     
     cattr_accessor :client_options
     self.client_options ||= HashWithIndifferentAccess.new({ 
       :with_subtotals => false, 
+      :ignore_missing_records => false,
       :max_retries => 4,
       :retry_sleep_time => 0.5,
       :max_facets => 100,
       :finder_methods => ['get_cache', 'find']
     })
     
-    # mode to integer mappings    
+    # Friendly sort mode mappings    
     SPHINX_CLIENT_PARAMS = HashWithIndifferentAccess.new({ 
       :sort_mode => HashWithIndifferentAccess.new({
-        'relevance' => Sphinx::Client::SPH_SORT_RELEVANCE, 
-        'descending' => Sphinx::Client::SPH_SORT_ATTR_DESC, 
-        'ascending' => Sphinx::Client::SPH_SORT_ATTR_ASC, 
-        'time' => Sphinx::Client::SPH_SORT_TIME_SEGMENTS,
-        'extended' => Sphinx::Client::SPH_SORT_EXTENDED,
-        'desc' => Sphinx::Client::SPH_SORT_ATTR_DESC, # legacy compatibility
-        'asc' => Sphinx::Client::SPH_SORT_ATTR_ASC
+        'relevance' => :relevance,
+        'descending' => :attr_desc, 
+        'ascending' => :attr_asc, 
+        'time' => :time_segments,
+        'extended' => :extended,
       })
     })
-    
-    LEGACY_QUERY_KEYS = ['raw_filters', 'filter', 'weight', 'class_name'] #:nodoc:
     
     INTERNAL_KEYS = ['parsed_query'] #:nodoc:
 
     def self.get_models_to_class_ids #:nodoc:
-      # reading the conf file makes sure that we are in sync with the actual sphinx index,
+      # Reading the conf file makes sure that we are in sync with the actual Sphinx index,
       # not whatever you happened to change your models to most recently
       unless File.exist? CONF_PATH
         Ultrasphinx.say "configuration file not found for #{RAILS_ENV.inspect} environment"
@@ -216,14 +213,9 @@ Note that your database is never changed by anything Ultrasphinx does.
       @response
     end
     
-    def class_name #:nodoc:
-      # Legacy accessor
-      @options['class_names']
-    end
-    
     # Returns a hash of total result counts, scoped to each available model. This requires extra queries against the search daemon right now. Set <tt>Ultrasphinx::Search.client_options[:with_subtotals] = true</tt> to enable the extra queries. Most of the overhead is in instantiating the AR result sets, so the performance hit is not usually significant.
     def subtotals
-      raise UsageError, "Subtotals are not enabled" unless self.class.client_options['with_subtotals']
+      raise UsageError, "Subtotals are not enabled" unless Ultrasphinx::Search.client_options['with_subtotals']
       require_run
       @subtotals
     end
@@ -231,13 +223,13 @@ Note that your database is never changed by anything Ultrasphinx does.
     # Returns the total result count.
     def total_entries
       require_run
-      [response['total_found'] || 0, MAX_MATCHES].min
+      [response[:total_found] || 0, MAX_MATCHES].min
     end  
   
     # Returns the response time of the query, in milliseconds.
     def time
       require_run
-      response['time']
+      response[:time]
     end
 
     # Returns whether the query has been run.  
@@ -279,28 +271,20 @@ Note that your database is never changed by anything Ultrasphinx does.
     # Builds a new command-interface Search object.
     def initialize opts = {} 
       opts = HashWithIndifferentAccess.new(opts)            
-      @options = self.class.query_defaults.merge(opts._deep_dup._coerce_basic_types)
+      @options = Ultrasphinx::Search.query_defaults.merge(opts._deep_dup._coerce_basic_types)            
 
-      # Legacy compatibility
-      @options['filters'] ||= @options['filter'] || @options['raw_filters'] || {}
-      @options['class_names'] ||= @options['class_name']
-      @options['weights'] ||= @options['weight']
-            
-      @options._delete(*LEGACY_QUERY_KEYS)
-      
-      # Coerce some special types
       @options['query'] = @options['query'].to_s
       @options['class_names'] = Array(@options['class_names'])
+      @options['facets'] = Array(@options['facets'])
+            
+      raise UsageError, "Weights must be a Hash" unless @options['weights'].is_a? Hash
+      raise UsageError, "Filters must be a Hash" unless @options['filters'].is_a? Hash
       
-      @options['parsed_query'] = if query.blank? 
-         "@empty_searchable #{EMPTY_SEARCHABLE}"
-        else
-          parse(query)
-        end
+      @options['parsed_query'] = parse(query)
   
       @results, @subtotals, @facets, @response = [], {}, {}, {}
         
-      extra_keys = @options.keys - (SPHINX_CLIENT_PARAMS.merge(self.class.query_defaults).keys + LEGACY_QUERY_KEYS + INTERNAL_KEYS)
+      extra_keys = @options.keys - (SPHINX_CLIENT_PARAMS.merge(Ultrasphinx::Search.query_defaults).keys + INTERNAL_KEYS)
       say "discarded invalid keys: #{extra_keys * ', '}" if extra_keys.any? and RAILS_ENV != "test" 
     end
     
@@ -311,10 +295,10 @@ Note that your database is never changed by anything Ultrasphinx does.
       say "searching for #{@options.inspect}"
 
       perform_action_with_retries do
-        @response = @request.Query(parsed_query)
-        say "search returned, error #{@request.GetLastError.inspect}, warning #{@request.GetLastWarning.inspect}, returned #{total_entries}/#{response['total_found']} in #{time} seconds."
+        @response = @request.query(parsed_query, UNIFIED_INDEX_NAME)
+        say "search returned #{total_entries}/#{response[:total_found].to_i} in #{time.to_f} seconds."
           
-        if self.class.client_options['with_subtotals']        
+        if Ultrasphinx::Search.client_options['with_subtotals']        
           @subtotals = get_subtotals(@request, parsed_query) 
         end
         
@@ -322,8 +306,11 @@ Note that your database is never changed by anything Ultrasphinx does.
           @facets[facet] = get_facets(@request, parsed_query, facet)
         end        
         
-        @results = convert_sphinx_ids(response['matches'])
+        @results = convert_sphinx_ids(response[:matches])
         @results = reify_results(@results) if reify
+        
+        say "warning; #{response[:warning]}" if response[:warning]
+        raise UsageError, response[:error] if response[:error]
         
       end      
       self
@@ -339,29 +326,33 @@ Note that your database is never changed by anything Ultrasphinx does.
     
       # See what fields each result might respond to for our excerpting
       results_with_content_methods = results.map do |result|
-        [result] << self.class.excerpting_options['content_methods'].map do |methods|
+        [result] << Ultrasphinx::Search.excerpting_options['content_methods'].map do |methods|
           methods.detect { |x| result.respond_to? x }
         end
       end
   
       # Fetch the actual field contents
-      texts = results_with_content_methods.map do |result, methods|
+      docs = results_with_content_methods.map do |result, methods|
         methods.map do |method| 
           method and strip_bogus_characters(result.send(method)) or ""
         end
       end.flatten
       
-      responses = perform_action_with_retries do 
-        # Ship to sphinx to highlight and excerpt
-        @request.BuildExcerpts(
-          texts, 
-          UNIFIED_INDEX_NAME, 
-          strip_query_commands(parsed_query),
-          self.class.excerpting_options.except('content_methods')
-        )
+      excerpting_options = {
+        :docs => docs, 
+        :index => UNIFIED_INDEX_NAME, 
+        :words => strip_query_commands(parsed_query)}
+      Ultrasphinx::Search.excerpting_options.except('content_methods').each do |key, value|
+        # Riddle only wants symbols
+        excerpting_options[key.to_sym] ||= value
       end
       
-      responses = responses.in_groups_of(self.class.excerpting_options['content_methods'].size)
+      responses = perform_action_with_retries do 
+        # Ship to Sphinx to highlight and excerpt
+        @request.excerpts(excerpting_options)
+      end
+      
+      responses = responses.in_groups_of(Ultrasphinx::Search.excerpting_options['content_methods'].size)
       
       results_with_content_methods.each_with_index do |result_and_methods, i|
         # override the individual model accessors with the excerpted data
@@ -379,7 +370,7 @@ Note that your database is never changed by anything Ultrasphinx does.
     end  
     
             
-    # Delegates enumerable methods to @results, if possible. This allows us to behave directly like a WillPaginate::Collection. Failing that, we delegate to the options hash if a key is set. This lets us use the <tt>self</tt> directly in view helpers.
+    # Delegates enumerable methods to @results, if possible. This allows us to behave directly like a WillPaginate::Collection. Failing that, we delegate to the options hash if a key is set. This lets us use <tt>self</tt> directly in view helpers.
     def method_missing(*args, &block)
       if @results.respond_to? args.first
         @results.send(*args, &block)

@@ -62,6 +62,7 @@ end
 ### Filter type coercion methods
 
 class String
+  # XXX Not used enough to justify such a strange abstraction
   def _to_numeric
     zeroless = self.squeeze(" ").strip.sub(/^0+(\d)/, '\1')
     zeroless.sub!(/(\...*?)0+$/, '\1')

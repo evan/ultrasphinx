@@ -2,4 +2,5 @@
 * Finish unifying filters and textfields
 * Support exclude filters
 * Make sure filters can be set to nil
-
+* Geolocation search
+* Use Treetop for the query parser instead of regexes

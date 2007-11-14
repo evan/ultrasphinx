@@ -18,9 +18,7 @@ This is a special singleton configuration class that stores the index field conf
       'float' => 'float',
       'boolean' => 'integer'
     }
-    
-    VERSIONS_REQUIRED = {'float' => '0.9.8'}
-    
+        
     attr_accessor :classes, :types
     
     def initialize
@@ -37,7 +35,6 @@ This is a special singleton configuration class that stores the index field conf
   
     def save_and_verify_type(field, new_type, string_sortable, klass)
       # Smoosh fields together based on their name in the Sphinx query schema
-      check_version(new_type.to_s)
       field, new_type = field.to_s, TYPE_MAP[new_type.to_s]
 
       if types[field]
@@ -86,16 +83,6 @@ This is a special singleton configuration class that stores the index field conf
         else
           raise "Field #{field} does not have a valid type #{types[field]}."
       end + " AS #{field}"
-    end
-    
-    def check_version(field)
-      # XXX Awkward location for the compatibility check
-      if req = VERSIONS_REQUIRED[field]
-        unless SPHINX_VERSION.include? req
-          # Will we eventually need to check version ranges?
-          Ultrasphinx.say "warning: '#{field}' type requires Sphinx #{req}, but you have #{SPHINX_VERSION}"
-        end
-      end
     end
     
     def configure(configuration)

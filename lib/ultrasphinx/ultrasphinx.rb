@@ -34,15 +34,7 @@ module Ultrasphinx
 
   MAX_WORDS = 2**16 # maximum number of stopwords built  
   
-  EMPTY_SEARCHABLE = "__empty_searchable__"
-  
   UNIFIED_INDEX_NAME = "complete"
-
-  SPHINX_VERSION = if `which indexer` =~ /\/indexer\n/m
-      `indexer`.split("\n").first[7..-1]
-    else
-      "unknown"
-    end 
 
   CONFIG_MAP = {
     # These must be symbols for key mapping against Rails itself

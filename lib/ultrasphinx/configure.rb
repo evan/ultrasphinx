@@ -93,9 +93,8 @@ module Ultrasphinx
         
         column_strings = [
           "(#{klass.table_name}.#{klass.primary_key} * #{MODEL_CONFIGURATION.size} + #{class_id}) AS id", 
-          "#{class_id} AS class_id", "'#{klass.name}' AS class", 
-          "'#{EMPTY_SEARCHABLE}' AS empty_searchable"]
-        remaining_columns = fields.types.keys - ["class", "class_id", "empty_searchable"]        
+          "#{class_id} AS class_id", "'#{klass.name}' AS class"]
+        remaining_columns = fields.types.keys - ["class", "class_id"]        
         [column_strings, [], condition_strings, remaining_columns]
       end
       

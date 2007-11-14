@@ -14,14 +14,42 @@ class SearchTest < Test::Unit::TestCase
     assert_equal 20, @s.results.size
   end  
   
-  def test_subtotals
+  def test_with_subtotals_option
+    S.client_options['with_subtotals'] = true
     @s = S.new.run
     assert_equal @s.total_entries, @s.subtotals.values._sum
+    S.client_options['with_subtotals'] = false
+  end
+  
+  def test_ignore_missing_records_option
+    @s = S.new(:per_page => 1).run
+    @record = @s.first
+    assert_equal 1, @s.size
+    
+    @record.destroy
+
+    assert_raises(ActiveRecord::RecordNotFound) do
+      @s = S.new(:per_page => 1).run
+    end    
+    
+    S.client_options['ignore_missing_records'] = true
+    assert_nothing_raised do
+      @s = S.new(:per_page => 1).run
+    end 
+    assert_equal 0, @s.size
+    assert_equal 1, @s.per_page
+
+    S.client_options['ignore_missing_records'] = false
+    
+    # Re-insert the record... ugh
+    @new_record = @record.class.new(@record.attributes)
+    @new_record.id = @record.id
+    @new_record.save!
   end
   
   def test_query_retries_and_fails
     system("cd #{RAILS_ROOT}; rake ultrasphinx:daemon:stop &> /dev/null")
-    assert_raises(Sphinx::SphinxConnectError) do
+    assert_raises(Ultrasphinx::DaemonError) do
       S.new.run
     end
     system("cd #{RAILS_ROOT}; rake ultrasphinx:daemon:start &> /dev/null")
@@ -69,11 +97,10 @@ class SearchTest < Test::Unit::TestCase
   end
   
   def test_sort_by_string
-    # XXX waiting for feedback from Andrew; this seems like a Sphinx bug
-#    assert_equal(
-#      Seller.find(:all, :limit => 5, :order => 'mission_statement DESC').map(&:mission_statement),
-#      S.new(:class_names => 'Seller', :sort_by => 'mission_statement', :sort_mode => 'descending', :per_page => 5).run.map(&:mission_statement)
-#    )
+    assert_equal(
+      Seller.find(:all, :limit => 5, :order => 'mission_statement ASC').map(&:mission_statement),
+      S.new(:class_names => 'Seller', :sort_by => 'mission_statement', :sort_mode => 'ascending', :per_page => 5).run.map(&:mission_statement)
+    )
   end
  
   def test_filter
@@ -123,7 +150,7 @@ class SearchTest < Test::Unit::TestCase
   end
   
   def test_invalid_filter
-    assert_raises(Sphinx::SphinxArgumentError) do
+    assert_raises(Ultrasphinx::UsageError) do
       S.new(:class_names => 'Seller', :filters => {'bogus' => 17}).run
     end
   end
@@ -131,14 +158,16 @@ class SearchTest < Test::Unit::TestCase
   def test_conditions
     @deleted_count = User.count(:conditions => {:deleted => true })
     assert_equal 1, @deleted_count
-    assert_equal User.count - @deleted_count, S.new(:class_name => 'User').run.total_entries 
+    assert_equal User.count - @deleted_count, S.new(:class_names => 'User').run.total_entries 
   end
   
-#  def test_mismatched_facet_configuration
-#    assert_raises(Ultrasphinx::ConfigurationError) do 
-#      Ultrasphinx::Search.new(:facets => 'company_name').run
-#    end
-#  end
+  #  def test_mismatched_facet_configuration
+  #    # XXX Should be caught at configuration time. For now it's your own fault 
+  #    # if you do it and get confused.
+  #    assert_raises(Ultrasphinx::ConfigurationError) do 
+  #      Ultrasphinx::Search.new(:facets => 'company_name').run
+  #    end
+  #  end
   
   def test_bogus_facet_name
     assert_raises(Ultrasphinx::UsageError) do
@@ -146,17 +175,24 @@ class SearchTest < Test::Unit::TestCase
     end
   end  
   
-#  def test_unconfigured_sortable_name
-#    assert_raises(Sphinx::SphinxInternalError) do
-#      S.new(:class_names => 'Seller', :sort_by => 'company_name', :per_page => 5).run
-#    end
-#  end
+  def test_unconfigured_sortable_name
+    assert_raises(Ultrasphinx::UsageError) do
+      S.new(:class_names => 'Seller', :sort_by => 'company_name', :sort_mode => 'ascending', :per_page => 5).run
+    end
+  end
   
-#  def test_nonexistent_sortable_name
-#    assert_raises(Sphinx::SphinxInternalError) do
-#      S.new(:class_names => 'Seller', :sort_by => 'bogus',:per_page => 5).run
-#    end  
-#  end
+  def test_sorting_by_field_with_relevance_order
+    assert_raises(Ultrasphinx::UsageError) do
+      # Defaults to :sort_mode => 'relevance'
+      S.new(:class_names => 'Seller', :sort_by => 'created_at', :per_page => 5).run 
+    end  
+  end
+  
+  def test_nonexistent_sortable_name
+    assert_raises(Ultrasphinx::UsageError) do
+      S.new(:class_names => 'Seller', :sort_by => 'bogus', :per_page => 5).run
+    end  
+  end
   
   def test_text_facet
     @s = Ultrasphinx::Search.new(:facets => ['company_name']).run
@@ -166,7 +202,7 @@ class SearchTest < Test::Unit::TestCase
   def test_numeric_facet
     @user_id_count = Seller.find(:all).map(&:user_id).uniq.size
 
-    @s = Ultrasphinx::Search.new(:class_name => 'Seller', :facets => 'user_id').run
+    @s = Ultrasphinx::Search.new(:class_names => 'Seller', :facets => 'user_id').run
     assert_equal @user_id_count, @s.facets['user_id'].size
 
     @s = Ultrasphinx::Search.new(:facets => 'user_id').run
@@ -184,15 +220,15 @@ class SearchTest < Test::Unit::TestCase
   end
   
   def test_float_facet
-    @s = Ultrasphinx::Search.new(:class_name => 'Seller', :facets => 'capitalization').run
+    @s = Ultrasphinx::Search.new(:class_names => 'Seller', :facets => 'capitalization').run
     @s.facets['capitalization'].keys.each do |key|
-      # XXX Requires full Sphinx 0.9.8 compatibility      
+      # XXX http://www.sphinxsearch.com/forum/view.html?id=963
       # assert key.is_a?(Float)
     end
   end
   
   def test_table_aliasing_and_association_sql
-    assert_equal 2, Ultrasphinx::Search.new(:class_name => 'User', :query => 'company_two:replacement').run.size
+    assert_equal 2, Ultrasphinx::Search.new(:class_names => 'User', :query => 'company_two:replacement').run.size
   end
     
   def test_weights
