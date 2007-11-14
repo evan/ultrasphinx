@@ -1,6 +1,4 @@
 
-vTODO. Use Pat Allan's association configurator.
-
 v1.6. API changes! Drop Sphinx 0.9.7 compatibility; switch to Pat Allan's 0.9.8 client plugin; remove legacy keynames; fix string sorting bug; improve error handling.
 
 v1.5.4. Various things.

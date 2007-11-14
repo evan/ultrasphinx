@@ -1,4 +1,5 @@
 
+* Use Pat Allan's association configurator
 * Finish unifying filters and textfields
 * Support exclude filters
 * Make sure filters can be set to nil

@@ -10,7 +10,7 @@ if defined? RAILS_ENV and RAILS_ENV == "development"
   end
 end
 
-$LOAD_PATH << "#{File.dirname(__FILE__)}/../vendor/riddle/"
+$LOAD_PATH << "#{File.dirname(__FILE__)}/../vendor/riddle/lib"
 require 'riddle'
 
 require 'ultrasphinx/ultrasphinx'
