@@ -1,0 +1,7 @@
+
+/* Fake CRC32 */
+
+CREATE OR REPLACE FUNCTION crc32(text)
+RETURNS int AS $$
+  SELECT hex_to_int(SUBSTRING(MD5($1) FROM 1 FOR 8))::int
+$$ VOLATILE LANGUAGE SQL;

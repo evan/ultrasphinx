@@ -169,11 +169,7 @@ module Ultrasphinx
           raise ConfigurationError, "Model #{klass.name} has the requested '#{facet}' field, but it was not configured for faceting" unless field
           field = field['field']
           
-          if hash_stored_procedure = ADAPTER_SQL_FUNCTIONS[ADAPTER]['hash_stored_procedure']
-            klass.connection.execute(hash_stored_procedure)
-          end
-                
-          klass.connection.execute("SELECT #{field} AS value, #{ADAPTER_SQL_FUNCTIONS[ADAPTER]['hash']._interpolate(field)} AS hash FROM #{klass.table_name} GROUP BY #{field}").each_hash do |hash|
+          klass.connection.execute("SELECT #{field} AS value, CRC32(#{field}) AS hash FROM #{klass.table_name} GROUP BY #{field}").each_hash do |hash|
             (FACET_CACHE[facet] ||= {})[hash['hash'].to_i] = hash['value']
           end                            
         end
@@ -204,9 +200,10 @@ module Ultrasphinx
           end
           
           # Load it
-          record = begin
+          begin
             # XXX Does not use Memcached's multiget, or MySQL's, for that matter
-            klass.send(finder, id)
+            record = klass.send(finder, id)
+            raise ActiveRecord::RecordNotFound 
           rescue ActiveRecord::RecordNotFound => e
             if Ultrasphinx::Search.client_options['ignore_missing_records']
               # XXX Should maybe adjust the total_found count, etc

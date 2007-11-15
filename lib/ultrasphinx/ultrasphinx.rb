@@ -49,18 +49,26 @@ module Ultrasphinx
   CONNECTION_DEFAULTS = {
     :host => 'localhost'
   }
+     
+  mattr_accessor :with_rake
+  
+  def self.load_stored_procedure(adapter, name)
+    open("#{THIS_DIR}/#{adapter}/#{name}.sql").read.gsub(/\s+/, ' ')
+  end
 
   ADAPTER_SQL_FUNCTIONS = {
     'mysql' => {
       'group_by' => 'GROUP BY id',
-      'timestamp' => 'UNIX_TIMESTAMP(?)',
-      'hash' => 'CRC32(?)'
-    },    
+      'stored_procedures' => {}
+    },
     'postgresql' => {
       'group_by' => '',
-      'timestamp' => 'EXTRACT(EPOCH FROM ?)',
-      'hash' => 'hex_to_int(SUBSTRING(MD5(?) FROM 1 FOR 8))',
-      'hash_stored_procedure' => open("#{THIS_DIR}/hex_to_int.sql").read.gsub("\n", ' ')
+      'stored_procedures' => Hash[*(
+        ['hex_to_int', 'unified_group_concat', 'concat_ws', 'unix_timestamp', 'crc32'].map do |name|
+          [name, load_stored_procedure('postgresql', name)]
+        end.flatten
+        )
+      ]
     }      
   }
   
@@ -72,14 +80,17 @@ sql_query_pre = SET NAMES utf8
   ), 
     'postgresql' => %(
 type = pgsql
-sql_query_pre = ) + ADAPTER_SQL_FUNCTIONS['postgresql']['hash_stored_procedure'] + %(
+sql_query_pre = ) + ADAPTER_SQL_FUNCTIONS['postgresql']['stored_procedures'].values.join(' ') + %(
   )
 }
     
   ADAPTER = ActiveRecord::Base.connection.instance_variable_get("@config")[:adapter] rescue 'mysql'
-     
-  mattr_accessor :with_rake
-     
+  
+  # Install the stored procedures
+  ADAPTER_SQL_FUNCTIONS[ADAPTER]['stored_procedures'].each do |key, value|
+    ActiveRecord::Base.connection.execute(value)
+  end
+  
   # Logger.
   def self.say msg
     if with_rake

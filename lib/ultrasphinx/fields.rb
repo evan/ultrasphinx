@@ -60,7 +60,7 @@ This is a special singleton configuration class that stores the index field conf
     
     def cast(source_string, field)
       if types[field] == "date"
-        "#{ADAPTER_SQL_FUNCTIONS[ADAPTER]['timestamp']._interpolate(source_string)}"
+        "UNIX_TIMESTAMP('#{source_string}')"
       elsif types[field] == "integer"
         source_string # "CAST(#{source_string} AS UNSIGNED)"
       elsif source_string =~ /GROUP_CONCAT/
@@ -77,7 +77,7 @@ This is a special singleton configuration class that stores the index field conf
         when 'integer', 'float'
           "0"
         when 'date'
-          ADAPTER_SQL_FUNCTIONS[ADAPTER]['timestamp']._interpolate("'1970-01-01 00:00:00'")
+          "UNIX_TIMESTAMP('1970-01-01 00:00:00')"
         when nil
           raise "Field #{field} is missing"
         else
