@@ -203,7 +203,7 @@ module Ultrasphinx
           begin
             # XXX Does not use Memcached's multiget, or MySQL's, for that matter
             record = klass.send(finder, id)
-            raise ActiveRecord::RecordNotFound 
+            raise ActiveRecord::RecordNotFound unless record
           rescue ActiveRecord::RecordNotFound => e
             if Ultrasphinx::Search.client_options['ignore_missing_records']
               # XXX Should maybe adjust the total_found count, etc
