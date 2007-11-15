@@ -60,7 +60,7 @@ This is a special singleton configuration class that stores the index field conf
     
     def cast(source_string, field)
       if types[field] == "date"
-        "UNIX_TIMESTAMP('#{source_string}')"
+        "UNIX_TIMESTAMP(#{source_string})"
       elsif types[field] == "integer"
         source_string # "CAST(#{source_string} AS UNSIGNED)"
       elsif source_string =~ /GROUP_CONCAT/
