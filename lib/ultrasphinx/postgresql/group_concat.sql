@@ -15,7 +15,7 @@ RETURNS text AS $$
   END
 $$ IMMUTABLE LANGUAGE SQL;
 
-DROP AGGREGATE group_concat(text); /*  */
+DROP AGGREGATE IF EXISTS group_concat(text);
 
 CREATE AGGREGATE group_concat (
 	BASETYPE = text,
