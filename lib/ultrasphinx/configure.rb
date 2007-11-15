@@ -146,7 +146,7 @@ module Ultrasphinx
           join_strings.uniq,
           "WHERE #{klass.table_name}.#{klass.primary_key} >= $start AND #{klass.table_name}.#{klass.primary_key} <= $end",
           condition_strings.uniq.map {|condition| "AND #{condition}" },
-          ADAPTER_SQL_FUNCTIONS[ADAPTER]['group_by']
+          "GROUP BY #{klass.table_name}.#{klass.primary_key}"
         ].flatten.join(" ")
       end
       

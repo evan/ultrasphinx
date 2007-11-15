@@ -58,12 +58,10 @@ module Ultrasphinx
 
   ADAPTER_SQL_FUNCTIONS = {
     'mysql' => {
-      'group_by' => 'GROUP BY id',
       'group_concat' => "GROUP_CONCAT(DISTINCT ? SEPARATOR ' ')",
       'stored_procedures' => {}
     },
     'postgresql' => {
-      'group_by' => '',
       'group_concat' => "GROUP_CONCAT(?)",
       'stored_procedures' => Hash[*(
         ['hex_to_int', 'group_concat', 'concat_ws', 'unix_timestamp', 'crc32'].map do |name|
