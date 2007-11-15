@@ -77,7 +77,7 @@ This is a special singleton configuration class that stores the index field conf
         when 'integer', 'float'
           "0"
         when 'date'
-          "UNIX_TIMESTAMP('1970-01-01 00:00:00')"
+          "18000" # Midnight on 1/1/1970
         when nil
           raise "Field #{field} is missing"
         else
