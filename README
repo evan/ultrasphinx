@@ -12,7 +12,7 @@ The public certificate for the gem is at http://rubyforge.org/frs/download.php/2
 == Requirements
 
 * MySQL (or Postgres, experimental)
-* Sphinx 0.9.8-dev r877 or greater
+* Sphinx 0.9.8-dev r871 or greater
 * Rails 1.2.3 or greater
 
 == Features
