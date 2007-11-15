@@ -5,7 +5,7 @@ Ruby on Rails configurator and client to the Sphinx full text search engine.
 
 == License
 
-Copyright 2007 Cloudburst, LLC. Licensed under the AFL 3. See the included LICENSE file. Some portions copyright Pat Allan, distributed under the MIT license, and used with permission. Some portions copyright PJ Hyett and Mislav Marohnić, distributed under the MIT license, and used with permission.
+Copyright 2007 Cloudburst, LLC. Licensed under the AFL 3. See the included LICENSE file. Some portions copyright Pat Allan, distributed under the MIT license, and used with permission. Some portions copyright PJ Hyett and Mislav Marohnić, distributed under the MIT license, and used with permission. 
 
 The public certificate for the gem is at http://rubyforge.org/frs/download.php/25331/evan_weaver-original-public_cert.pem.
 
@@ -33,7 +33,7 @@ Good Rails integration:
 * <tt>will_paginate</tt> compatibility
 * query spellcheck
 * Google-style query parser
-* temporary error recovery
+* error recovery
 * multiple deployment environments
 * comprehensive Rake tasks
 
@@ -43,7 +43,7 @@ And some other things.
 
 == Installation
   
-First, compile and install Sphinx itself using the 0.9.8 development snapshot (http://www.sphinxsearch.com). 
+First, install Sphinx itself. Get the 0.9.8 development snapshot (http://www.sphinxsearch.com), then run <tt>./configure</tt>, <tt>make</tt>, and <tt>sudo make install</tt>. Make sure to set your <tt>./configure</tt> flags : <tt>--prefix</tt> if necessary, and also <tt>--with-pgsql</tt> if you need Postgres support.
 
 You also need the <tt>chronic</tt> gem:
   sudo gem install chronic

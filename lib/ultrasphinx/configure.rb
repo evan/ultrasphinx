@@ -199,8 +199,8 @@ module Ultrasphinx
       def build_concatenations(klass, fields, entries, column_strings, join_strings, remaining_columns)
         entries.to_a.each do |entry|
           if entry['class_name'] and entry['field']
-            # group concats
-            # only has_many's or explicit sql right now
+            # Group concats
+            # Only has_many's or explicit sql right now
             join_klass = entry['class_name'].constantize
         
             join_strings = install_join_unless_association_sql(entry['association_sql'], nil, join_strings) do 
@@ -210,11 +210,11 @@ module Ultrasphinx
                 (entry['conditions'] ? " AND (#{entry['conditions']})" : "")
             end
             
-            source_string = "GROUP_CONCAT(DISTINCT #{entry['table']}.#{entry['field']} SEPARATOR ' ')"
+            source_string = ADAPTER_SQL_FUNCTIONS[ADAPTER]['group_concat']._interpolate("#{entry['table']}.#{entry['field']}")
             column_strings, remaining_columns = install_field(fields, source_string, entry['as'], entry['function_sql'], entry['facet'], column_strings, remaining_columns)
             
           elsif entry['fields']
-            # regular concats
+            # Regular concats
             source_string = "CONCAT_WS(' ', " + entry['fields'].map do |subfield| 
               "#{entry['table']}.#{subfield}"
             end.join(', ') + ")"

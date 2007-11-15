@@ -15,9 +15,9 @@ RETURNS text AS $$
   END
 $$ IMMUTABLE LANGUAGE SQL;
 
-DROP AGGREGATE unified_group_concat(text); /* IF EXISTS */
+DROP AGGREGATE group_concat(text); /* IF EXISTS */
 
-CREATE AGGREGATE unified_group_concat (
+CREATE AGGREGATE group_concat (
 	BASETYPE = text,
 	SFUNC = _group_concat,
 	STYPE = text

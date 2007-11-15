@@ -1,21 +1,17 @@
-
-development:
-  adapter: mysql
+defaults: &defaults 
+  adapter: <%= ENV['DB'] || 'mysql' %>
   host: localhost
-  database: ultrasphinx_development
   username: root
   password:
+  
+development:
+  <<: *defaults
+  database: ultrasphinx_development
 
 test:
-  adapter: mysql
-  host: localhost
+  <<: *defaults
   database: ultrasphinx_test
-  username: root
-  password:
-
+  
 production:
-  adapter: mysql
-  host: localhost
+  <<: *defaults
   database: ultrasphinx_production
-  username: root
-  password: 

@@ -52,20 +52,22 @@ module Ultrasphinx
      
   mattr_accessor :with_rake
   
-  def self.load_stored_procedure(adapter, name)
-    open("#{THIS_DIR}/#{adapter}/#{name}.sql").read.gsub(/\s+/, ' ')
+  def self.load_stored_procedure(name)
+    open("#{THIS_DIR}/postgresql/#{name}.sql").read.gsub(/\s+/, ' ')
   end
 
   ADAPTER_SQL_FUNCTIONS = {
     'mysql' => {
       'group_by' => 'GROUP BY id',
+      'group_concat' => "GROUP_CONCAT(DISTINCT ? SEPARATOR ' ')",
       'stored_procedures' => {}
     },
     'postgresql' => {
       'group_by' => '',
+      'group_concat' => "GROUP_CONCAT(?)",
       'stored_procedures' => Hash[*(
-        ['hex_to_int', 'unified_group_concat', 'concat_ws', 'unix_timestamp', 'crc32'].map do |name|
-          [name, load_stored_procedure('postgresql', name)]
+        ['hex_to_int', 'group_concat', 'concat_ws', 'unix_timestamp', 'crc32'].map do |name|
+          [name, load_stored_procedure(name)]
         end.flatten
         )
       ]
