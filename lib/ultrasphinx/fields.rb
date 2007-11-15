@@ -77,7 +77,7 @@ This is a special singleton configuration class that stores the index field conf
         when 'integer', 'float'
           "0"
         when 'date'
-          ADAPTER_SQL_FUNCTIONS[ADAPTER]['timestamp']._interpolate('1970-01-01 00:00:00')
+          ADAPTER_SQL_FUNCTIONS[ADAPTER]['timestamp']._interpolate("'1970-01-01 00:00:00'")
         when nil
           raise "Field #{field} is missing"
         else
