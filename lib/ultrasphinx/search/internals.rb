@@ -169,8 +169,9 @@ module Ultrasphinx
           raise ConfigurationError, "Model #{klass.name} has the requested '#{facet}' field, but it was not configured for faceting" unless field
           field = field['field']
           
-          klass.connection.execute("SELECT #{field} AS value, CRC32(#{field}) AS hash FROM #{klass.table_name} GROUP BY #{field}").each_hash do |hash|
-            (FACET_CACHE[facet] ||= {})[hash['hash'].to_i] = hash['value']
+          FACET_CACHE[facet] ||= {}
+          klass.connection.execute("SELECT #{field} AS value, CRC32(#{field}) AS hash FROM #{klass.table_name} GROUP BY #{field}").each do |value, hash|
+            FACET_CACHE[facet][hash.to_i] = value
           end                            
         end
         FACET_CACHE[facet]
