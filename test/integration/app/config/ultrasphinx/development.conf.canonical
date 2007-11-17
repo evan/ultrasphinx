@@ -1,5 +1,5 @@
 
-# Auto-generated at Wed Nov 14 03:28:33 -0500 2007.
+# Auto-generated at Sat Nov 17 16:55:00 -0500 2007.
 # Hand modifications will be overwritten.
 # /Users/eweaver/Desktop/projects/fauna/ultrasphinx/trunk/test/integration/app/config/ultrasphinx/default.base
 indexer {
@@ -34,7 +34,7 @@ sql_host = localhost
 sql_pass = 
 sql_user = root
 sql_query_range = SELECT MIN(id), MAX(id) FROM states
-sql_query = SELECT (states.id * 4 + 0) AS id, CAST(GROUP_CONCAT(DISTINCT addresses.name SEPARATOR ' ') AS CHAR) AS address_name, 0 AS capitalization, 'Geo::State' AS class, 0 AS class_id, '' AS company, '' AS company_name, 0 AS company_name_facet, '' AS company_two, '' AS content, UNIX_TIMESTAMP('1970-01-01 00:00:00') AS created_at, 0 AS deleted, '' AS email, '' AS login, '' AS mission_statement, '' AS name, '' AS state, 0 AS user_id FROM states LEFT OUTER JOIN addresses AS addresses ON states.id = addresses.state_id WHERE states.id >= $start AND states.id <= $end GROUP BY id
+sql_query = SELECT DISTINCT (states.id * 4 + 0) AS id, CAST(GROUP_CONCAT(DISTINCT addresses.name SEPARATOR ' ') AS CHAR) AS address_name, 0 AS capitalization, 'Geo::State' AS class, 0 AS class_id, '' AS company, '' AS company_name, 0 AS company_name_facet, '' AS company_two, '' AS content, 18000 AS created_at, 0 AS deleted, '' AS email, '' AS login, '' AS mission_statement, '' AS name, '' AS state, 0 AS user_id FROM states LEFT OUTER JOIN addresses AS addresses ON states.id = addresses.state_id WHERE states.id >= $start AND states.id <= $end GROUP BY states.id, addresses.name
 
 sql_group_column = capitalization
 sql_group_column = class_id
@@ -65,7 +65,7 @@ sql_host = localhost
 sql_pass = 
 sql_user = root
 sql_query_range = SELECT MIN(id), MAX(id) FROM sellers
-sql_query = SELECT (sellers.id * 4 + 1) AS id, '' AS address_name, sellers.capitalization AS capitalization, 'Seller' AS class, 1 AS class_id, '' AS company, sellers.company_name AS company_name, CRC32(sellers.company_name) AS company_name_facet, '' AS company_two, '' AS content, UNIX_TIMESTAMP(sellers.created_at) AS created_at, 0 AS deleted, '' AS email, '' AS login, sellers.mission_statement AS mission_statement, '' AS name, '' AS state, sellers.user_id AS user_id FROM sellers WHERE sellers.id >= $start AND sellers.id <= $end GROUP BY id
+sql_query = SELECT DISTINCT (sellers.id * 4 + 1) AS id, '' AS address_name, sellers.capitalization AS capitalization, 'Seller' AS class, 1 AS class_id, '' AS company, sellers.company_name AS company_name, CRC32(sellers.company_name) AS company_name_facet, '' AS company_two, '' AS content, UNIX_TIMESTAMP(sellers.created_at) AS created_at, 0 AS deleted, '' AS email, '' AS login, sellers.mission_statement AS mission_statement, '' AS name, '' AS state, sellers.user_id AS user_id FROM sellers WHERE sellers.id >= $start AND sellers.id <= $end GROUP BY sellers.id, sellers.capitalization, sellers.company_name, sellers.created_at, sellers.mission_statement, sellers.user_id
 
 sql_group_column = capitalization
 sql_group_column = class_id
@@ -96,7 +96,7 @@ sql_host = localhost
 sql_pass = 
 sql_user = root
 sql_query_range = SELECT MIN(id), MAX(id) FROM addresses
-sql_query = SELECT (addresses.id * 4 + 2) AS id, '' AS address_name, 0 AS capitalization, 'Geo::Address' AS class, 2 AS class_id, '' AS company, '' AS company_name, 0 AS company_name_facet, '' AS company_two, CONCAT_WS(' ', addresses.line_1, addresses.line_2, addresses.city, addresses.province_region, addresses.zip_postal_code) AS content, UNIX_TIMESTAMP('1970-01-01 00:00:00') AS created_at, 0 AS deleted, '' AS email, '' AS login, '' AS mission_statement, addresses.name AS name, states.name AS state, 0 AS user_id FROM addresses LEFT OUTER JOIN states AS states ON states.id = addresses.state_id WHERE addresses.id >= $start AND addresses.id <= $end GROUP BY id
+sql_query = SELECT DISTINCT (addresses.id * 4 + 2) AS id, '' AS address_name, 0 AS capitalization, 'Geo::Address' AS class, 2 AS class_id, '' AS company, '' AS company_name, 0 AS company_name_facet, '' AS company_two, CONCAT_WS(' ', addresses.line_1, addresses.line_2, addresses.city, addresses.province_region, addresses.zip_postal_code) AS content, 18000 AS created_at, 0 AS deleted, '' AS email, '' AS login, '' AS mission_statement, addresses.name AS name, states.name AS state, 0 AS user_id FROM addresses LEFT OUTER JOIN states AS states ON states.id = addresses.state_id WHERE addresses.id >= $start AND addresses.id <= $end GROUP BY addresses.id, addresses.city, addresses.line_1, addresses.line_2, addresses.name, addresses.province_region, addresses.zip_postal_code, states.name
 
 sql_group_column = capitalization
 sql_group_column = class_id
@@ -127,7 +127,7 @@ sql_host = localhost
 sql_pass = 
 sql_user = root
 sql_query_range = SELECT MIN(id), MAX(id) FROM users
-sql_query = SELECT (users.id * 4 + 3) AS id, '' AS address_name, 0 AS capitalization, 'User' AS class, 3 AS class_id, sellers.company_name AS company, '' AS company_name, 0 AS company_name_facet, REPLACE(sellers_two.company_name, '6', ' replacement ') AS company_two, '' AS content, UNIX_TIMESTAMP('1970-01-01 00:00:00') AS created_at, users.deleted AS deleted, users.email AS email, users.login AS login, '' AS mission_statement, '' AS name, '' AS state, 0 AS user_id FROM users LEFT OUTER JOIN sellers AS sellers ON users.id = sellers.user_id LEFT OUTER JOIN sellers AS sellers_two ON users.id = sellers_two.user_id WHERE users.id >= $start AND users.id <= $end AND (deleted = 0) GROUP BY id
+sql_query = SELECT DISTINCT (users.id * 4 + 3) AS id, '' AS address_name, 0 AS capitalization, 'User' AS class, 3 AS class_id, sellers.company_name AS company, '' AS company_name, 0 AS company_name_facet, REPLACE(sellers_two.company_name, '6', ' replacement ') AS company_two, '' AS content, 18000 AS created_at, users.deleted AS deleted, users.email AS email, users.login AS login, '' AS mission_statement, '' AS name, '' AS state, 0 AS user_id FROM users LEFT OUTER JOIN sellers AS sellers ON users.id = sellers.user_id LEFT OUTER JOIN sellers AS sellers_two ON users.id = sellers_two.user_id WHERE users.id >= $start AND users.id <= $end AND (deleted = '0') GROUP BY users.id, sellers.company_name, sellers_two.company_name, users.deleted, users.email, users.login
 
 sql_group_column = capitalization
 sql_group_column = class_id
