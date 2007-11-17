@@ -58,7 +58,7 @@ module Ultrasphinx
 
   ADAPTER_SQL_FUNCTIONS = {
     'mysql' => {
-      'group_concat' => "GROUP_CONCAT(DISTINCT ? SEPARATOR ' ')",
+      'group_concat' => "CAST(GROUP_CONCAT(DISTINCT ? SEPARATOR ' ') AS CHAR)",
       'stored_procedures' => {}
     },
     'postgresql' => {
