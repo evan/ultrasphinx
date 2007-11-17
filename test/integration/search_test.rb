@@ -68,18 +68,20 @@ class SearchTest < Test::Unit::TestCase
    end
   
   def test_empty_query
+    assert_nothing_raised do
+      @s = S.new.run
+    end 
+  end
+  
+  def test_total_entries
     @total = Ultrasphinx::MODEL_CONFIGURATION.keys.inject(0) do |acc, class_name| 
       acc + class_name.constantize.count
     end - User.count(:conditions => {:deleted => true })
     
-    assert_nothing_raised do
-      @s = S.new.run
-    end
-    
     assert_equal(
       @total,
-      @s.total_entries
-    )
+      @s = S.new.run.total_entries
+    )  
   end
   
   def test_sort_by_date
