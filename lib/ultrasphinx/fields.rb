@@ -63,8 +63,6 @@ This is a special singleton configuration class that stores the index field conf
         "UNIX_TIMESTAMP(#{source_string})"
       elsif types[field] == "integer"
         source_string # "CAST(#{source_string} AS UNSIGNED)"
-      elsif source_string =~ /GROUP_CONCAT/
-        "CAST(#{source_string} AS CHAR)"
       else
         source_string              
       end + " AS #{field}"
