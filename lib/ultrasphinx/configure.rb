@@ -95,7 +95,7 @@ module Ultrasphinx
           "(#{klass.table_name}.#{klass.primary_key} * #{MODEL_CONFIGURATION.size} + #{class_id}) AS id", 
           "#{class_id} AS class_id", "'#{klass.name}' AS class"]
         remaining_columns = fields.types.keys - ["class", "class_id"]        
-        [column_strings, [], condition_strings, [], remaining_columns]
+        [column_strings, [], condition_strings, [], false, remaining_columns]
       end
       
       
@@ -111,21 +111,21 @@ module Ultrasphinx
             
       def build_source(fields, model, options, class_id, klass, source, groups)
                 
-        column_strings, join_strings, condition_strings, group_bys, remaining_columns = 
-          setup_source_arrays(klass, fields, class_id, options['conditions'])
+        column_strings, join_strings, condition_strings, group_bys, use_distinct, remaining_columns = 
+          setup_source_arrays(
+            klass, fields, class_id, options['conditions'])
 
         column_strings, join_strings, group_bys, remaining_columns = 
           build_regular_fields(
-            klass, fields, options['fields'], column_strings, join_strings, group_bys, remaining_columns
-          )
+            klass, fields, options['fields'], column_strings, join_strings, group_bys, remaining_columns)
+            
         column_strings, join_strings, group_bys, remaining_columns = 
           build_includes(
-            klass, fields, options['include'], column_strings, join_strings, group_bys, remaining_columns
-          )
-        column_strings, join_strings, group_bys, remaining_columns = 
+            klass, fields, options['include'], column_strings, join_strings, group_bys, remaining_columns)
+            
+        column_strings, join_strings, group_bys, use_distinct, remaining_columns = 
           build_concatenations(
-            klass, fields, options['concatenate'], column_strings, join_strings, group_bys, remaining_columns
-          )
+            klass, fields, options['concatenate'], column_strings, join_strings, group_bys, use_distinct, remaining_columns)
         
         column_strings = add_missing_columns(fields, remaining_columns, column_strings)
        
@@ -134,18 +134,19 @@ module Ultrasphinx
           SOURCE_SETTINGS._to_conf_string,
           setup_source_database(klass),
           range_select_string(klass),
-          build_query(klass, column_strings, join_strings, condition_strings, group_bys),
+          build_query(klass, column_strings, join_strings, condition_strings, use_distinct, group_bys),
           "\n" + groups,
           query_info_string(klass, class_id),
           "}\n\n"]
       end
       
       
-      def build_query(klass, column_strings, join_strings, condition_strings, group_bys)
+      def build_query(klass, column_strings, join_strings, condition_strings, use_distinct, group_bys)
         primary_key = "#{klass.table_name}.#{klass.primary_key}"
         group_bys = group_bys.reject {|s| s == primary_key}.uniq.sort
         ["sql_query =", 
-          "SELECT DISTINCT", 
+          "SELECT",
+          ("DISTINCT" if use_distinct), 
           column_strings.sort_by do |string| 
             # Sphinx wants them always in the same order, but "id" must be first
             (field = string[/.*AS (.*)/, 1]) == "id" ? "*" : field
@@ -155,7 +156,7 @@ module Ultrasphinx
           "WHERE #{primary_key} >= $start AND #{primary_key} <= $end",
           condition_strings.uniq.map {|condition| "AND #{condition}" },
           "GROUP BY #{primary_key}, #{group_bys.join(', ')}"
-        ].flatten.join(" ")
+        ].flatten.compact.join(" ")
       end
       
       
@@ -206,7 +207,7 @@ module Ultrasphinx
       end
       
         
-      def build_concatenations(klass, fields, entries, column_strings, join_strings, group_bys, remaining_columns)
+      def build_concatenations(klass, fields, entries, column_strings, join_strings, group_bys, use_distinct, remaining_columns)
         entries.to_a.each do |entry|
           if entry['class_name'] and entry['field']
             # Group concats
@@ -223,6 +224,7 @@ module Ultrasphinx
             source_string = "#{entry['table']}.#{entry['field']}"
             group_bys << source_string
             source_string = ADAPTER_SQL_FUNCTIONS[ADAPTER]['group_concat']._interpolate(source_string)
+            use_distinct = true
             
             column_strings, remaining_columns = install_field(fields, source_string, entry['as'], entry['function_sql'], entry['facet'], column_strings, remaining_columns)
             
@@ -241,7 +243,7 @@ module Ultrasphinx
           end
         end
         
-        [column_strings, join_strings, group_bys, remaining_columns]
+        [column_strings, join_strings, group_bys, use_distinct, remaining_columns]
       end
       
     
