@@ -39,7 +39,7 @@ client
 source
 {
   # Individual SQL source options
-  sql_range_step = 512   
+  sql_range_step = 5000   
   strip_html = 0
   index_html_attrs =
   sql_query_post =

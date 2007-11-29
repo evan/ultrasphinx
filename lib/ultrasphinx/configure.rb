@@ -146,7 +146,8 @@ module Ultrasphinx
         group_bys = group_bys.reject {|s| s == primary_key}.uniq.sort
         ["sql_query =", 
           "SELECT",
-          ("DISTINCT" if use_distinct), 
+          # XXX Why does this destroy performance so much?
+          # ("DISTINCT" if use_distinct), 
           column_strings.sort_by do |string| 
             # Sphinx wants them always in the same order, but "id" must be first
             (field = string[/.*AS (.*)/, 1]) == "id" ? "*" : field
