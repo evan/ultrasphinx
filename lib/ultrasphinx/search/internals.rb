@@ -160,22 +160,31 @@ module Ultrasphinx
         # XXX not necessarily optimal since it requires a direct DB hit once per mongrel
         Ultrasphinx.say "caching hash reverse map for text facet #{facet}"
         
-        Fields.instance.classes[facet].each do |klass|
-          # you can only use a facet from your own self right now; no includes allowed
+        configured_classes = Fields.instance.classes[facet].map do |klass|
+          # You can only use a facet from your own self right now; no includes allowed
           field = MODEL_CONFIGURATION[klass.name]['fields'].detect do |field_hash|
             field_hash['as'] == facet
           end
                     
-          raise ConfigurationError, "Model #{klass.name} has the requested '#{facet}' field, but it was not configured for faceting" unless field
-          field = field['field']
+          unless field
+            Ultrasphinx.say "model #{klass.name} has the requested '#{field}' field, but it was not configured for faceting, and will be skipped"
+            next
+          end
+          
+          field = field['field'] # XXX Ugh
           
           FACET_CACHE[facet] ||= {}
           klass.connection.execute("SELECT #{field} AS value, CRC32(#{field}) AS hash FROM #{klass.table_name} GROUP BY #{field}").each do |value, hash|
             FACET_CACHE[facet][hash.to_i] = value
           end                            
+          klass
         end
+
+        configured_classes.compact!      
+        raise ConfigurationError, "no classes were correctly configured for text faceting on '#{facet}'" if configured_classes.empty?      
+        
         FACET_CACHE[facet]
-      end
+      end      
       
       # Inverse-modulus map the Sphinx ids to the table-specific ids
       def convert_sphinx_ids(sphinx_ids)    
