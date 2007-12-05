@@ -216,7 +216,7 @@ module Ultrasphinx
             raise ActiveRecord::RecordNotFound unless record
           rescue ActiveRecord::RecordNotFound => e
             if Ultrasphinx::Search.client_options['ignore_missing_records']
-              # XXX Should maybe adjust the total_found count, etc
+              say "warning; #{klass}.#{finder}(#{id}) returned RecordNotFound"
             else
               raise(e)
             end
