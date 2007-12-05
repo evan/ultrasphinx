@@ -1,5 +1,5 @@
 
-# Auto-generated at Sat Nov 17 16:55:00 -0500 2007.
+# Auto-generated at Tue Dec 04 22:22:23 -0500 2007.
 # Hand modifications will be overwritten.
 # /Users/eweaver/Desktop/projects/fauna/ultrasphinx/trunk/test/integration/app/config/ultrasphinx/default.base
 indexer {
@@ -34,7 +34,7 @@ sql_host = localhost
 sql_pass = 
 sql_user = root
 sql_query_range = SELECT MIN(id), MAX(id) FROM states
-sql_query = SELECT DISTINCT (states.id * 4 + 0) AS id, CAST(GROUP_CONCAT(DISTINCT addresses.name SEPARATOR ' ') AS CHAR) AS address_name, 0 AS capitalization, 'Geo::State' AS class, 0 AS class_id, '' AS company, '' AS company_name, 0 AS company_name_facet, '' AS company_two, '' AS content, 18000 AS created_at, 0 AS deleted, '' AS email, '' AS login, '' AS mission_statement, '' AS name, '' AS state, 0 AS user_id FROM states LEFT OUTER JOIN addresses AS addresses ON states.id = addresses.state_id WHERE states.id >= $start AND states.id <= $end GROUP BY states.id, addresses.name
+sql_query = SELECT (states.id * 4 + 0) AS id, CAST(GROUP_CONCAT(DISTINCT addresses.name SEPARATOR ' ') AS CHAR) AS address_name, 0 AS capitalization, 'Geo::State' AS class, 0 AS class_id, '' AS company, '' AS company_name, 0 AS company_name_facet, '' AS company_two, '' AS content, 18000 AS created_at, 0 AS deleted, '' AS email, '' AS login, '' AS mission_statement, '' AS name, '' AS state, 0 AS user_id FROM states LEFT OUTER JOIN addresses AS addresses ON states.id = addresses.state_id WHERE states.id >= $start AND states.id <= $end GROUP BY states.id, addresses.name
 
 sql_group_column = capitalization
 sql_group_column = class_id
