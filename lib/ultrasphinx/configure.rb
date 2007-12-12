@@ -72,7 +72,7 @@ module Ultrasphinx
       
       
       def setup_source_database(klass)
-        # Tentatively supporting Postgres now
+        # Supporting Postgres now
         connection_settings = klass.connection.instance_variable_get("@config")
 
         adapter_defaults = ADAPTER_DEFAULTS[ADAPTER]
@@ -142,12 +142,19 @@ module Ultrasphinx
       
       
       def build_query(klass, column_strings, join_strings, condition_strings, use_distinct, group_bys)
+        
         primary_key = "#{klass.table_name}.#{klass.primary_key}"
-        group_bys = group_bys.reject {|s| s == primary_key}.uniq.sort
+        group_bys = case ADAPTER
+          when 'mysql'
+            primary_key
+          when 'postgresql'
+            # Postgres is very fussy about GROUP_BY 
+            ([primary_key] + group_bys.reject {|s| s == primary_key}.uniq.sort).join(', ')
+          end
+        
         ["sql_query =", 
           "SELECT",
-          # XXX Why does this destroy performance so much?
-          # ("DISTINCT" if use_distinct), 
+          # Avoid DISTINCT; it destroys performance
           column_strings.sort_by do |string| 
             # Sphinx wants them always in the same order, but "id" must be first
             (field = string[/.*AS (.*)/, 1]) == "id" ? "*" : field
@@ -156,7 +163,7 @@ module Ultrasphinx
           join_strings.uniq,
           "WHERE #{primary_key} >= $start AND #{primary_key} <= $end",
           condition_strings.uniq.map {|condition| "AND #{condition}" },
-          "GROUP BY #{primary_key}, #{group_bys.join(', ')}"
+          "GROUP BY #{group_bys}"
         ].flatten.compact.join(" ")
       end
       
@@ -223,7 +230,7 @@ module Ultrasphinx
             end
             
             source_string = "#{entry['table']}.#{entry['field']}"
-            group_bys << source_string
+            # We are using the field in an aggregate, so we don't want to add it to group_bys
             source_string = ADAPTER_SQL_FUNCTIONS[ADAPTER]['group_concat']._interpolate(source_string)
             use_distinct = true
             
