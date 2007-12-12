@@ -1,5 +1,4 @@
 
-* Figure out how to avoid cartesian product issue without using SELECT DISTINCT
 * Use Pat Allan's association configurator, possibly with an API change to avoid the message-passing DSL
 * Finish unifying filters and textfields
 * Support exclude filters
