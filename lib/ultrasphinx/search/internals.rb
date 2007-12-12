@@ -157,24 +157,43 @@ module Ultrasphinx
       
       def rebuild_facet_cache(facet)
         # Cache the reverse hash map for the textual facet if it hasn't been done yet
-        # XXX not necessarily optimal since it requires a direct DB hit once per mongrel
+        # XXX Not necessarily optimal since it requires a direct DB hit once per mongrel
         Ultrasphinx.say "caching hash reverse map for text facet #{facet}"
         
         configured_classes = Fields.instance.classes[facet].map do |klass|
-          # You can only use a facet from your own self right now; no includes allowed
-          field = MODEL_CONFIGURATION[klass.name]['fields'].detect do |field_hash|
-            field_hash['as'] == facet
+
+          # Concatenates might not work well
+          type, configuration = nil, nil
+          MODEL_CONFIGURATION[klass.name].except('conditions').each do |_type, values| 
+            type = _type
+            configuration = values.detect { |this_field| this_field['as'] == facet }
+            break if configuration
           end
                     
-          unless field
-            Ultrasphinx.say "model #{klass.name} has the requested '#{field}' field, but it was not configured for faceting, and will be skipped"
+          unless configuration
+            Ultrasphinx.say "model #{klass.name} has the requested '#{facet}' field, but it was not configured for faceting, and will be skipped"
             next
           end
           
-          field = field['field'] # XXX Ugh
-          
           FACET_CACHE[facet] ||= {}
-          klass.connection.execute("SELECT #{field} AS value, CRC32(#{field}) AS hash FROM #{klass.table_name} GROUP BY #{field}").each do |value, hash|
+          
+          # XXX This is a duplication of stuff already known in configure.rb, and ought to be cleaned up,
+          # but that would mean we have to either parse the .conf or configure every time at boot
+
+          field_string, join_string = case type
+            when 'fields'
+              [configuration['field'], ""]
+            when 'include'
+              # XXX Only handles the basic case. No test coverage.
+              ["included.#{configuration['field']}", 
+                (configuration['association_sql'] or "LEFT OUTER JOIN #{configuration['table']} AS included ON included.#{configuration['class_name'].constantize.primary_key} = #{klass.table_name}.#{configuration['class_name'].underscore}_id")
+              ]
+            when 'concatenate'
+              # Wait for someone to complain before worrying about this
+              raise "Concatenation text facets have not been implemented"
+          end
+          
+          klass.connection.execute("SELECT #{field_string} AS value, CRC32(#{field_string}) AS hash FROM #{klass.table_name} #{join_string} GROUP BY value").each do |value, hash|
             FACET_CACHE[facet][hash.to_i] = value
           end                            
           klass

@@ -102,17 +102,12 @@ This is a special singleton configuration class that stores the index field conf
             extract_field_alias!(entry, klass)
             
             unless klass.columns_hash[entry['field']]
+              # XXX I think this is here for migrations
               Ultrasphinx.say "warning: field #{entry['field']} is not present in #{model}"
             else
               save_and_verify_type(entry['as'], klass.columns_hash[entry['field']].type, entry['sortable'], klass)
-            end
-            
-            if entry['facet']
-              save_and_verify_type(entry['as'], 'text', nil, klass) # source must be a string
-              save_and_verify_type("#{entry['as']}_facet", 'integer', nil, klass)
-            end
-            
-            entry
+              install_facets!(entry, klass)
+            end            
           end  
           
           # Joins are whatever they are in the target       
@@ -120,13 +115,15 @@ This is a special singleton configuration class that stores the index field conf
             extract_table_alias!(entry, klass)
             extract_field_alias!(entry, klass)
 
-            save_and_verify_type(entry['as'] || entry['field'], entry['class_name'].constantize.columns_hash[entry['field']].type, entry['sortable'], klass)
+            save_and_verify_type(entry['as'] || entry['field'], entry['class_name'].constantize.columns_hash[entry['field']].type, entry['sortable'], klass)            
+            install_facets!(entry, klass)
           end  
           
           # Regular concats are CHAR, group_concats are BLOB and need to be cast to CHAR
           options['concatenate'].to_a.each do |entry|
             extract_table_alias!(entry, klass) # XXX Doesn't actually do anything useful
             save_and_verify_type(entry['as'], 'text', entry['sortable'], klass) 
+            install_facets!(entry, klass)
           end          
           
         rescue ActiveRecord::StatementInvalid
@@ -135,6 +132,14 @@ This is a special singleton configuration class that stores the index field conf
       end
       
       self
+    end
+    
+    def install_facets!(entry, klass)
+      if entry['facet']
+        save_and_verify_type(entry['as'], 'text', nil, klass) # source must be a string
+        save_and_verify_type("#{entry['as']}_facet", 'integer', nil, klass)
+      end
+      entry
     end
     
     def extract_field_alias!(entry, klass)
