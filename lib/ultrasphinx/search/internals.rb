@@ -170,7 +170,7 @@ module Ultrasphinx
             break if configuration
           end
                     
-          unless configuration
+          unless configuration and configuration['facet']
             Ultrasphinx.say "model #{klass.name} has the requested '#{facet}' field, but it was not configured for faceting, and will be skipped"
             next
           end
