@@ -12,7 +12,7 @@ class ServerTest < Test::Unit::TestCase
   def setup
     @pid = Process.fork do
        Dir.chdir RAILS_ROOT do
-         print "S"
+         # print "S"
          exec("script/server -p #{PORT} &> /dev/null")
        end
      end
@@ -23,7 +23,7 @@ class ServerTest < Test::Unit::TestCase
     # Process.kill(9, @pid) doesn't work because Mongrel has double-forked itself away
     `ps awx | grep #{PORT} | grep -v grep | awk '{print $1}'`.split("\n").each do |pid|
       system("kill -9 #{pid}")
-      print "K"
+      # print "K"
     end
     sleep(2)
     @pid = nil

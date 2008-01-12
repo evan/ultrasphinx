@@ -26,7 +26,7 @@ module Riddle
       
       # Append a float
       def append_float(float)
-        @message << [float].pack('f')
+        @message << [float].pack('f').unpack('L*').pack("N")
       end
       
       # Append multiple integers

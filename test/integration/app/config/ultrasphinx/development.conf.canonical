@@ -1,5 +1,5 @@
 
-# Auto-generated at Wed Dec 12 02:47:44 -0500 2007.
+# Auto-generated at Sat Jan 12 08:05:26 -0500 2008.
 # Hand modifications will be overwritten.
 # /Users/eweaver/Desktop/projects/chow/vendor/plugins/ultrasphinx/test/integration/app/config/ultrasphinx/default.base
 indexer {
@@ -33,8 +33,8 @@ sql_db = ultrasphinx_development
 sql_host = localhost
 sql_pass = 
 sql_user = root
-sql_query_range = SELECT MIN(id), MAX(id) FROM states
-sql_query = SELECT (states.id * 4 + 0) AS id, CAST(GROUP_CONCAT(DISTINCT addresses.name SEPARATOR ' ') AS CHAR) AS address_name, 0 AS capitalization, 'Geo::State' AS class, 0 AS class_id, '' AS company, '' AS company_name, 0 AS company_name_facet, '' AS company_two, '' AS content, 18000 AS created_at, 0 AS deleted, '' AS email, '' AS login, '' AS mission_statement, '' AS name, '' AS state, 0 AS user_id FROM states LEFT OUTER JOIN addresses AS addresses ON states.id = addresses.state_id WHERE states.id >= $start AND states.id <= $end GROUP BY states.id
+sql_query_range = SELECT MIN(id) ,  MAX(id) FROM states
+sql_query = SELECT (states.id * 5 + 0) AS id, CAST(GROUP_CONCAT(DISTINCT addresses.name SEPARATOR ' ') AS CHAR) AS address_name, 0 AS capitalization, 'Geo::State' AS class, 0 AS class_id, '' AS company, '' AS company_name, 0 AS company_name_facet, '' AS company_two, '' AS content, 18000 AS created_at, 0 AS deleted, '' AS email, '' AS login, '' AS mission_statement, '' AS name, '' AS state, 0 AS user_id FROM states LEFT OUTER JOIN addresses AS addresses ON states.id = addresses.state_id WHERE states.id >= $start AND states.id <= $end GROUP BY states.id
 
 sql_group_column = capitalization
 sql_group_column = class_id
@@ -43,7 +43,7 @@ sql_date_column = created_at
 sql_group_column = deleted
 sql_str2ordinal_column = mission_statement
 sql_group_column = user_id
-sql_query_info = SELECT * FROM states WHERE states.id = (($id - 0) / 4)
+sql_query_info = SELECT * FROM states WHERE states.id = (($id - 0) / 5)
 }
 
 
@@ -64,8 +64,8 @@ sql_db = ultrasphinx_development
 sql_host = localhost
 sql_pass = 
 sql_user = root
-sql_query_range = SELECT MIN(id), MAX(id) FROM sellers
-sql_query = SELECT (sellers.id * 4 + 1) AS id, '' AS address_name, sellers.capitalization AS capitalization, 'Seller' AS class, 1 AS class_id, '' AS company, sellers.company_name AS company_name, CRC32(sellers.company_name) AS company_name_facet, '' AS company_two, '' AS content, UNIX_TIMESTAMP(sellers.created_at) AS created_at, 0 AS deleted, '' AS email, '' AS login, sellers.mission_statement AS mission_statement, '' AS name, '' AS state, sellers.user_id AS user_id FROM sellers WHERE sellers.id >= $start AND sellers.id <= $end GROUP BY sellers.id
+sql_query_range = SELECT MIN(id) ,  MAX(id) FROM sellers
+sql_query = SELECT (sellers.id * 5 + 1) AS id, '' AS address_name, sellers.capitalization AS capitalization, 'Seller' AS class, 1 AS class_id, '' AS company, sellers.company_name AS company_name, CRC32(sellers.company_name) AS company_name_facet, '' AS company_two, '' AS content, UNIX_TIMESTAMP(sellers.created_at) AS created_at, 0 AS deleted, '' AS email, '' AS login, sellers.mission_statement AS mission_statement, '' AS name, '' AS state, sellers.user_id AS user_id FROM sellers WHERE sellers.id >= $start AND sellers.id <= $end GROUP BY sellers.id
 
 sql_group_column = capitalization
 sql_group_column = class_id
@@ -74,7 +74,7 @@ sql_date_column = created_at
 sql_group_column = deleted
 sql_str2ordinal_column = mission_statement
 sql_group_column = user_id
-sql_query_info = SELECT * FROM sellers WHERE sellers.id = (($id - 1) / 4)
+sql_query_info = SELECT * FROM sellers WHERE sellers.id = (($id - 1) / 5)
 }
 
 
@@ -95,8 +95,8 @@ sql_db = ultrasphinx_development
 sql_host = localhost
 sql_pass = 
 sql_user = root
-sql_query_range = SELECT MIN(id), MAX(id) FROM addresses
-sql_query = SELECT (addresses.id * 4 + 2) AS id, '' AS address_name, 0 AS capitalization, 'Geo::Address' AS class, 2 AS class_id, '' AS company, '' AS company_name, 0 AS company_name_facet, '' AS company_two, CONCAT_WS(' ', addresses.line_1, addresses.line_2, addresses.city, addresses.province_region, addresses.zip_postal_code) AS content, 18000 AS created_at, 0 AS deleted, '' AS email, '' AS login, '' AS mission_statement, addresses.name AS name, states.name AS state, 0 AS user_id FROM addresses LEFT OUTER JOIN states AS states ON states.id = addresses.state_id WHERE addresses.id >= $start AND addresses.id <= $end GROUP BY addresses.id
+sql_query_range = SELECT MIN(id) ,  MAX(id) FROM addresses
+sql_query = SELECT (addresses.id * 5 + 2) AS id, '' AS address_name, 0 AS capitalization, 'Geo::Address' AS class, 2 AS class_id, '' AS company, '' AS company_name, 0 AS company_name_facet, '' AS company_two, CONCAT_WS(' ', addresses.line_1, addresses.line_2, addresses.city, addresses.province_region, addresses.zip_postal_code) AS content, 18000 AS created_at, 0 AS deleted, '' AS email, '' AS login, '' AS mission_statement, addresses.name AS name, states.name AS state, 0 AS user_id FROM addresses LEFT OUTER JOIN states AS states ON states.id = addresses.state_id WHERE addresses.id >= $start AND addresses.id <= $end GROUP BY addresses.id
 
 sql_group_column = capitalization
 sql_group_column = class_id
@@ -105,7 +105,7 @@ sql_date_column = created_at
 sql_group_column = deleted
 sql_str2ordinal_column = mission_statement
 sql_group_column = user_id
-sql_query_info = SELECT * FROM addresses WHERE addresses.id = (($id - 2) / 4)
+sql_query_info = SELECT * FROM addresses WHERE addresses.id = (($id - 2) / 5)
 }
 
 
@@ -126,8 +126,8 @@ sql_db = ultrasphinx_development
 sql_host = localhost
 sql_pass = 
 sql_user = root
-sql_query_range = SELECT MIN(id), MAX(id) FROM users
-sql_query = SELECT (users.id * 4 + 3) AS id, '' AS address_name, 0 AS capitalization, 'User' AS class, 3 AS class_id, sellers.company_name AS company, '' AS company_name, 0 AS company_name_facet, REPLACE(sellers_two.company_name, '6', ' replacement ') AS company_two, '' AS content, 18000 AS created_at, users.deleted AS deleted, users.email AS email, users.login AS login, '' AS mission_statement, '' AS name, '' AS state, 0 AS user_id FROM users LEFT OUTER JOIN sellers AS sellers ON users.id = sellers.user_id LEFT OUTER JOIN sellers AS sellers_two ON users.id = sellers_two.user_id WHERE users.id >= $start AND users.id <= $end AND (deleted = '0') GROUP BY users.id
+sql_query_range = SELECT MIN(id) ,  MAX(id) FROM users
+sql_query = SELECT (users.id * 5 + 3) AS id, '' AS address_name, 0 AS capitalization, 'User' AS class, 3 AS class_id, sellers.company_name AS company, '' AS company_name, 0 AS company_name_facet, REPLACE(sellers_two.company_name, '6', ' replacement ') AS company_two, '' AS content, 18000 AS created_at, users.deleted AS deleted, users.email AS email, users.login AS login, '' AS mission_statement, '' AS name, '' AS state, 0 AS user_id FROM users LEFT OUTER JOIN sellers AS sellers ON users.id = sellers.user_id LEFT OUTER JOIN sellers AS sellers_two ON users.id = sellers_two.user_id WHERE users.id >= $start AND users.id <= $end AND (deleted = '0') GROUP BY users.id
 
 sql_group_column = capitalization
 sql_group_column = class_id
@@ -136,7 +136,38 @@ sql_date_column = created_at
 sql_group_column = deleted
 sql_str2ordinal_column = mission_statement
 sql_group_column = user_id
-sql_query_info = SELECT * FROM users WHERE users.id = (($id - 3) / 4)
+sql_query_info = SELECT * FROM users WHERE users.id = (($id - 3) / 5)
+}
+
+
+# Source configuration
+
+source geo__countries
+{
+  strip_html = 0
+  sql_range_step = 20000
+  index_html_attrs = 
+  sql_query_post = 
+
+type = mysql
+sql_query_pre = SET SESSION group_concat_max_len = 65535
+sql_query_pre = SET NAMES utf8
+  
+sql_db = ultrasphinx_development
+sql_host = localhost
+sql_pass = 
+sql_user = root
+sql_query_range = SELECT MIN(id) ,  MAX(id) FROM countries
+sql_query = SELECT (countries.id * 5 + 4) AS id, '' AS address_name, 0 AS capitalization, 'Geo::Country' AS class, 4 AS class_id, '' AS company, '' AS company_name, 0 AS company_name_facet, '' AS company_two, '' AS content, 18000 AS created_at, 0 AS deleted, '' AS email, '' AS login, '' AS mission_statement, countries.name AS name, '' AS state, 0 AS user_id FROM countries WHERE countries.id >= $start AND countries.id <= $end GROUP BY countries.id
+
+sql_group_column = capitalization
+sql_group_column = class_id
+sql_group_column = company_name_facet
+sql_date_column = created_at
+sql_group_column = deleted
+sql_str2ordinal_column = mission_statement
+sql_group_column = user_id
+sql_query_info = SELECT * FROM countries WHERE countries.id = (($id - 4) / 5)
 }
 
 
@@ -145,6 +176,7 @@ sql_query_info = SELECT * FROM users WHERE users.id = (($id - 3) / 4)
 index complete
 {
   source = geo__addresses
+  source = geo__countries
   source = geo__states
   source = sellers
   source = users

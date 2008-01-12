@@ -75,7 +75,7 @@ module Ultrasphinx
         # Supporting Postgres now
         connection_settings = klass.connection.instance_variable_get("@config")
 
-        adapter_defaults = ADAPTER_DEFAULTS[ADAPTER]
+        adapter_defaults = DEFAULTS[ADAPTER]
         raise ConfigurationError, "Unsupported database adapter" unless adapter_defaults
 
         conf = [adapter_defaults]                  
@@ -100,7 +100,12 @@ module Ultrasphinx
       
       
       def range_select_string(klass)
-        "sql_query_range = SELECT MIN(#{klass.primary_key}), MAX(#{klass.primary_key}) FROM #{klass.table_name}"
+        ["sql_query_range = SELECT",
+          SQL_FUNCTIONS[ADAPTER]['range_cast']._interpolate("MIN(#{klass.primary_key})"),
+          ", ",
+          SQL_FUNCTIONS[ADAPTER]['range_cast']._interpolate("MAX(#{klass.primary_key})"),
+          "FROM #{klass.table_name}"
+        ].join(" ")
       end
       
       
@@ -231,7 +236,7 @@ module Ultrasphinx
             
             source_string = "#{entry['table']}.#{entry['field']}"
             # We are using the field in an aggregate, so we don't want to add it to group_bys
-            source_string = ADAPTER_SQL_FUNCTIONS[ADAPTER]['group_concat']._interpolate(source_string)
+            source_string = SQL_FUNCTIONS[ADAPTER]['group_concat']._interpolate(source_string)
             use_distinct = true
             
             column_strings, remaining_columns = install_field(fields, source_string, entry['as'], entry['function_sql'], entry['facet'], column_strings, remaining_columns)

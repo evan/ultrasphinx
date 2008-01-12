@@ -205,6 +205,7 @@ class SearchTest < Test::Unit::TestCase
   end
   
   def test_text_facet
+    # XXX Still broken on Postgres
     @s = Ultrasphinx::Search.new(:facets => ['company_name']).run
     assert_equal 21, @s.facets['company_name'].size
   end

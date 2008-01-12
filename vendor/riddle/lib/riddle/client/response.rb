@@ -30,7 +30,7 @@ module Riddle
       
       # Return the next float value from the stream
       def next_float
-        float = @str[@marker, 4].unpack('f*').first
+        float = @str[@marker, 4].unpack('N*').pack('L').unpack('f*').first
         @marker += 4
         
         return float

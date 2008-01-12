@@ -1,9 +1,12 @@
 
 module Ultrasphinx
   class Search
-    module Parser
-      
-      class Error < RuntimeError; end
+    module Parser    
+      # We could rewrite this in Treetop, but since it works well, what's the point? It's
+      # probably faster this way. Ragel would speed it up, but be too much work.
+          
+      class Error < RuntimeError
+      end
 
       OPERATORS = {
         'OR' => '|',
@@ -32,7 +35,7 @@ module Ultrasphinx
         token_hash.sort_by do |key, value| 
           key or ""
         end.each do |field, contents|
-          # first operator always goes outside
+          # First operator always goes outside
           query << contents.first.first 
           
           query << "@#{field}" if field
@@ -66,24 +69,24 @@ module Ultrasphinx
         
         query.each_with_index do |subtoken, index|
       
-          # recurse for parens, if necessary
+          # Recurse for parens, if necessary
           if subtoken =~ /^(.*?)\((.*)\)(.*?$)/
             subtoken = query[index] = "#{$1}(#{parse $2})#{$3}"
           end 
           
-          # reappend missing closing quotes
+          # Reappend missing closing quotes
           if subtoken =~ /(^|\:)\"/
             subtoken = subtoken.chomp('"') + '"'
           end
           
-          # strip parentheses within quoted strings
+          # Strip parentheses within quoted strings
           if subtoken =~ /\"(.*)\"/
             subtoken.sub!($1, $1.gsub(/[()]/, ''))
           end
           
           # add to the stream, converting the operator
           if !has_operator
-            if OPERATORS.to_a.flatten.include? subtoken and index != (query.size - 1) # operators at the end of the string are not parsed
+            if OPERATORS.to_a.flatten.include? subtoken and index != (query.size - 1) # Operators at the end of the string are not parsed
               token_stream << OPERATORS[subtoken] || subtoken
               has_operator = true # flip
             else
@@ -92,7 +95,7 @@ module Ultrasphinx
             end
           else
             if OPERATORS.to_a.flatten.include? subtoken
-              # drop extra operator
+              # Drop extra operator
             else
               token_stream << subtoken
               has_operator = false # flop
@@ -108,9 +111,9 @@ module Ultrasphinx
       def token_stream_to_hash(token_stream)
         token_hash = Hash.new([])        
         token_stream.map do |operator, content|
-          # remove some spaces
+          # Remove some spaces
           content.gsub!(/^"\s+|\s+"$/, '"')
-          # convert fields into sphinx style, reformat the stream object
+          # Convert fields into sphinx style, reformat the stream object
           if content =~ /(.*?):(.*)/
             token_hash[$1] += [[operator, $2]]
           else

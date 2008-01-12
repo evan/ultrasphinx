@@ -31,7 +31,9 @@ module Riddle
         when Array
           message.append_int FilterTypes[:values]
           message.append_int self.values.length
-          message.append_ints *self.values
+          # using to_f is a hack from the php client - to workaround 32bit
+          # signed ints on x32 platforms
+          message.append_ints *self.values.collect { |val| val.to_f }
         end
         message.append_int self.exclude? ? 1 : 0
         

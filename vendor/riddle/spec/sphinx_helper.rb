@@ -1,5 +1,6 @@
 require 'mysql'
 require 'erb'
+require 'yaml'
 
 class SphinxHelper
   attr_accessor :host, :username, :password

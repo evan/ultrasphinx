@@ -56,13 +56,15 @@ module Ultrasphinx
     open("#{THIS_DIR}/postgresql/#{name}.sql").read.gsub(/\s+/, ' ')
   end
 
-  ADAPTER_SQL_FUNCTIONS = {
+  SQL_FUNCTIONS = {
     'mysql' => {
       'group_concat' => "CAST(GROUP_CONCAT(DISTINCT ? SEPARATOR ' ') AS CHAR)",
+      'range_cast' => "?",
       'stored_procedures' => {}
     },
     'postgresql' => {
       'group_concat' => "GROUP_CONCAT(?)",
+      'range_cast' => "cast(coalesce(?,1) AS integer)",
       'stored_procedures' => Hash[*(
         ['hex_to_int', 'group_concat', 'concat_ws', 'unix_timestamp', 'crc32'].map do |name|
           [name, load_stored_procedure(name)]
@@ -72,7 +74,7 @@ module Ultrasphinx
     }      
   }
   
-  ADAPTER_DEFAULTS = {
+  DEFAULTS = {
     'mysql' => %(
 type = mysql
 sql_query_pre = SET SESSION group_concat_max_len = 65535
@@ -80,14 +82,14 @@ sql_query_pre = SET NAMES utf8
   ), 
     'postgresql' => %(
 type = pgsql
-sql_query_pre = ) + ADAPTER_SQL_FUNCTIONS['postgresql']['stored_procedures'].values.join(' ') + %(
+sql_query_pre = ) + SQL_FUNCTIONS['postgresql']['stored_procedures'].values.join(' ') + %(
   )
 }
     
   ADAPTER = ActiveRecord::Base.connection.instance_variable_get("@config")[:adapter] rescue 'mysql'
   
   # Install the stored procedures
-  ADAPTER_SQL_FUNCTIONS[ADAPTER]['stored_procedures'].each do |key, value|
+  SQL_FUNCTIONS[ADAPTER]['stored_procedures'].each do |key, value|
     ActiveRecord::Base.connection.execute(value)
   end
   

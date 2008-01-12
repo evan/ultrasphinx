@@ -251,6 +251,11 @@ module Ultrasphinx
           result._metaclass.send('define_method', 'result_index') { i }
         end
         
+        if ids.size - results.size > Ultrasphinx::Search.client_options['max_missing_records']
+          # Never reached if Ultrasphinx::Search.client_options['ignore_missing_records'] is false
+          raise ConfigurationError, "Too many results for this query returned ActiveRecord::RecordNotFound. The index is probably out of date" 
+        end
+        
         results        
       end  
       

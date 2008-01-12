@@ -28,7 +28,7 @@ describe Riddle::Client::Message do
   it "should append floats correctly - packed with f" do
     message = Riddle::Client::Message.new
     message.append_float 1.4
-    message.to_s.should == [1.4].pack('f')
+    message.to_s.should == [1.4].pack('f').unpack('L*').pack('N')
   end
   
   it "should append a collection of integers correctly" do
@@ -40,7 +40,7 @@ describe Riddle::Client::Message do
   it "should append a collection of floats correctly" do
     message = Riddle::Client::Message.new
     message.append_floats 1.0, 1.1, 1.2, 1.3
-    message.to_s.should == [1.0, 1.1, 1.2, 1.3].pack('ffff')
+    message.to_s.should == [1.0, 1.1, 1.2, 1.3].pack('ffff').unpack('L*L*L*L*').pack('NNNN')
   end
   
   it "should append an array of strings correctly" do
@@ -58,6 +58,6 @@ describe Riddle::Client::Message do
     message.append_array ["one", "two"]
     message.append_floats 1.5, 1.7
     message.to_s.should == [4, 4].pack('NN') + "test" + [2, 3].pack('NN') +
-      "one" + [3].pack('N') + "two" + [1.5, 1.7].pack('ff')
+      "one" + [3].pack('N') + "two" + [1.5, 1.7].pack('ff').unpack('L*L*').pack('NN')
   end
 end

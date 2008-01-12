@@ -14,7 +14,7 @@ describe Riddle::Client::Response do
   
   # Comparing floats with decimal places doesn't seem to be exact
   it "should interpret a float correctly" do
-    Riddle::Client::Response.new([1.0].pack('f')).next_float.should == 1.0
+    Riddle::Client::Response.new([1.0].pack('f').unpack('L*').pack('N')).next_float.should == 1.0
   end
   
   it "should interpret an array of strings correctly" do
@@ -53,7 +53,7 @@ describe Riddle::Client::Response do
   
   it "should handle a combination of strings, ints, floats and string arrays correctly" do
     data = [1, 2, 2].pack('NNN') + 'aa' + [2].pack('N') + 'bb' + [4].pack('N') +
-      "word" + [7, 3, 2, 2, 2].pack('fNNNN')
+      "word" + [7].pack('f').unpack('L*').pack('N') + [3, 2, 2, 2].pack('NNNN')
     response = Riddle::Client::Response.new(data)
     response.next_int.should == 1
     response.next_array.should == ['aa', 'bb']

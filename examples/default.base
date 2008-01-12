@@ -2,8 +2,21 @@
 #
 # Sphinx/Ultrasphinx user-configurable options.
 #
-# Copy this file to RAILS_ROOT/config/ultrasphinx.
-# You can use individual namespaces if you want (e.g. "development.base").
+# Copy this file to RAILS_ROOT/config/ultrasphinx. You can use individual 
+# namespaces if you want (e.g. development.base, production.base,
+# test.base).
+#
+# This file should not be handed directly to Sphinx. Use the rake task 
+#
+#   rake ultrasphinx::configure
+#
+# to generate a parallel default.conf file. This is the file that Sphinx itself will
+# use. The Ultrasphinx rake tasks automatically pass the correct file to 
+# to Sphinx.
+# 
+# It is safe to edit .base files by hand. It is not safe to edit the generated 
+# .conf files. Do not symlink the .conf file to the .base file! I don't know why 
+# people think they need to do that. It's wrong.
 #
 
 indexer
@@ -18,6 +31,7 @@ searchd
   # What interface the search daemon should listen on and where to store its logs
   address = 0.0.0.0
   port = 3312
+  seamless_rotate = 1
   log = /opt/local/var/db/sphinx/log/searchd.log
   query_log = /opt/local/var/db/sphinx/log/query.log
   read_timeout = 5
