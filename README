@@ -114,7 +114,7 @@ All tasks have shortcuts. Use <tt>us:conf</tt>, <tt>us:in</tt>, <tt>us:restart</
 
 The tasks are suitable for putting in a cronjob or running from Capistrano. Just make sure the current directory is set to the RAILS_ROOT and the RAILS_ENV environment variable is set.
 
-== A Note About PostgreSQL
+== A note about PostgreSQL
 
 PostgreSQL 8.2 and higher are well supported. However, make sure you have executed <tt>CREATE LANGUAGE plpgsql;</tt> at least once. This step does not need to be repeated, so depending on your DB permisions, you might be able to put it in a migration.
 

@@ -1,5 +1,5 @@
 
-== The Configuration Files
+== The configuration files
 
 Please note that the generated <tt>.conf</tt> file in <tt>config/ultrasphinx</tt> should not be modified by hand. This is the configuration for Sphinx itself, and includes all the generated SQL. It is <b>never the same</b> as the <tt>.base</tt> file.
 
@@ -11,7 +11,7 @@ If you don't have local read access to the production database, you'll need to w
 
 You will <b>not</b> want to keep the generated <tt>development.conf</tt> in the repository. This helps to catch bugs by discouraging out-of-date configurations.
 
-== Indexing and Monitoring
+== Indexing and monitoring
 
 It's easy to keep the search daemon and the indexer running in a production environment. Cronjobs are the best way:
 

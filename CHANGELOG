@@ -1,4 +1,6 @@
 
+v1.7. Deployment docs. Postgres fixes. Support association_name instead of class_name (Daniel Higginbotham). 
+
 v1.6.7. Fix GROUP_CONCAT aggregate problem. Discourage enable_star in default.base. Allow faceting on includes.
 
 v1.6.6. Only use DISTINCT when necessary to improve indexing speed.
