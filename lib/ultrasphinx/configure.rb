@@ -1,7 +1,9 @@
 
 module Ultrasphinx
   class Configure  
-    class << self    
+    class << self
+
+      include Associations
   
       # Force all the indexed models to load and register in the MODEL_CONFIGURATION hash.
       def load_constants
@@ -194,11 +196,15 @@ module Ultrasphinx
 
       def build_includes(klass, fields, entries, column_strings, join_strings, group_bys, remaining_columns)                  
         entries.to_a.each do |entry|
+          raise ConfigurationError, "You must identify your association with either class_name or association_name, but not both" if entry['class_name'] && entry ['association_name']          
         
-          join_klass = entry['class_name'].constantize
-          association = association_by_class_name(klass, entry['class_name'])
+          association = get_association(klass, entry)
+
+          # You can use 'class_name' and 'association_sql' to associate to a model that doesn't actually 
+          # have an association
+          join_klass = association ? association.class_name.constantize : entry['class_name'].constantize
                         
-          raise ConfigurationError, "Unknown association from #{klass} to #{entry['class_name']}" if not association and not entry['association_sql']
+          raise ConfigurationError, "Unknown association from #{klass} to #{entry['class_name'] || entry['association_name']}" if not association and not entry['association_sql']
           
           join_strings = install_join_unless_association_sql(entry['association_sql'], nil, join_strings) do 
             "LEFT OUTER JOIN #{join_klass.table_name} AS #{entry['table']} ON " + 
@@ -222,14 +228,19 @@ module Ultrasphinx
         
       def build_concatenations(klass, fields, entries, column_strings, join_strings, group_bys, use_distinct, remaining_columns)
         entries.to_a.each do |entry|
-          if entry['class_name'] and entry['field']
+          if entry_identifies_association?(entry) and entry['field']
             # Group concats
+  
             # Only has_many's or explicit sql right now
-            join_klass = entry['class_name'].constantize
+            association = get_association(klass, entry)
+            
+            # You can use 'class_name' and 'association_sql' to associate to a model that doesn't actually 
+            # have an association
+            join_klass = association ? association.class_name.constantize : entry['class_name'].constantize
         
             join_strings = install_join_unless_association_sql(entry['association_sql'], nil, join_strings) do 
               # XXX make sure foreign key is right for polymorphic relationships
-              association = association_by_class_name(klass, entry['class_name'])
+              association = get_association(klass, entry)
               "LEFT OUTER JOIN #{join_klass.table_name} AS #{entry['table']} ON #{klass.table_name}.#{klass.primary_key} = #{entry['table']}.#{association.primary_key_name}" + 
                 (entry['conditions'] ? " AND (#{entry['conditions']})" : "")
             end
@@ -288,12 +299,6 @@ module Ultrasphinx
       
       def install_join_unless_association_sql(association_sql, join_string, join_strings)
         join_strings << (association_sql or join_string or yield)
-      end
-
-      def association_by_class_name(klass, class_name)
-        klass.reflect_on_all_associations.detect do |assoc|
-          assoc.class_name == class_name
-        end
       end
       
       def say(s)

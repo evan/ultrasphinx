@@ -2,6 +2,7 @@
 module Ultrasphinx
   class Search
     module Internals
+      include Associations
 
       # These methods are kept stateless to ease debugging
       
@@ -184,9 +185,10 @@ module Ultrasphinx
             when 'fields'
               [configuration['field'], ""]
             when 'include'
+              association_model = get_association_model(klass, configuration)
               # XXX Only handles the basic case. No test coverage.
               ["included.#{configuration['field']}", 
-                (configuration['association_sql'] or "LEFT OUTER JOIN #{configuration['table']} AS included ON included.#{configuration['class_name'].constantize.primary_key} = #{klass.table_name}.#{configuration['class_name'].underscore}_id")
+                (configuration['association_sql'] or "LEFT OUTER JOIN #{configuration['table']} AS included ON included.#{association_model.primary_key} = #{klass.table_name}.#{association_model.class_name.underscore}_id")
               ]
             when 'concatenate'
               # Wait for someone to complain before worrying about this
@@ -203,8 +205,8 @@ module Ultrasphinx
         raise ConfigurationError, "no classes were correctly configured for text faceting on '#{facet}'" if configured_classes.empty?      
         
         FACET_CACHE[facet]
-      end      
-      
+      end 
+            
       # Inverse-modulus map the Sphinx ids to the table-specific ids
       def convert_sphinx_ids(sphinx_ids)    
         sphinx_ids.sort_by do |item| 

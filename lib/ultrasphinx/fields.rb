@@ -7,6 +7,7 @@ This is a special singleton configuration class that stores the index field conf
 
   class Fields
     include Singleton
+    include Associations
     
     TYPE_MAP = {
       'string' => 'text', 
@@ -114,14 +115,16 @@ This is a special singleton configuration class that stores the index field conf
           options['include'].to_a.each do |entry|
             extract_table_alias!(entry, klass)
             extract_field_alias!(entry, klass)
-
-            save_and_verify_type(entry['as'] || entry['field'], entry['class_name'].constantize.columns_hash[entry['field']].type, entry['sortable'], klass)            
+            
+            association_model = get_association_model(klass, entry)
+            
+            save_and_verify_type(entry['as'] || entry['field'], association_model.columns_hash[entry['field']].type, entry['sortable'], klass)
             install_facets!(entry, klass)
           end  
           
           # Regular concats are CHAR, group_concats are BLOB and need to be cast to CHAR
           options['concatenate'].to_a.each do |entry|
-            extract_table_alias!(entry, klass) # XXX Doesn't actually do anything useful
+            extract_table_alias!(entry, klass)
             save_and_verify_type(entry['as'], 'text', entry['sortable'], klass) 
             install_facets!(entry, klass)
           end          
@@ -155,7 +158,7 @@ This is a special singleton configuration class that stores the index field conf
           # This field is referenced by a table alias
           entry['table'], entry['field'] = entry['field'].split(".")
         else
-          klass = entry['class_name'].constantize if entry['class_name']         
+          klass = get_association_model(klass, entry) if entry_identifies_association?(entry)
           entry['table'] = klass.table_name
         end
       end

@@ -67,15 +67,15 @@ For more index options, see ActiveRecord::Base .is_indexed.
 
 == Building the index
 
-Run:
+Now run:
 
   rake ultrasphinx:configure
   rake ultrasphinx:index
   rake ultrasphinx:daemon:start
 
-To rotate the index, just rerun <tt>rake ultrasphinx:index</tt>. If the search daemon is running, it will have its index rotated. Otherwise the new index will be installed but the daemon will remain stopped.
+To rotate the index, just rerun <tt>rake ultrasphinx:index</tt>. If the search daemon is running, it will have its index rotated live. Otherwise the new index will be installed but the daemon will remain stopped.
 
-Make sure to manually stop and restart the daemon if you change the field configuration or model set. It will not reload the configuration file automatically.
+See DEPLOYMENT_NOTES[link:files/DEPLOYMENT_NOTES.html] for more.
 
 == Running queries
     
@@ -111,6 +111,12 @@ These Rake tasks are made available to your Rails app:
 <tt>ultrasphinx:bootstrap</tt>:: Bootstrap a full Sphinx environment by running configure, index, then daemon:start.
 
 All tasks have shortcuts. Use <tt>us:conf</tt>, <tt>us:in</tt>, <tt>us:restart</tt>, <tt>us:start</tt>, <tt>us:stop</tt>, <tt>us:stat</tt>, <tt>us:spell</tt>, and <tt>us:boot</tt>.
+
+The tasks are suitable for putting in a cronjob or running from Capistrano. Just make sure the current directory is set to the RAILS_ROOT and the RAILS_ENV environment variable is set.
+
+== A Note About PostgreSQL
+
+PostgreSQL 8.2 and higher are well supported. However, make sure you have executed <tt>CREATE LANGUAGE plpgsql;</tt> at least once. This step does not need to be repeated, so depending on your DB permisions, you might be able to put it in a migration.
 
 == Reporting problems
 

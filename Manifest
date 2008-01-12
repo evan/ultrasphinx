@@ -1,9 +1,12 @@
 CHANGELOG
+DEPLOYMENT_NOTES
 examples/ap.multi
 examples/default.base
 init.rb
+lib/ultrasphinx/associations.rb
 lib/ultrasphinx/autoload.rb
 lib/ultrasphinx/configure.rb
+lib/ultrasphinx/configure.rb.orig
 lib/ultrasphinx/core_extensions.rb
 lib/ultrasphinx/fields.rb
 lib/ultrasphinx/is_indexed.rb
@@ -35,6 +38,7 @@ test/integration/app/app/helpers/sellers_helper.rb
 test/integration/app/app/helpers/states_helper.rb
 test/integration/app/app/helpers/users_helper.rb
 test/integration/app/app/models/geo/address.rb
+test/integration/app/app/models/geo/country.rb
 test/integration/app/app/models/geo/state.rb
 test/integration/app/app/models/person/user.rb
 test/integration/app/app/models/seller.rb
@@ -77,6 +81,7 @@ test/integration/app/db/migrate/005_add_capitalization_to_seller.rb
 test/integration/app/db/migrate/006_add_deleted_to_user.rb
 test/integration/app/db/migrate/007_add_lat_and_long_to_address.rb
 test/integration/app/db/migrate/008_add_mission_statement_to_seller.rb
+test/integration/app/db/migrate/009_create_countries.rb
 test/integration/app/db/schema.rb
 test/integration/app/doc/README_FOR_APP
 test/integration/app/public/404.html
@@ -110,6 +115,7 @@ test/integration/app/script/process/spawner
 test/integration/app/script/runner
 test/integration/app/script/server
 test/integration/app/test/fixtures/addresses.yml
+test/integration/app/test/fixtures/countries.yml
 test/integration/app/test/fixtures/sellers.yml
 test/integration/app/test/fixtures/states.yml
 test/integration/app/test/fixtures/users.yml
@@ -127,6 +133,7 @@ test/integration/search_test.rb
 test/integration/server_test.rb
 test/integration/spell_test.rb
 test/setup.rb
+test/teardown.rb
 test/test_all.rb
 test/test_helper.rb
 test/ts.multi

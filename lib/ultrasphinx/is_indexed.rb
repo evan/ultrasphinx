@@ -32,47 +32,59 @@ To apply an SQL function to a field before it is indexed, use the key <tt>:funct
 
 Note that <tt>float</tt> fields are supported, but require Sphinx 0.98.
 
+== Requiring conditions
+
+Use the <tt>:conditions</tt> key.
+
+SQL conditions, to scope which records are selected for indexing. Accepts a string. 
+
+  :conditions => "created_at < NOW() AND deleted IS NOT NULL"
+  
+The <tt>:conditions</tt> key is especially useful if you delete records by marking them deleted rather than removing them from the database.
+
 == Including a field from an association
 
 Use the <tt>:include</tt> key.
 
 Accepts an array of hashes. 
 
-  :include => [{:class_name => 'Category', :field => 'name', :as => 'category'}]
+  :include => [{:association_name => 'category', :field => 'name', :as => 'category_name'}]
 
-Each should contain a <tt>:class_name</tt> key (the class name of the included model), a <tt>:field</tt> key (the name of the field to include), and an optional <tt>:as</tt> key (what to name the field in the parent). You can use the optional key <tt>:association_sql</tt> if you need to pass a custom JOIN string, in which case the default JOIN for <tt>belongs_to</tt> will not be generated.
+Each should contain an <tt>:association_name</tt> key (the association name for the included model), a <tt>:field</tt> key (the name of the field to include), and an optional <tt>:as</tt> key (what to name the field in the parent). 
 
-The keys <tt>:facet</tt>, <tt>:sortable</tt>, and <tt>:function_sql</tt> are also recognized, just like for regular fields.
+<tt>:include</tt> hashes also accept their own <tt>:conditions</tt> key. You can use this  if you need custom WHERE conditions for this particular association (e.g, this JOIN).
 
-== Requiring conditions
+The keys <tt>:facet</tt>, <tt>:sortable</tt>, <tt>:class_name</tt>, <tt>:association_sql</tt>, and <tt>:function_sql</tt> are also recognized.
 
-Use the <tt>:conditions</tt> key.
-
-SQL conditions, to scope which records are selected for indexing. Accepts a string. 
-  :conditions => "created_at < NOW() AND deleted IS NOT NULL"
-The <tt>:conditions</tt> key is especially useful if you delete records by marking them deleted rather than removing them from the database.
-
-== Concatenating several fields within a record
+== Concatenating several fields within one record
 
 Use the <tt>:concatenate</tt> key (MySQL only).
 
 Accepts an array of option hashes. 
 
-To concatenate several fields within one record as a combined field, use a regular (or horizontal) concatenation. Regular concatenations contain a <tt>:fields</tt> key (again, an array of field names), and a mandatory <tt>:as</tt> key (the name of the result of the concatenation). For example, to concatenate the <tt>title</tt> and <tt>body</tt> into one field called <tt>text</tt>: 
+To concatenate several fields within one record as a combined field, use a regular (or lateral) concatenation. Regular concatenations contain a <tt>:fields</tt> key (again, an array of field names), and a mandatory <tt>:as</tt> key (the name of the result of the concatenation). For example, to concatenate the <tt>title</tt> and <tt>body</tt> into one field called <tt>text</tt>: 
   :concatenate => [{:fields => ['title', 'body'], :as => 'text'}]
   
-The keys <tt>:facet</tt>, <tt>:sortable</tt>, and <tt>:function_sql</tt> are also recognized, just like for regular fields.
+The keys <tt>:facet</tt>, <tt>:sortable</tt>, <tt>:conditions</tt>, <tt>:function_sql</tt>, <tt>:class_name</tt>, and <tt>:association_sql</tt>, are also recognized.
 
-== Concatenating one field from a set of associated records 
+Lateral concatenations are implemented with CONCAT_WS on MySQL and with a stored procedure on PostgreSQL.
+
+== Concatenating the same field from a set of associated records 
 
 Also use the <tt>:concatenate</tt> key.
 
-To concatenate one field from a set of associated records as a combined field in the parent record, use a group (or vertical) concatenation. A group concatenation should contain a <tt>:class_name</tt> key (the class name of the included model), a <tt>:field</tt> key (the field on the included model to concatenate), and an optional <tt>:as</tt> key (also the name of the result of the concatenation). For example, to concatenate all <tt>Post#body</tt> contents into the parent's <tt>responses</tt> field:
-  :concatenate => [{:class_name => 'Post', :field => 'body', :as => 'responses'}]
+To concatenate one field from a set of associated records as a combined field in the parent record, use a group (or vertical) concatenation. A group concatenation should contain an <tt>:association_name</tt> key (the association name for the included model), a <tt>:field</tt> key (the field on the included model to concatenate), and an optional <tt>:as</tt> key (also the name of the result of the concatenation). For example, to concatenate all <tt>Post#body</tt> contents into the parent's <tt>responses</tt> field:
+  :concatenate => [{:association_name => 'posts', :field => 'body', :as => 'responses'}]
 
-Optional group concatenation keys are <tt>:association_sql</tt>, if you need to pass a custom JOIN string (for example, a double JOIN for a <tt>has_many :through</tt>), and <tt>:conditions</tt> (if you need custom WHERE conditions for this particular association).
+The keys <tt>:facet</tt>, <tt>:sortable</tt>, <tt>:conditions</tt>, <tt>:function_sql</tt>, <tt>:class_name</tt>, and <tt>:association_sql</tt>, are also recognized.
 
-The keys <tt>:facet</tt>, <tt>:sortable</tt>, and <tt>:function_sql</tt> are also recognized, just like for regular fields.
+Vertical concatenations are implemented with GROUP_CONCAT on MySQL and with an aggregate and a stored procedure on PostgreSQL.
+
+== Custom joins
+
+<tt>:include</tt> and <tt>:concatenate</tt> accept an <tt>:association_sql</tt> key. You can use this if you need to pass a custom JOIN string, for example, a double JOIN for a <tt>has_many :through</tt>). If <tt>:association_sql</tt> is present, the default JOIN for <tt>belongs_to</tt> will not be generated. 
+
+Also, If you want to include a model that you don't have an actual ActiveRecord association for, you can use <tt>:association_sql</tt> combined with <tt>:class_name</tt> instead of <tt>:association_name</tt>. <tt>:class_name</tt> should be camelcase.
 
 Ultrasphinx is not an object-relational mapper, and the association generation is intended to stay minimal--don't be afraid of <tt>:association_sql</tt>.
 
@@ -89,13 +101,13 @@ Here's an example configuration using most of the options, taken from production
         {:field => 'author', :facet => true}
       ],
       :include => [
-        {:class_name => 'Category', :field => 'name', :as => 'category'}
+        {:association_name => 'category', :field => 'name', :as => 'category_name'}
       ],      
       :concatenate => [
         {:fields => ['title', 'long_description', 'short_description'], 
           :as => 'editorial'},
-        {:class_name => 'Page', :field => 'body', :as => 'body'},
-        {:class_name => 'Comment', :field => 'body', :as => 'comments', 
+        {:association_name => 'pages', :field => 'body', :as => 'body'},
+        {:association_name => 'comments', :field => 'body', :as => 'comments', 
           :conditions => "comments.item_type = '#{base_class}'"}
       ],
       :conditions => self.live_condition_string
@@ -110,7 +122,7 @@ A common use case is to only search records that belong to a particular parent m
 For example, say a Company <tt>has_many :users</tt> and each User <tt>has_many :articles</tt>. If you want to to filter Articles by Company, add <tt>company_id</tt> to the Article's <tt>is_indexed</tt> method. The best way is to grab it from the User association:
 
   class Article < ActiveRecord::Base 
-     is_indexed :include => [{:class_name => 'User', :field => 'company_id'}]
+     is_indexed :include => [{:association_name => 'users', :field => 'company_id'}]
   end
  
 Now you can run:
@@ -136,8 +148,8 @@ If the associations weren't just <tt>has_many</tt> and <tt>belongs_to</tt>, you 
       
       Array(opts['concatenate']).each do |entry|
         entry.stringify_keys!
-        entry.assert_valid_keys ['class_name', 'conditions', 'field', 'as', 'fields', 'association_sql', 'facet', 'function_sql', 'sortable']
-        raise Ultrasphinx::ConfigurationError, "You can't mix regular concat and group concats" if entry['fields'] and (entry['field'] or entry['class_name'])
+        entry.assert_valid_keys ['class_name', 'association_name', 'conditions', 'field', 'as', 'fields', 'association_sql', 'facet', 'function_sql', 'sortable']
+        raise Ultrasphinx::ConfigurationError, "You can't mix regular concat and group concats" if entry['fields'] and (entry['field'] or entry['class_name'] or entry['association_name'])
         raise Ultrasphinx::ConfigurationError, "Concatenations must specify an :as key" unless entry['as']
         raise Ultrasphinx::ConfigurationError, "Group concatenations must not have multiple fields" if entry['field'].is_a? Array
         raise Ultrasphinx::ConfigurationError, "Regular concatenations should have multiple fields" if entry['fields'] and !entry['fields'].is_a?(Array)
@@ -145,7 +157,7 @@ If the associations weren't just <tt>has_many</tt> and <tt>belongs_to</tt>, you 
       
       Array(opts['include']).each do |entry|
         entry.stringify_keys!
-        entry.assert_valid_keys ['class_name', 'field', 'as', 'association_sql', 'facet', 'function_sql', 'sortable']
+        entry.assert_valid_keys ['class_name', 'association_name', 'field', 'as', 'association_sql', 'facet', 'function_sql', 'sortable']
       end
       
       Ultrasphinx::MODEL_CONFIGURATION[self.name] = opts
