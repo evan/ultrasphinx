@@ -24,6 +24,7 @@ lib/ultrasphinx/ultrasphinx.rb
 lib/ultrasphinx.rb
 LICENSE
 Manifest
+RAKE_TASKS
 README
 tasks/ultrasphinx.rake
 test/config/ultrasphinx/test.base
