@@ -6,7 +6,6 @@ init.rb
 lib/ultrasphinx/associations.rb
 lib/ultrasphinx/autoload.rb
 lib/ultrasphinx/configure.rb
-lib/ultrasphinx/configure.rb.orig
 lib/ultrasphinx/core_extensions.rb
 lib/ultrasphinx/fields.rb
 lib/ultrasphinx/is_indexed.rb
@@ -72,7 +71,6 @@ test/integration/app/config/environments/test.rb
 test/integration/app/config/locomotive.yml
 test/integration/app/config/routes.rb
 test/integration/app/config/ultrasphinx/default.base
-test/integration/app/config/ultrasphinx/development.conf
 test/integration/app/config/ultrasphinx/development.conf.canonical
 test/integration/app/db/migrate/001_create_users.rb
 test/integration/app/db/migrate/002_create_sellers.rb
@@ -83,7 +81,6 @@ test/integration/app/db/migrate/006_add_deleted_to_user.rb
 test/integration/app/db/migrate/007_add_lat_and_long_to_address.rb
 test/integration/app/db/migrate/008_add_mission_statement_to_seller.rb
 test/integration/app/db/migrate/009_create_countries.rb
-test/integration/app/db/schema.rb
 test/integration/app/doc/README_FOR_APP
 test/integration/app/public/404.html
 test/integration/app/public/500.html
