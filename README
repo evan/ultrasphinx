@@ -116,7 +116,7 @@ The tasks are suitable for putting in a cronjob or running from Capistrano. Just
 
 == A note about PostgreSQL
 
-PostgreSQL 8.2 and higher are well supported. However, make sure you have executed <tt>CREATE LANGUAGE plpgsql;</tt> at least once. This step does not need to be repeated, so depending on your DB permisions, you might be able to put it in a migration.
+PostgreSQL 8.2 and higher are well supported. However, make sure you have executed <tt>CREATE LANGUAGE plpgsql;</tt> at least once. This step does not need to be repeated, so depending on your DB permissions, you might be able to put it in a migration.
 
 == Reporting problems
 
