@@ -13,7 +13,7 @@ The public certificate for the gem is at http://rubyforge.org/frs/download.php/2
 
 * MySQL 5.0, or PostgreSQL 8.2
 * Sphinx 0.9.8-dev r871
-* Rails 1.2.3
+* Rails 2.0.2
 
 More recent versions than listed are ok.
 

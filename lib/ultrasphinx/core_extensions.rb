@@ -56,7 +56,18 @@ class Hash
     end.join("\n")
     section ? "#{section} {\n#{inner}\n}\n" : inner
   end
-
+  
+  unless Hash.new.respond_to? :except
+    # Rails 1.2.6 compatibility
+    def except(*keys)
+      rejected = Set.new(respond_to?(:convert_key) ? keys.map { |key| convert_key(key) } : keys)
+      reject { |key,| rejected.include?(key) }
+    end
+    def except!(*keys)
+      replace(except(*keys))
+    end
+  end 
+  
 end
 
 ### Filter type coercion methods
