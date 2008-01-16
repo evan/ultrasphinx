@@ -185,7 +185,7 @@ module Ultrasphinx
 
       def build_regular_fields(klass, fields, entries, column_strings, join_strings, group_bys, remaining_columns)          
         entries.to_a.each do |entry|
-          source_string = "#{entry['table']}.#{entry['field']}"
+          source_string = "#{entry['table_alias']}.#{entry['field']}"
           group_bys << source_string
           column_strings, remaining_columns = install_field(fields, source_string, entry['as'], entry['function_sql'], entry['facet'], column_strings, remaining_columns)
         end
@@ -207,17 +207,17 @@ module Ultrasphinx
           raise ConfigurationError, "Unknown association from #{klass} to #{entry['class_name'] || entry['association_name']}" if not association and not entry['association_sql']
           
           join_strings = install_join_unless_association_sql(entry['association_sql'], nil, join_strings) do 
-            "LEFT OUTER JOIN #{join_klass.table_name} AS #{entry['table']} ON " + 
+            "LEFT OUTER JOIN #{join_klass.table_name} AS #{entry['table_alias']} ON " + 
             if (macro = association.macro) == :belongs_to 
-              "#{entry['table']}.#{join_klass.primary_key} = #{klass.table_name}.#{association.primary_key_name}" 
+              "#{entry['table_alias']}.#{join_klass.primary_key} = #{klass.table_name}.#{association.primary_key_name}" 
             elsif macro == :has_one
-              "#{klass.table_name}.#{klass.primary_key} = #{entry['table']}.#{association.primary_key_name}" 
+              "#{klass.table_name}.#{klass.primary_key} = #{entry['table_alias']}.#{association.primary_key_name}" 
             else
               raise ConfigurationError, "Unidentified association macro #{macro.inspect}. Please use the :association_sql key to manually specify the JOIN syntax."
             end
           end
           
-          source_string = "#{entry['table']}.#{entry['field']}"
+          source_string = "#{entry['table_alias']}.#{entry['field']}"
           group_bys << source_string
           column_strings, remaining_columns = install_field(fields, source_string, entry['as'], entry['function_sql'], entry['facet'], column_strings, remaining_columns)                         
         end
@@ -241,11 +241,11 @@ module Ultrasphinx
             join_strings = install_join_unless_association_sql(entry['association_sql'], nil, join_strings) do 
               # XXX make sure foreign key is right for polymorphic relationships
               association = get_association(klass, entry)
-              "LEFT OUTER JOIN #{join_klass.table_name} AS #{entry['table']} ON #{klass.table_name}.#{klass.primary_key} = #{entry['table']}.#{association.primary_key_name}" + 
+              "LEFT OUTER JOIN #{join_klass.table_name} AS #{entry['table_alias']} ON #{klass.table_name}.#{klass.primary_key} = #{entry['table_alias']}.#{association.primary_key_name}" + 
                 (entry['conditions'] ? " AND (#{entry['conditions']})" : "")
             end
             
-            source_string = "#{entry['table']}.#{entry['field']}"
+            source_string = "#{entry['table_alias']}.#{entry['field']}"
             # We are using the field in an aggregate, so we don't want to add it to group_bys
             source_string = SQL_FUNCTIONS[ADAPTER]['group_concat']._interpolate(source_string)
             use_distinct = true
@@ -255,7 +255,7 @@ module Ultrasphinx
           elsif entry['fields']
             # Regular concats
             source_string = "CONCAT_WS(' ', " + entry['fields'].map do |subfield| 
-              "#{entry['table']}.#{subfield}"
+              "#{entry['table_alias']}.#{subfield}"
             end.each do |subsource_string|
               group_bys << subsource_string
             end.join(', ') + ")"

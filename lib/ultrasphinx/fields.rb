@@ -152,14 +152,20 @@ This is a special singleton configuration class that stores the index field conf
     end
     
     def extract_table_alias!(entry, klass)
-      unless entry['table']
-        # Getting run twice; don't know why
-        if entry['field'] and entry['field'].include? "."
-          # This field is referenced by a table alias
-          entry['table'], entry['field'] = entry['field'].split(".")
+      unless entry['table_alias']
+        entry['table_alias'] = if entry['field'] and entry['field'].include? "." and entry['association_sql']
+          # This field is referenced by a table alias in association_sql
+          table_alias, entry['field'] = entry['field'].split(".")
+          table_alias
+        elsif entry_identifies_association?(entry)
+          # Refers to the association
+          get_association(klass, entry).name
+        elsif entry['association_sql']
+          # Refers to the association_sql class's table
+          entry['class_name'].constantize.table_name
         else
-          klass = get_association_model(klass, entry) if entry_identifies_association?(entry)
-          entry['table'] = klass.table_name
+          # Refers to this class
+          klass.table_name
         end
       end
     end
