@@ -5,9 +5,11 @@ Ruby on Rails configurator and client to the Sphinx full text search engine.
 
 == License
 
-Copyright 2007 Cloudburst, LLC. Licensed under the AFL 3. See the included LICENSE file. Some portions copyright Pat Allan, distributed under the MIT license, and used with permission. Some portions copyright PJ Hyett and Mislav Marohnić, distributed under the MIT license, and used with permission. 
+Copyright 2008 Cloudburst, LLC. Licensed under the AFL 3. See the included LICENSE file. Some portions copyright Pat Allan, distributed under the MIT license, and used with permission. Some portions copyright PJ Hyett and Mislav Marohnić, distributed under the MIT license, and used with permission. 
 
-The public certificate for the gem is at http://rubyforge.org/frs/download.php/25331/evan_weaver-original-public_cert.pem.
+The public certificate for the gem is here[link:http://rubyforge.org/frs/download.php/25331/evan_weaver-original-public_cert.pem]. 
+
+If you like this software, please {make a donation to charity}[link:http://blog.evanweaver.com/donate/] or {recommend Evan}[link:http://www.workingwithrails.com/person/7739-evan-weaver] at Working with Rails.
 
 == Requirements
 
@@ -109,7 +111,7 @@ PostgreSQL 8.2 and higher are well supported. However, make sure you have execut
 
 == Reporting problems
 
-* http://rubyforge.org/forum/forum.php?forum_id=14244
+The support forum is here[http://rubyforge.org/forum/forum.php?forum_id=14244].
 
 Patches and contributions are very welcome. Please note that contributors are required to assign copyright for their additions to Cloudburst, LLC. 
 
