@@ -185,10 +185,16 @@ module Ultrasphinx
             when 'fields'
               [configuration['field'], ""]
             when 'include'
-              association_model = get_association_model(klass, configuration)
               # XXX Only handles the basic case. No test coverage.
+
+              association_model = if configuration['class_name']
+                configuration['class_name'].constantize
+              else
+                get_association_model(klass, configuration)
+              end
+
               ["included.#{configuration['field']}", 
-                (configuration['association_sql'] or "LEFT OUTER JOIN #{configuration['table_alias']} AS included ON included.#{association_model.primary_key} = #{klass.table_name}.#{association_model.class_name.underscore}_id")
+                (configuration['association_sql'] or "LEFT OUTER JOIN #{association_model.table_name} AS included ON included.#{association_model.primary_key} = #{klass.table_name}.#{association_model.class_name.underscore}_id")
               ]
             when 'concatenate'
               # Wait for someone to complain before worrying about this
