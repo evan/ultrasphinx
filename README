@@ -55,7 +55,7 @@ You also need the <tt>chronic</tt> gem:
 Then, install the plugin:
   script/plugin install -x svn://rubyforge.org/var/svn/fauna/ultrasphinx/trunk
  
-Next, copy the <tt>example/default.base</tt> file to <tt>RAILS_ROOT/config/ultrasphinx/default.base</tt>. This file sets up the  Sphinx daemon options such as port, host, and index location.
+Next, copy the <tt>examples/default.base</tt> file to <tt>RAILS_ROOT/config/ultrasphinx/default.base</tt>. This file sets up the  Sphinx daemon options such as port, host, and index location.
   
 If you need per-environment configuration, you can use <tt>RAILS_ROOT/config/ultrasphinx/development.base</tt>, etc. 
 
