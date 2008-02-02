@@ -319,7 +319,8 @@ Note that your database is never changed by anything Ultrasphinx does.
   
   
     # Overwrite the configured content accessors with excerpted and highlighted versions of themselves.
-    # Runs run if it hasn't already been done.
+    # Runs run if it hasn't already been done. Please note that this does not change the @attributes
+    # hash in the record; only the accessor.
     def excerpt
     
       require_run         
@@ -356,7 +357,7 @@ Note that your database is never changed by anything Ultrasphinx does.
       responses = responses.in_groups_of(Ultrasphinx::Search.excerpting_options['content_methods'].size)
       
       results_with_content_methods.each_with_index do |result_and_methods, i|
-        # override the individual model accessors with the excerpted data
+        # Override the individual model accessors with the excerpted data
         result, methods = result_and_methods
         methods.each_with_index do |method, j|
           result._metaclass.send('define_method', method) { responses[i][j] } if method

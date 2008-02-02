@@ -47,7 +47,7 @@ And some other things.
 
 == Installation
   
-First, install Sphinx itself. Get the 0.9.8 development snapshot (http://www.sphinxsearch.com), then run <tt>./configure</tt>, <tt>make</tt>, and <tt>sudo make install</tt>. Make sure to set your <tt>./configure</tt> flags : <tt>----prefix</tt> if necessary, and also <tt>----with-pgsql</tt> if you need Postgres support.
+First, install Sphinx itself. Get the 0.9.8 development snapshot (http://www.sphinxsearch.com), then run <tt>./configure</tt>, <tt>make</tt>, and <tt>sudo make install</tt>. Make sure to set your <tt>./configure</tt> flags: <tt>----prefix</tt> if necessary, and also <tt>----with-pgsql</tt> if you need Postgres support.
 
 You also need the <tt>chronic</tt> gem:
   sudo gem install chronic
