@@ -1,5 +1,5 @@
 
-# Auto-generated at Mon Feb 04 17:13:35 -0500 2008.
+# Auto-generated at Tue Feb 05 04:49:29 -0500 2008.
 # Hand modifications will be overwritten.
 # /Users/eweaver/Desktop/projects/chow/vendor/plugins/ultrasphinx/test/integration/app/config/ultrasphinx/default.base
 indexer {
@@ -64,7 +64,7 @@ sql_host = localhost
 sql_pass = 
 sql_user = root
 sql_query_range = SELECT MIN(id) ,  MAX(id) FROM sellers
-sql_query = SELECT (sellers.id * 5 + 1) AS id, '' AS address_name, sellers.capitalization AS capitalization, 'Seller' AS class, 1 AS class_id, '' AS company, sellers.company_name AS company_name, CRC32(sellers.company_name) AS company_name_facet, '' AS company_two, '' AS content, UNIX_TIMESTAMP(sellers.created_at) AS created_at, 0 AS deleted, '' AS email, '' AS login, sellers.mission_statement AS mission_statement, '' AS name, '' AS state, sellers.user_id AS user_id FROM sellers WHERE sellers.id >= $start AND sellers.id <= $end GROUP BY sellers.id
+sql_query = SELECT (sellers.id * 5 + 1) AS id, '' AS address_name, sellers.capitalization AS capitalization, 'Seller' AS class, 1 AS class_id, '' AS company, sellers.company_name AS company_name, CAST(CRC32(sellers.company_name) AS unsigned) AS company_name_facet, '' AS company_two, '' AS content, UNIX_TIMESTAMP(sellers.created_at) AS created_at, 0 AS deleted, '' AS email, '' AS login, sellers.mission_statement AS mission_statement, '' AS name, '' AS state, sellers.user_id AS user_id FROM sellers WHERE sellers.id >= $start AND sellers.id <= $end GROUP BY sellers.id
 
 sql_attr_float = capitalization
 sql_attr_uint = class_id

@@ -1,5 +1,5 @@
 
-v1.8. Update client for compatibility with Sphinx 0.9.8 r1112. This is a breaking release! You need to update Sphinx along with Ultrasphinx for things to work. Float range bugfix; text faceting on association_include bugfix.
+v1.8. Update client for compatibility with Sphinx 0.9.8 r1112. This is a breaking release! You need to update Sphinx along with Ultrasphinx. Float range bugfix; text faceting on association_include bugfix. Postgres users, please note that the return type of CRC32() has changed to bigint.
 
 v1.7. Deployment docs. Postgres fixes. Support association_name instead of class_name (Daniel Higginbotham). 
 

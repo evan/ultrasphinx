@@ -290,7 +290,7 @@ module Ultrasphinx
         
         # Generate hashed integer fields for text grouping
         if with_facet
-          column_strings << "CRC32(#{source_string}) AS #{as}_facet"
+          column_strings << "#{SQL_FUNCTIONS[ADAPTER]['hash']._interpolate(source_string)} AS #{as}_facet"
           remaining_columns.delete("#{as}_facet")
         end
         [column_strings, remaining_columns]

@@ -59,12 +59,14 @@ module Ultrasphinx
   SQL_FUNCTIONS = {
     'mysql' => {
       'group_concat' => "CAST(GROUP_CONCAT(DISTINCT ? SEPARATOR ' ') AS CHAR)",
+      'hash' => "CAST(CRC32(?) AS unsigned)",
       'range_cast' => "?",
       'stored_procedures' => {}
     },
     'postgresql' => {
       'group_concat' => "GROUP_CONCAT(?)",
       'range_cast' => "cast(coalesce(?,1) AS integer)",
+      'hash' => "CRC32(?)",
       'stored_procedures' => Hash[*(
         ['hex_to_int', 'group_concat', 'concat_ws', 'unix_timestamp', 'crc32'].map do |name|
           [name, load_stored_procedure(name)]
