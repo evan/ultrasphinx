@@ -61,12 +61,16 @@ module Ultrasphinx
         # XXX We should coerce based on the Field values, not on the class
         Array(opts['filters']).each do |field, value|          
           field = field.to_s
-          unless Fields.instance.types[field]
+          type = Fields.instance.types[field]
+          unless type
             raise UsageError, "field #{field.inspect} is invalid"
           end
+          
           begin
             case value
               when Integer, Float, BigDecimal, NilClass, Array
+                # XXX Hack to force floats to be floats
+                value = value.to_f if type == 'float'
                 # Just bomb the filter in there
                 request.filters << Riddle::Client::Filter.new(field, Array(value), false)
               when Range
@@ -74,6 +78,8 @@ module Ultrasphinx
                 min, max = [value.begin, value.end].map {|x| x._to_numeric }
                 raise NoMethodError unless min <=> max and max <=> min
                 min, max = max, min if min > max
+                # XXX Hack to force floats to be floats
+                min, max = min.to_f, max.to_f if type == 'float'
                 request.filters << Riddle::Client::Filter.new(field, min..max, false)
               when String
                 # XXX Hack to move text filters into the query
@@ -186,15 +192,16 @@ module Ultrasphinx
               [configuration['field'], ""]
             when 'include'
               # XXX Only handles the basic case. No test coverage.
-
+              
+              table_alias = configuration['table_alias']
               association_model = if configuration['class_name']
                 configuration['class_name'].constantize
               else
                 get_association_model(klass, configuration)
               end
-
-              ["included.#{configuration['field']}", 
-                (configuration['association_sql'] or "LEFT OUTER JOIN #{association_model.table_name} AS included ON included.#{association_model.primary_key} = #{klass.table_name}.#{association_model.class_name.underscore}_id")
+              
+              ["table_alias.#{configuration['field']}", 
+                (configuration['association_sql'] or "LEFT OUTER JOIN #{association_model.table_name} AS table_alias ON table_alias.#{association_model.primary_key} = #{klass.table_name}.#{association_model.class_name.underscore}_id")
               ]
             when 'concatenate'
               # Wait for someone to complain before worrying about this

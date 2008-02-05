@@ -53,9 +53,8 @@ client
 source
 {
   # Individual SQL source options
+  sql_ranged_throttle = 0  
   sql_range_step = 5000   
-  strip_html = 0
-  index_html_attrs =
   sql_query_post =
 }
 
@@ -67,6 +66,10 @@ index
   morphology = stem_en
   stopwords = # /path/to/stopwords.txt
   min_word_len = 1
+
+  # HTML-specific options
+  html_strip = 0
+  html_index_attrs =
   
   # Enable these if you need wildcard searching. They will slow down indexing significantly.
   #   min_infix_len = 1    

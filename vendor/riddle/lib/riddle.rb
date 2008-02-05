@@ -1,3 +1,4 @@
+require 'socket'
 require 'riddle/client'
 require 'riddle/client/filter'
 require 'riddle/client/message'
@@ -11,7 +12,7 @@ module Riddle #:nodoc:
     Major = 0
     Minor = 9
     Tiny  = 8
-    Rev   = 985
+    Rev   = 1065
     
     String = [Major, Minor, Tiny].join('.') + "r#{Rev}"
   end

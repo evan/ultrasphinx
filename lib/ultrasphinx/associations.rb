@@ -14,12 +14,13 @@ module Ultrasphinx
     end
     
     def get_association_model(klass, entry)
-      get_association(klass, entry).class_name.constantize
-    end    
-    
-    def entry_identifies_association?(entry)
-      entry['class_name'] || entry['association_name']
-    end
-    
+      association = get_association(klass, entry)
+      if association
+        association.class_name.constantize
+      else
+        entry['class_name'].constantize
+      end
+    end  
+          
   end
 end

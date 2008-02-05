@@ -228,7 +228,7 @@ module Ultrasphinx
         
       def build_concatenations(klass, fields, entries, column_strings, join_strings, group_bys, use_distinct, remaining_columns)
         entries.to_a.each do |entry|
-          if entry_identifies_association?(entry) and entry['field']
+          if entry['field']
             # Group concats
   
             # Only has_many's or explicit sql right now
