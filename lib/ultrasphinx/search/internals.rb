@@ -200,8 +200,8 @@ module Ultrasphinx
                 get_association_model(klass, configuration)
               end
               
-              ["table_alias.#{configuration['field']}", 
-                (configuration['association_sql'] or "LEFT OUTER JOIN #{association_model.table_name} AS table_alias ON table_alias.#{association_model.primary_key} = #{klass.table_name}.#{association_model.class_name.underscore}_id")
+              ["#{table_alias}.#{configuration['field']}", 
+                (configuration['association_sql'] or "LEFT OUTER JOIN #{association_model.table_name} AS #{table_alias} ON #{table_alias}.#{association_model.primary_key} = #{klass.table_name}.#{association_model.class_name.underscore}_id")
               ]
             when 'concatenate'
               # Wait for someone to complain before worrying about this
