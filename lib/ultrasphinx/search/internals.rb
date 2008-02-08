@@ -40,9 +40,13 @@ module Ultrasphinx
         weights = opts['weights']
         if weights.any?
           # Order according to the field order for Sphinx, and set the missing fields to 1.0
-          request.weights = (Fields.instance.types.select{|n,t| t == 'text'}.map(&:first).sort.inject([]) do |array, field|
-            array << (weights[field] || 1.0)
-          end)
+          ordered_weights = []
+          Fields.instance.types.map do |name, type| 
+            name if type == 'text'
+          end.compact.sort.each do |name|
+            ordered_weights << (weights[name] || 1.0)
+          end
+          request.weights = ordered_weights
         end
         
         # Class names
@@ -235,7 +239,12 @@ module Ultrasphinx
       def reify_results(ids)
         results = []
         
-        ids.map(&:first).uniq.each do |class_name|
+        ids_hash = {}
+        ids.each do |class_name, id|
+          (ids_hash[class_name] ||= []) << id
+        end
+        
+        ids.map {|ary| ary.first}.uniq.each do |class_name|
           klass = class_name.constantize
           
           method_choices = Ultrasphinx::Search.client_options['finder_methods']
@@ -245,16 +254,12 @@ module Ultrasphinx
             method_choices.last
           end
 
-          class_ids = ids.map do |this_class_name, id|
-            id if this_class_name == class_name
-          end.compact
+          records = klass.send(finder, ids_hash[class_name])
           
-          records = klass.send(finder, class_ids)
-          
-          if !Ultrasphinx::Search.client_options['ignore_missing_records']
-            if records.size != class_ids.size
+          unless Ultrasphinx::Search.client_options['ignore_missing_records']
+            if records.size != ids_hash[class_name].size
               raise ActiveRecord::RecordNotFound, 
-                "#{class_name}:#{(class_ids - records.map(&:id))[1..-2]} not found"
+                "#{class_name}:#{(ids_hash[class_name] - records.map {|obj| obj.id})[1..-2]} not found"
             end
           end
           
@@ -263,11 +268,13 @@ module Ultrasphinx
           end
         end
         
-        # Add an accessor for absolute search rank for each record (does anyone use this?)
-        results.each_with_index do |result, index|
-          if result
-            i = per_page * (current_page - 1) + index
-            result._metaclass.send('define_method', 'result_index') { i }
+        # Add an accessor for global search rank for each record, if requested
+        if self.class.client_options['with_global_rank']
+          results.each_with_index do |result, index|
+            if result
+              global_index = per_page * (current_page - 1) + index
+              result.instance_variable_get('@attributes')['result_index'] = global_index
+            end
           end
         end
         
