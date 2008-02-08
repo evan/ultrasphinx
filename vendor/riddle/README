@@ -8,13 +8,13 @@ opting for a more Ruby-like structure.
 While it doesn't (yet) exist as a gem, you can obtain the sourcecode via subversion. If you
 are after a specific release, use the tag as follows:
 
-  svn co http://rails-oceania.googlecode.com/svn/patallan/riddle/tags/0.9.8-r985 riddle
+  svn co http://rails-oceania.googlecode.com/svn/patallan/riddle/tags/0.9.8-r1065 riddle
 
 Or for the most current, just use trunk:
 
   svn co http://rails-oceania.googlecode.com/svn/patallan/riddle/trunk riddle
 
-Please note that at the time of writing, only 0.9.8r871, 0.9.8r909 and 0.9.8r985 are supported.
+Please note that at the time of writing, only 0.9.8r871, 0.9.8r909, 0.9.8r985 and 0.9.8r1065 are supported.
 
 To get started, just instantiate a Client object:
 

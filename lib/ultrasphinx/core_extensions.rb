@@ -27,6 +27,15 @@ class Object
   end
 end
 
+#class HashWithIndifferentAccess
+#  # Returns a regular Hash with all string keys. Much faster
+#  # than HWIA#merge.
+#  def _fast_merge(right)
+#    left = Hash[self]
+#    left.merge!(self.class.new(right))
+#  end
+#end
+
 class Hash
   def _coerce_basic_types
     # XXX To remove

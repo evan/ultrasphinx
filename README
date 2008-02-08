@@ -14,10 +14,10 @@ If you use this software, please {make a donation}[http://blog.evanweaver.com/do
 == Requirements
 
 * MySQL 5.0, or PostgreSQL 8.2
-* Sphinx 0.9.8-dev r871
+* Sphinx 0.9.8-dev r1112
 * Rails 2.0.2
 
-More recent versions than listed are ok.
+More recent versions than listed are usually ok.
 
 == Features
 
@@ -47,7 +47,7 @@ And some other things.
 
 == Installation
   
-First, install Sphinx itself. Get the 0.9.8 development snapshot (http://www.sphinxsearch.com), then run <tt>./configure</tt>, <tt>make</tt>, and <tt>sudo make install</tt>. Make sure to set your <tt>./configure</tt> flags: <tt>----prefix</tt> if necessary, and also <tt>----with-pgsql</tt> if you need Postgres support.
+First, install Sphinx itself. Get the {0.9.8 snapshot}[http://www.sphinxsearch.com/downloads.html], then run <tt>./configure</tt>, <tt>make</tt>, and <tt>sudo make install</tt>. Make sure to set your <tt>./configure</tt> flags: <tt>----prefix</tt> if necessary, and also <tt>----with-pgsql</tt> if you need Postgres support.
 
 You also need the <tt>chronic</tt> gem:
   sudo gem install chronic

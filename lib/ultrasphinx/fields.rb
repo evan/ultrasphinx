@@ -17,7 +17,7 @@ This is a special singleton configuration class that stores the index field conf
       'datetime' => 'date',
       'timestamp' => 'date',
       'float' => 'float',
-      'boolean' => 'integer'
+      'boolean' => 'bool'
     }
         
     attr_accessor :classes, :types
@@ -49,12 +49,16 @@ This is a special singleton configuration class that stores the index field conf
         classes[field] = [klass]
 
         @groups << case new_type
-          when 'float', 'integer'
-            "sql_group_column = #{field}"
+          when 'integer'
+            "sql_attr_uint = #{field}"
+          when 'float'
+            "sql_attr_float = #{field}"
+          when 'bool'
+            "sql_attr_bool = #{field}"
           when 'date'
-            "sql_date_column = #{field}"
+            "sql_attr_timestamp = #{field}"
           when 'text' 
-            "sql_str2ordinal_column = #{field}" if string_sortable
+            "sql_attr_str2ordinal = #{field}" if string_sortable
         end
       end
     end
@@ -73,7 +77,7 @@ This is a special singleton configuration class that stores the index field conf
       case types[field]
         when 'text'
           "''"
-        when 'integer', 'float'
+        when 'integer', 'float', 'bool'
           "0"
         when 'date'
           "18000" # Midnight on 1/1/1970
@@ -157,7 +161,7 @@ This is a special singleton configuration class that stores the index field conf
           # This field is referenced by a table alias in association_sql
           table_alias, entry['field'] = entry['field'].split(".")
           table_alias
-        elsif entry_identifies_association?(entry)
+        elsif get_association(klass, entry)
           # Refers to the association
           get_association(klass, entry).name
         elsif entry['association_sql']

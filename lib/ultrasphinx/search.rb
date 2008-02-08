@@ -24,7 +24,7 @@ Now, to run the query, call its <tt>run</tt> method. Your results will be availa
 The query string supports boolean operation, parentheses, phrases, and field-specific search. Query words are stemmed and joined by an implicit <tt>AND</tt> by default.
 
 * Valid boolean operators are <tt>AND</tt>, <tt>OR</tt>, and <tt>NOT</tt>.
-* Field-specific searches should be formatted as <tt>fieldname:contents</tt>. (This will only work for text fields. For numeric and date fields, see the <tt>'filters</tt> parameter, below.)
+* Field-specific searches should be formatted as <tt>fieldname:contents</tt>. (This will only work for text fields. For numeric and date fields, see the <tt>:filters</tt> parameter, below.)
 * Phrases must be enclosed in double quotes.
     
 A Sphinx::SphinxInternalError will be raised on invalid queries. In general, queries can only be nested to one level. 
@@ -45,7 +45,7 @@ The hash lets you customize internal aspects of the search.
 
 Note that you can set up your own query defaults in <tt>environment.rb</tt>: 
   
-  Ultrasphinx::Search.query_defaults = HashWithIndifferentAccess.new({
+  self.class.query_defaults = HashWithIndifferentAccess.new({
     :per_page => 10,
     :sort_mode => 'relevance',
     :weights => {'title' => 2.0}
@@ -120,23 +120,26 @@ Note that your database is never changed by anything Ultrasphinx does.
     self.client_options ||= HashWithIndifferentAccess.new({ 
       :with_subtotals => false, 
       :ignore_missing_records => false,
-      :max_missing_records => 5, # Has no effect if :ignore_missing_records => false
+      # Has no effect if :ignore_missing_records => false
+      :max_missing_records => 5, 
       :max_retries => 4,
       :retry_sleep_time => 0.5,
       :max_facets => 100,
-      :finder_methods => ['get_cache', 'find']
+      :with_global_rank => false,
+      # Finder methods must accept an Array of ids, but do not have to preserve order
+      :finder_methods => ['find_all_by_id'] 
     })
     
     # Friendly sort mode mappings    
-    SPHINX_CLIENT_PARAMS = HashWithIndifferentAccess.new({ 
-      :sort_mode => HashWithIndifferentAccess.new({
+    SPHINX_CLIENT_PARAMS = { 
+      'sort_mode' => {
         'relevance' => :relevance,
         'descending' => :attr_desc, 
         'ascending' => :attr_asc, 
         'time' => :time_segments,
         'extended' => :extended,
-      })
-    })
+      }
+    }
     
     INTERNAL_KEYS = ['parsed_query'] #:nodoc:
 
@@ -174,6 +177,8 @@ Note that your database is never changed by anything Ultrasphinx does.
     end
 
     MODELS_TO_IDS = get_models_to_class_ids || {} 
+
+    IDS_TO_MODELS = MODELS_TO_IDS.invert #:nodoc:
       
     MAX_MATCHES = DAEMON_SETTINGS["max_matches"].to_i 
     
@@ -216,7 +221,7 @@ Note that your database is never changed by anything Ultrasphinx does.
     
     # Returns a hash of total result counts, scoped to each available model. This requires extra queries against the search daemon right now. Set <tt>Ultrasphinx::Search.client_options[:with_subtotals] = true</tt> to enable the extra queries. Most of the overhead is in instantiating the AR result sets, so the performance hit is not usually significant.
     def subtotals
-      raise UsageError, "Subtotals are not enabled" unless Ultrasphinx::Search.client_options['with_subtotals']
+      raise UsageError, "Subtotals are not enabled" unless self.class.client_options['with_subtotals']
       require_run
       @subtotals
     end
@@ -267,13 +272,21 @@ Note that your database is never changed by anything Ultrasphinx does.
     # Returns the global index position of the first result on this page.
     def offset 
       (current_page - 1) * per_page
-    end    
+    end
     
     # Builds a new command-interface Search object.
     def initialize opts = {} 
-      opts = HashWithIndifferentAccess.new(opts)            
-      @options = Ultrasphinx::Search.query_defaults.merge(opts._deep_dup._coerce_basic_types)            
 
+      # Change to normal hashes with String keys for speed
+      opts = Hash[HashWithIndifferentAccess.new(opts._deep_dup._coerce_basic_types)]
+      unless self.class.query_defaults.instance_of? Hash
+        self.class.query_defaults = Hash[self.class.query_defaults]
+        self.class.client_options = Hash[self.class.client_options]
+        self.class.excerpting_options = Hash[self.class.excerpting_options]
+        self.class.excerpting_options['content_methods'].map! {|ary| ary.map {|m| m.to_s}}
+      end    
+      
+      @options = self.class.query_defaults.merge(opts)            
       @options['query'] = @options['query'].to_s
       @options['class_names'] = Array(@options['class_names'])
       @options['facets'] = Array(@options['facets'])
@@ -285,7 +298,7 @@ Note that your database is never changed by anything Ultrasphinx does.
   
       @results, @subtotals, @facets, @response = [], {}, {}, {}
         
-      extra_keys = @options.keys - (SPHINX_CLIENT_PARAMS.merge(Ultrasphinx::Search.query_defaults).keys + INTERNAL_KEYS)
+      extra_keys = @options.keys - (self.class.query_defaults.keys + INTERNAL_KEYS)
       say "discarded invalid keys: #{extra_keys * ', '}" if extra_keys.any? and RAILS_ENV != "test" 
     end
     
@@ -299,7 +312,7 @@ Note that your database is never changed by anything Ultrasphinx does.
         @response = @request.query(parsed_query, UNIFIED_INDEX_NAME)
         say "search returned #{total_entries}/#{response[:total_found].to_i} in #{time.to_f} seconds."
           
-        if Ultrasphinx::Search.client_options['with_subtotals']        
+        if self.class.client_options['with_subtotals']        
           @subtotals = get_subtotals(@request, parsed_query) 
         end
         
@@ -318,19 +331,22 @@ Note that your database is never changed by anything Ultrasphinx does.
     end
   
   
-    # Overwrite the configured content accessors with excerpted and highlighted versions of themselves.
-    # Runs run if it hasn't already been done. Please note that this does not change the @attributes
-    # hash in the record; only the accessor.
+    # Overwrite the configured content attributes with excerpted and highlighted versions of themselves.
+    # Runs run if it hasn't already been done.
     def excerpt
     
       require_run         
       return if results.empty?
     
-      # See what fields each result might respond to for our excerpting
+      # See what fields in each result might respond to our excerptable methods
       results_with_content_methods = results.map do |result|
-        [result] << Ultrasphinx::Search.excerpting_options['content_methods'].map do |methods|
-          methods.detect { |x| result.respond_to? x }
-        end
+        [result, 
+          self.class.excerpting_options['content_methods'].map do |methods|
+            methods.detect do |this| 
+              result.respond_to? this
+            end
+          end
+        ]
       end
   
       # Fetch the actual field contents
@@ -343,8 +359,9 @@ Note that your database is never changed by anything Ultrasphinx does.
       excerpting_options = {
         :docs => docs, 
         :index => UNIFIED_INDEX_NAME, 
-        :words => strip_query_commands(parsed_query)}
-      Ultrasphinx::Search.excerpting_options.except('content_methods').each do |key, value|
+        :words => strip_query_commands(parsed_query)
+      }
+      self.class.excerpting_options.except('content_methods').each do |key, value|
         # Riddle only wants symbols
         excerpting_options[key.to_sym] ||= value
       end
@@ -354,13 +371,18 @@ Note that your database is never changed by anything Ultrasphinx does.
         @request.excerpts(excerpting_options)
       end
       
-      responses = responses.in_groups_of(Ultrasphinx::Search.excerpting_options['content_methods'].size)
+      responses = responses.in_groups_of(self.class.excerpting_options['content_methods'].size)
       
       results_with_content_methods.each_with_index do |result_and_methods, i|
         # Override the individual model accessors with the excerpted data
         result, methods = result_and_methods
         methods.each_with_index do |method, j|
-          result._metaclass.send('define_method', method) { responses[i][j] } if method
+          data = responses[i][j]
+          if method
+            result._metaclass.send('define_method', method) { data }
+            attributes = result.instance_variable_get('@attributes')
+            attributes[method] = data if attributes[method]
+          end
         end
       end
   

@@ -66,14 +66,11 @@ module RDoc
     <div id="validator-badges">
       <p><small><a href="http://validator.w3.org/check/referer">[Validate]</a></small></p>
     </div>
-    <script type="text/javascript">
-    var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-    document.write("\\<script src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'>\\<\\/script>" );
+    <script src="http://www.google-analytics.com/urchin.js" type="text/javascript">
     </script>
     <script type="text/javascript">
-    var pageTracker = _gat._getTracker("%analytics%");
-    pageTracker._initData();
-    pageTracker._trackPageview();
+      _uacct = "%analytics%";
+      urchinTracker();
     </script>
     
     </body>

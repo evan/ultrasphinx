@@ -32,9 +32,9 @@ module Riddle
     }
     
     Versions = {
-      :search  => 0x10F, # VER_COMMAND_SEARCH
+      :search  => 0x112, # VER_COMMAND_SEARCH
       :excerpt => 0x100, # VER_COMMAND_EXCERPT
-      :update  => 0x100  # VER_COMMAND_UPDATE
+      :update  => 0x101  # VER_COMMAND_UPDATE
     }
     
     Statuses = {
@@ -52,6 +52,12 @@ module Riddle
       :extended   => 4, # SPH_MATCH_EXTENDED
       :fullsacn   => 5, # SPH_MATCH_FULLSCAN
       :extended2  => 6  # SPH_MATCH_EXTENDED2
+    }
+    
+    RankModes = {
+      :proximity_bm25 => 0, # SPH_RANK_PROXIMITY_BM25
+      :bm25           => 1, # SPH_RANK_BM25
+      :none           => 2  # SPH_RANK_NONE
     }
     
     SortModes = {
@@ -89,7 +95,8 @@ module Riddle
     attr_accessor :server, :port, :offset, :limit, :max_matches,
       :match_mode, :sort_mode, :sort_by, :weights, :id_range, :filters,
       :group_by, :group_function, :group_clause, :group_distinct, :cut_off,
-      :retry_count, :retry_delay, :anchor
+      :retry_count, :retry_delay, :anchor, :index_weights, :rank_mode,
+      :max_query_time, :field_weights
     attr_reader :queue
     
     # Can instantiate with a specific server and port - otherwise it assumes
@@ -119,6 +126,10 @@ module Riddle
       @anchor         = {}
       # string keys are index names, integer values are weightings
       @index_weights  = {}
+      @rank_mode      = :proximity_bm25
+      @max_query_time = 0
+      # string keys are field names, integer values are weightings
+      @field_weights  = {}
       
       @queue = []
     end
@@ -181,7 +192,7 @@ module Riddle
         matches   = response.next_int
         is_64_bit = response.next_int
         for i in 0...matches
-          doc = is_64_bit > 0 ? (response.next_int() << 32) + response.next_int : response.next_int
+          doc = is_64_bit > 0 ? response.next_64bit_int : response.next_int
           weight = response.next_int
 
           result[:matches] << {:doc => doc, :weight => weight, :index => i, :attributes => {}}
@@ -344,7 +355,7 @@ module Riddle
       version  = 0
       length   = 0
       message  = Array(messages).join("")
-      
+          
       connect do |socket|
         case command
         when :search
@@ -397,7 +408,8 @@ module Riddle
       message = Message.new
       
       # Mode, Limits, Sort Mode
-      message.append_ints @offset, @limit, MatchModes[@match_mode], SortModes[@sort_mode]
+      message.append_ints @offset, @limit, MatchModes[@match_mode],
+        RankModes[@rank_mode], SortModes[@sort_mode]
       message.append_string @sort_by
       
       # Query
@@ -411,7 +423,8 @@ module Riddle
       message.append_string index
       
       # ID Range
-      message.append_ints 0, @id_range.first, @id_range.last
+      message.append_int 1
+      message.append_64bit_ints @id_range.first, @id_range.last
       
       # Filters
       message.append_int @filters.length
@@ -438,6 +451,16 @@ module Riddle
       # Per Index Weights
       message.append_int @index_weights.length
       @index_weights.each do |key,val|
+        message.append_string key
+        message.append_int val
+      end
+      
+      # Max Query Time
+      message.append_int @max_query_time
+      
+      # Per Field Weights
+      message.append_int @field_weights.length
+      @field_weights.each do |key,val|
         message.append_string key
         message.append_int val
       end
@@ -480,7 +503,7 @@ module Riddle
       
       message.append_int values_by_doc.length
       values_by_doc.each do |key,values|
-        message.append_int key # document ID
+        message.append_64bit_int key # document ID
         message.append_ints *values # array of new values (integers)
       end
       

@@ -228,7 +228,7 @@ module Ultrasphinx
         
       def build_concatenations(klass, fields, entries, column_strings, join_strings, group_bys, use_distinct, remaining_columns)
         entries.to_a.each do |entry|
-          if entry_identifies_association?(entry) and entry['field']
+          if entry['field']
             # Group concats
   
             # Only has_many's or explicit sql right now
@@ -290,7 +290,7 @@ module Ultrasphinx
         
         # Generate hashed integer fields for text grouping
         if with_facet
-          column_strings << "CRC32(#{source_string}) AS #{as}_facet"
+          column_strings << "#{SQL_FUNCTIONS[ADAPTER]['hash']._interpolate(source_string)} AS #{as}_facet"
           remaining_columns.delete("#{as}_facet")
         end
         [column_strings, remaining_columns]

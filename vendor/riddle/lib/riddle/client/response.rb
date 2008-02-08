@@ -28,6 +28,13 @@ module Riddle
         return int
       end
       
+      def next_64bit_int
+        high, low = @str[@marker, 8].unpack('N*N*')[0..1]
+        @marker += 8
+        
+        return (high << 32) + low
+      end
+      
       # Return the next float value from the stream
       def next_float
         float = @str[@marker, 4].unpack('N*').pack('L').unpack('f*').first
