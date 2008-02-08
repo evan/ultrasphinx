@@ -235,39 +235,46 @@ module Ultrasphinx
       def reify_results(ids)
         results = []
         
-        ids.each do |klass_name, id|
-        
-          # What class and class method are we using to get the record?
-          klass = klass_name.constantize
-          finder = Ultrasphinx::Search.client_options['finder_methods'].detect do |method_name|
-            klass.respond_to? method_name
+        ids.map(&:first).uniq.each do |class_name|
+          klass = class_name.constantize
+          
+          method_choices = Ultrasphinx::Search.client_options['finder_methods']
+          finder = if method_choices.size > 1
+            method_choices.detect { |method_name| klass.respond_to? method_name }
+          else
+            method_choices.last
+          end
+
+          class_ids = ids.map do |this_class_name, id|
+            id if this_class_name == class_name
+          end.compact
+          
+          records = klass.send(finder, class_ids)
+          
+          if !Ultrasphinx::Search.client_options['ignore_missing_records']
+            if records.size != class_ids.size
+              raise ActiveRecord::RecordNotFound, 
+                "#{class_name}:#{(class_ids - records.map(&:id))[1..-2]} not found"
+            end
           end
           
-          # Load it
-          begin
-            # XXX Does not use Memcached's multiget, or MySQL's, for that matter
-            record = klass.send(finder, id)
-            raise ActiveRecord::RecordNotFound unless record
-          rescue ActiveRecord::RecordNotFound => e
-            if Ultrasphinx::Search.client_options['ignore_missing_records']
-              say "warning; #{klass}.#{finder}(#{id}) returned RecordNotFound"
-            else
-              raise(e)
-            end
-          end  
-          
-          # Add it to the list. Cache_fu does funny things with returned record organization.
-          results += record.is_a?(Hash) ? record.values : Array(record)                
-        end
-    
-        # Add an accessor for absolute search rank for each record (does anyone use this?)
-        results.each_with_index do |result, index|
-          i = per_page * (current_page - 1) + index
-          result._metaclass.send('define_method', 'result_index') { i }
+          records.each do |record|
+            results[ids.index([class_name, record.id])] = record
+          end
         end
         
+        # Add an accessor for absolute search rank for each record (does anyone use this?)
+        results.each_with_index do |result, index|
+          if result
+            i = per_page * (current_page - 1) + index
+            result._metaclass.send('define_method', 'result_index') { i }
+          end
+        end
+        
+        results.compact!
+        
         if ids.size - results.size > Ultrasphinx::Search.client_options['max_missing_records']
-          # Never reached if Ultrasphinx::Search.client_options['ignore_missing_records'] is false
+          # Never reached if Ultrasphinx::Search.client_options['ignore_missing_records'] is false due to raise
           raise ConfigurationError, "Too many results for this query returned ActiveRecord::RecordNotFound. The index is probably out of date" 
         end
         

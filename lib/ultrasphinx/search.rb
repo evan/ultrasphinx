@@ -120,11 +120,13 @@ Note that your database is never changed by anything Ultrasphinx does.
     self.client_options ||= HashWithIndifferentAccess.new({ 
       :with_subtotals => false, 
       :ignore_missing_records => false,
-      :max_missing_records => 5, # Has no effect if :ignore_missing_records => false
+      # Has no effect if :ignore_missing_records => false
+      :max_missing_records => 5, 
       :max_retries => 4,
       :retry_sleep_time => 0.5,
       :max_facets => 100,
-      :finder_methods => ['get_cache', 'find']
+      # Finder methods must accept an Array of ids, but do not have to preserve order
+      :finder_methods => ['find_all_by_id'] 
     })
     
     # Friendly sort mode mappings    
