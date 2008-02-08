@@ -27,8 +27,8 @@ Features include:
 
 * searching and ranking across orthogonal models
 * excerpt highlighting
-* query spellcheck
 * Google-style query parser
+* spellcheck
 * faceting on text, date, and numeric fields
 * field weighting, merging, and aliases
 * <tt>belongs_to</tt> and <tt>has_many</tt> includes
@@ -87,7 +87,8 @@ For more query options, including excerpt mode, see Ultrasphinx::Search.
 
 == Pagination
 
-Once the <tt>@search</tt> object has been <tt>run</tt>, it is directly compatible with the <tt>will_paginate</tt> view helper.
+Once the <tt>@search</tt> object has been <tt>run</tt>, it is directly compatible with the <tt>will_paginate</tt> view helper. In your view, just do:
+  <%= will_paginate(@search) %>
   
 == Spell checking
 
