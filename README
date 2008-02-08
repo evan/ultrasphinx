@@ -21,23 +21,19 @@ More recent versions than listed are usually ok.
 
 == Features
 
-Advanced Sphinx usage:
+Sphinx/Ultrasphinx is the fastest and most stable Rails fulltext search solution.
+
+Features include:
+
 * searching and ranking across orthogonal models
 * excerpt highlighting
-* field weighting
-* faceting on text, date, and numeric fields
-
-ActiveRecord-style SQL generation:
-* <tt>belongs_to</tt> and <tt>has_many</tt> includes
-* field merging
-* field aliasing
-
-Good Rails integration:
-* automatic memcached loads via <tt>cache_fu</tt>
-* <tt>will_paginate</tt> compatibility
 * query spellcheck
 * Google-style query parser
-* error recovery
+* faceting on text, date, and numeric fields
+* field weighting, merging, and aliases
+* <tt>belongs_to</tt> and <tt>has_many</tt> includes
+* drop-in compatibility with Interlock[http://blog.evanweaver.com/files/doc/fauna/interlock/]
+* drop-in compatibility with will_paginate[http://err.lighthouseapp.com/projects/466/home]
 * multiple deployment environments
 * comprehensive Rake tasks
 
