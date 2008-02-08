@@ -107,6 +107,7 @@ sql_query_pre = ) + SQL_FUNCTIONS['postgresql']['stored_procedures'].values.join
         STDERR.puts msg
       end
     end
+    nil
   end
   
   # Configuration file parser.

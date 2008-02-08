@@ -177,6 +177,8 @@ Note that your database is never changed by anything Ultrasphinx does.
     end
 
     MODELS_TO_IDS = get_models_to_class_ids || {} 
+
+    IDS_TO_MODELS = MODELS_TO_IDS.invert #:nodoc:
       
     MAX_MATCHES = DAEMON_SETTINGS["max_matches"].to_i 
     

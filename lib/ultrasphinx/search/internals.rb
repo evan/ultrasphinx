@@ -226,12 +226,13 @@ module Ultrasphinx
             
       # Inverse-modulus map the Sphinx ids to the table-specific ids
       def convert_sphinx_ids(sphinx_ids)    
+        number_of_models = IDS_TO_MODELS.size
         sphinx_ids.sort_by do |item| 
           item[:index]
         end.map do |item|
-          class_name = MODELS_TO_IDS.invert[item[:doc] % MODELS_TO_IDS.size]
+          class_name = IDS_TO_MODELS[item[:doc] % number_of_models]
           raise DaemonError, "Impossible Sphinx document id #{item[:doc]} in query result" unless class_name
-          [class_name, item[:doc] / MODELS_TO_IDS.size]
+          [class_name, item[:doc] / number_of_models]
         end
       end
 
