@@ -6,7 +6,7 @@ require 'echoe'
 begin
   require 'multi_rails_init'
 rescue LoadError
-  $STDERR.puts "No multi_rails found"
+  STDERR.puts "No multi_rails found"
 end
 
 if defined? ENV['MULTIRAILS_RAILS_VERSION']

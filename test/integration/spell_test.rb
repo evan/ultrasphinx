@@ -8,8 +8,12 @@ class SpellTest < Test::Unit::TestCase
   end
   
   def test_spelling
-    assert_equal nil, Ultrasphinx::Spell.correct("correct words")
-    assert_equal "garbled words", Ultrasphinx::Spell.correct("glarbled words")
+    if defined?(Aspell)
+      assert_equal nil, Ultrasphinx::Spell.correct("correct words")
+      assert_equal "garbled words", Ultrasphinx::Spell.correct("glarbled words")
+    else
+      STDERR.puts "No Aspell found"
+    end
   end  
 
 end
