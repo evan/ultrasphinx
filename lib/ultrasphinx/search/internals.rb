@@ -261,7 +261,7 @@ module Ultrasphinx
             if records.size != ids_hash[class_name].size
               missed_ids = ids_hash[class_name] - records.map(&:id)
               msg = if missed_ids.size == 1
-                "Couldn't find Participant with ID=#{missed_ids.first}"
+                "Couldn't find #{class_name} with ID=#{missed_ids.first}"
               else
                 "Couldn't find #{class_name.pluralize} with IDs: #{missed_ids.join(',')} (found #{records.size} results, but was looking for #{ids_hash[class_name].size})"
               end
