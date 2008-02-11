@@ -260,7 +260,7 @@ module Ultrasphinx
           unless Ultrasphinx::Search.client_options['ignore_missing_records']
             if records.size != ids_hash[class_name].size
               raise ActiveRecord::RecordNotFound, 
-                "#{class_name}:#{(ids_hash[class_name] - records.map {|obj| obj.id})[1..-2]} not found"
+                "#{class_name}:#{(ids_hash[class_name] - records.map {|obj| obj.id}).inspect[1..-2]} not found"
             end
           end
           
