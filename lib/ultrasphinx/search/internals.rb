@@ -259,8 +259,13 @@ module Ultrasphinx
           
           unless Ultrasphinx::Search.client_options['ignore_missing_records']
             if records.size != ids_hash[class_name].size
-              raise ActiveRecord::RecordNotFound, 
-                "#{class_name}:#{(ids_hash[class_name] - records.map {|obj| obj.id}).inspect[1..-2]} not found"
+              missed_ids = ids_hash[class_name] - records.map(&:id)
+              msg = if missed_ids.size == 1
+                "Couldn't find Participant with ID=#{missed_ids.first}"
+              else
+                "Couldn't find #{class_name.pluralize} with IDs: #{missed_ids.join(',')} (found #{records.size} results, but was looking for #{ids_hash[class_name].size})"
+              end
+              raise ActiveRecord::RecordNotFound, msg
             end
           end
           
