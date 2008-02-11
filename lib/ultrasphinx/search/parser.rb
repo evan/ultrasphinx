@@ -103,7 +103,9 @@ module Ultrasphinx
           end        
         end
         
-        raise Error, "#{token_stream.inspect} is not a valid token stream" unless token_stream.size % 2 == 0        
+        if token_stream.size.zero? or token_stream.size.odd?
+          raise Error, "#{token_stream.inspect} is not a valid token stream"
+        end
         token_stream.in_groups_of(2) 
       end
       

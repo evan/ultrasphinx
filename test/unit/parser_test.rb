@@ -7,7 +7,7 @@ class ParserTest < Test::Unit::TestCase
     @s = Ultrasphinx::Search.new
   end
 
-  def test_parsing 
+  def test_valid_queries
     [
       'artichokes', 
       'artichokes',
@@ -92,6 +92,19 @@ class ParserTest < Test::Unit::TestCase
       
     ].in_groups_of(2).each do |query, result|
       assert_equal result, @s.send(:parse, query)
+    end
+  end
+  
+  def test_invalid_queries
+    [
+      "\"", 
+      "(", 
+      ")", 
+      "  \"  "
+    ].each do |query|
+      assert_raises(Ultrasphinx::Search::Parser::Error) do 
+        @s.send(:parse, query)
+      end
     end
   end
 

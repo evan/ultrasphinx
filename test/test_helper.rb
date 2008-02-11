@@ -2,7 +2,12 @@
 require 'rubygems'
 require 'test/unit'
 require 'echoe'
-require 'multi_rails_init'
+
+begin
+  require 'multi_rails_init'
+rescue LoadError
+  $STDERR.puts "No multi_rails found"
+end
 
 if defined? ENV['MULTIRAILS_RAILS_VERSION']
   ENV['RAILS_GEM_VERSION'] = ENV['MULTIRAILS_RAILS_VERSION']
