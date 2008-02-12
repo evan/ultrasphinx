@@ -88,7 +88,13 @@ class ParserTest < Test::Unit::TestCase
       '"traditional"',   
       
       'cuisine:"american (traditional"',
-      '@cuisine "american traditional"'
+      '@cuisine "american traditional"',
+      
+      'title:cats OR user:john',
+      '@title cats | @user john',
+      
+      'user:john OR title:cats',
+      '@user john | @title cats'
       
     ].in_groups_of(2).each do |query, result|
       assert_equal result, @s.send(:parse, query)
