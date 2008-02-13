@@ -94,7 +94,7 @@ class ParserTest < Test::Unit::TestCase
       '@title cats | @user john',
       
       'user:john OR title:cats',
-      '@user john | @title cats'
+      '@title cats | @user john',
       
     ].in_groups_of(2).each do |query, result|
       assert_equal result, @s.send(:parse, query)

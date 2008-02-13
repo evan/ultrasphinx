@@ -50,7 +50,15 @@ module Ultrasphinx
           query << ")" if field and contents.size > 1        
         end
         
-        # XXX swap the first pair if the order is reversed
+        # Collapse fieldsets early so that the swap doesn't split them        
+        query.each_with_index do |token, index|
+          if token =~ /^@/
+            query[index] = "#{token} #{query[index + 1]}"
+            query[index + 1] = nil
+          end
+        end
+        
+        # Swap the first pair if the order is reversed
         if [OPERATORS['NOT'], OPERATORS['OR']].include? query.first.upcase
           query[0], query[1] = query[1], query[0]
         end
@@ -83,7 +91,7 @@ module Ultrasphinx
           if subtoken =~ /\"(.*)\"/
             subtoken.sub!($1, $1.gsub(/[()]/, ''))
           end
-          
+         
           # add to the stream, converting the operator
           if !has_operator
             if OPERATORS.to_a.flatten.include? subtoken and index != (query.size - 1) # Operators at the end of the string are not parsed
