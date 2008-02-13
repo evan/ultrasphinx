@@ -2,8 +2,7 @@
 module Ultrasphinx
   class Search
     module Parser    
-      # We could rewrite this in Treetop, but since it works well, what's the point? It's
-      # probably faster this way. Ragel would speed it up, but be too much work.
+      # We could rewrite this in Treetop, but for now it works well.
           
       class Error < RuntimeError
       end
@@ -92,9 +91,10 @@ module Ultrasphinx
             subtoken.sub!($1, $1.gsub(/[()]/, ''))
           end
          
-          # add to the stream, converting the operator
+          # Add to the stream, converting the operator
           if !has_operator
-            if OPERATORS.to_a.flatten.include? subtoken and index != (query.size - 1) # Operators at the end of the string are not parsed
+            if OPERATORS.to_a.flatten.include? subtoken and index != (query.size - 1) 
+              # Note that operators at the end of the string are not parsed
               token_stream << OPERATORS[subtoken] || subtoken
               has_operator = true # flip
             else
