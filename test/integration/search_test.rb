@@ -211,6 +211,25 @@ class SearchTest < Test::Unit::TestCase
       @s.facets['company_name'].size
     )
   end
+
+  def test_included_text_facet_without_association_sql
+    # there are 40 users, but only 20 sellers. So you get 20 facets + 1 nil with 20 items
+    @s = Ultrasphinx::Search.new(:class_names => 'User', :facets => ['company']).run
+    assert_equal(
+      (Seller.count + 1), 
+      @s.facets['company'].size
+    )
+  end
+
+  def test_included_text_facet_with_association_sql
+    # XXX there are 40 users but only 20 sellers, but the replace function from user deletes 
+    # User #6 and 16 (why?). There is also a nil facet that gets added for a total of 19 objects
+    @s = Ultrasphinx::Search.new(:class_names => 'User', :facets => ['company_two']).run
+    assert_equal(
+      (Seller.count - 1), 
+      @s.facets['company_two'].size
+    )
+  end
   
   def test_numeric_facet
     @user_id_count = Seller.find(:all).map(&:user_id).uniq.size
