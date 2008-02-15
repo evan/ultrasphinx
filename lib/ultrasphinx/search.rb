@@ -53,9 +53,9 @@ Note that you can set up your own query defaults in <tt>environment.rb</tt>:
 
 = Advanced features
 
-== Cache_fu integration
+== Interlock integration
   
-The <tt>get_cache</tt> method will be used to instantiate records for models that respond to it. Otherwise, <tt>find</tt> is used.
+Ultrasphinx uses the <tt>find_all_by_id</tt> method to instantiate records. If you set <tt>with_finders: true</tt> in {Interlock's}[http://blog.evanweaver.com/files/doc/fauna/interlock] <tt>config/memcached.yml</tt>, Interlock overrides <tt>find_all_by_id</tt> with a caching version.
 
 == Will_paginate integration
 
