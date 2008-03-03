@@ -12,7 +12,7 @@ module Ultrasphinx
           Dir["**/*.rb"].each do |filename|
             open(filename) do |file| 
               begin
-                if file.grep(/is_indexed/).any?
+                if file.grep(/^\s+is_indexed/).any?
                   filename = filename[0..-4]
                   begin                
                     File.basename(filename).camelize.constantize
