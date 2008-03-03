@@ -102,7 +102,9 @@ See RAKE_TASKS[link:files/RAKE_TASKS.html].
 
 See DEPLOYMENT_NOTES[link:files/DEPLOYMENT_NOTES.html].
 
-== A note about PostgreSQL
+== Gotchas
+
+Note that since Ultrasphinx preloads indexed models, you need to make sure those models have their own dependencies in place early in the boot process. This may require adjusting the general plugin load order or moving monkey-patches from <tt>lib/</tt> to <tt>vendor/plugins/</tt>.
 
 PostgreSQL 8.2 and higher are well supported. However, make sure you have executed <tt>CREATE LANGUAGE plpgsql;</tt> at least once. This step does not need to be repeated, so depending on your DB permissions, you might be able to put it in a migration.
 
