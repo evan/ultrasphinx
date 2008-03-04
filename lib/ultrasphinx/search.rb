@@ -112,7 +112,8 @@ Note that your database is never changed by anything Ultrasphinx does.
       :chunk_separator => "...",
       :limit => 256,
       :around => 3,
-      # Results should respond to one in each group of these, in precedence order, for the excerpting to fire
+      # Results should respond to one in each group of these, in precedence order, for the 
+      # excerpting to fire
       :content_methods => [['title', 'name'], ['body', 'description', 'content'], ['metadata']] 
     })
     
@@ -126,8 +127,11 @@ Note that your database is never changed by anything Ultrasphinx does.
       :retry_sleep_time => 0.5,
       :max_facets => 100,
       :with_global_rank => false,
-      # Finder methods must accept an Array of ids, but do not have to preserve order
-      :finder_methods => ['find_all_by_id'] 
+      # Which method names to try to use for loading records. You can define your own (for 
+      # example, with :includes) and then attach it here. Each method must accept an Array 
+      # of ids, but do not have to preserve order. If the class does not respond_to? any 
+      # method name in the array, :find_all_by_id will be used.
+      :finder_methods => [] 
     })
     
     # Friendly sort mode mappings    

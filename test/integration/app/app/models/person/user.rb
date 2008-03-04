@@ -7,4 +7,12 @@ class User < ActiveRecord::Base
       {:class_name => 'Seller', :field => 'sellers_two.company_name', :as => 'company_two', :facet => true, 'association_sql' => 'LEFT OUTER JOIN sellers AS sellers_two ON users.id = sellers_two.user_id', 'function_sql' => "REPLACE(?, '6', ' replacement ')"}],
     :conditions => "deleted = '0'"
   
+  def self.find_all_by_id(*args)
+    raise "Wrong finder"
+  end
+    
+  def self.custom_find(*args)
+    method_missing(:find_all_by_id, *args)
+  end  
+  
 end

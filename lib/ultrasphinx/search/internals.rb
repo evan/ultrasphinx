@@ -248,12 +248,14 @@ module Ultrasphinx
         ids.map {|ary| ary.first}.uniq.each do |class_name|
           klass = class_name.constantize
           
-          method_choices = Ultrasphinx::Search.client_options['finder_methods']
-          finder = if method_choices.size > 1
-            method_choices.detect { |method_name| klass.respond_to? method_name }
-          else
-            method_choices.last
-          end
+          finder = (
+            Ultrasphinx::Search.client_options['finder_methods'].detect do |method_name| 
+              klass.respond_to? method_name
+            end or
+              # XXX This default is kind of buried, but I'm not sure why you would need it to be 
+              # configurable, since you can use ['finder_methods'].
+              "find_all_by_id"
+            )
 
           records = klass.send(finder, ids_hash[class_name])
           
