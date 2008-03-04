@@ -126,6 +126,8 @@ Note that your database is never changed by anything Ultrasphinx does.
       :max_retries => 4,
       :retry_sleep_time => 0.5,
       :max_facets => 100,
+      # Whether to add an accessor to each returned result that specifies its global rank in 
+      # the search.
       :with_global_rank => false,
       # Which method names to try to use for loading records. You can define your own (for 
       # example, with :includes) and then attach it here. Each method must accept an Array 

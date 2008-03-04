@@ -278,6 +278,7 @@ module Ultrasphinx
         
         # Add an accessor for global search rank for each record, if requested
         if self.class.client_options['with_global_rank']
+          # XXX Nobody uses this
           results.each_with_index do |result, index|
             if result
               global_index = per_page * (current_page - 1) + index
