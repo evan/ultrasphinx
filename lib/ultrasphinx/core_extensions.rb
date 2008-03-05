@@ -98,7 +98,7 @@ class String
   end
   
   def _interpolate(value)
-    self.sub('?', value)
+    self.gsub('?', value)
   end
 end
 
