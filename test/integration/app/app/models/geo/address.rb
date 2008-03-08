@@ -4,5 +4,6 @@ class Geo::Address < ActiveRecord::Base
   
   is_indexed 'fields' => ['name'],
     'concatenate' => [{'fields' => ['line_1', 'line_2', 'city', 'province_region', 'zip_postal_code'], 'as' => 'content'}],
-    'include' => [{'association_name' => 'state', 'field' => 'name', 'as' => 'state'}]
+    'include' => [{'association_name' => 'state', 'field' => 'name', 'as' => 'state'}],
+    'delta' => true
 end

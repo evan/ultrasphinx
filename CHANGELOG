@@ -1,4 +1,6 @@
 
+v1.9. Delta indexing. ERb now supported in .base files. Allow setting the searched indexes at runtime.
+
 v1.8.1. Use multifind/multiget for record loading; avoid using HashWithIndifferentAccess internally for speed; other minor performance improvements.
 
 v1.8. Update client for compatibility with Sphinx 0.9.8 r1112. This is a breaking release! You need to update Sphinx along with Ultrasphinx. Float range bugfix; text faceting on association_include bugfix. Postgres users, please note that the return type of CRC32() has changed to bigint.

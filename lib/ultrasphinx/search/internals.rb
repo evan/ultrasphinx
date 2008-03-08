@@ -17,7 +17,7 @@ module Ultrasphinx
           @match_mode = :extended # Force extended query mode
           @offset = opts['per_page'] * (opts['page'] - 1)
           @limit = opts['per_page']
-          @max_matches = [@offset + @limit, MAX_MATCHES].min
+          @max_matches = [@offset + @limit + Ultrasphinx::Search.client_options['max_matches_offset'], MAX_MATCHES].min
         end
           
         # Sorting
@@ -130,12 +130,12 @@ module Ultrasphinx
           @group_clauses = '@count desc'
           @offset = 0
           @limit = Ultrasphinx::Search.client_options['max_facets']
-          @max_matches = [@limit, MAX_MATCHES].min
+          @max_matches = [@limit + Ultrasphinx::Search.client_options['max_matches_offset'], MAX_MATCHES].min
         end
         
         # Run the query
         begin
-          matches = request.query(query, UNIFIED_INDEX_NAME)[:matches]
+          matches = request.query(query, options['indexes'])[:matches]
         rescue DaemonError
           raise ConfigurationError, "Index seems out of date. Run 'rake ultrasphinx:index'"
         end
@@ -175,7 +175,7 @@ module Ultrasphinx
 
           # Concatenates might not work well
           type, configuration = nil, nil
-          MODEL_CONFIGURATION[klass.name].except('conditions').each do |_type, values| 
+          MODEL_CONFIGURATION[klass.name].except('conditions', 'delta').each do |_type, values| 
             type = _type
             configuration = values.detect { |this_field| this_field['as'] == facet }
             break if configuration

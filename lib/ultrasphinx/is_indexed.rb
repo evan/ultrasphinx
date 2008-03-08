@@ -58,7 +58,7 @@ The keys <tt>:facet</tt>, <tt>:sortable</tt>, <tt>:class_name</tt>, <tt>:associa
 
 == Concatenating several fields within one record
 
-Use the <tt>:concatenate</tt> key (MySQL only).
+Use the <tt>:concatenate</tt> key.
 
 Accepts an array of option hashes. 
 
@@ -88,6 +88,26 @@ Also, If you want to include a model that you don't have an actual ActiveRecord 
 
 Ultrasphinx is not an object-relational mapper, and the association generation is intended to stay minimal--don't be afraid of <tt>:association_sql</tt>.
 
+== Enabling delta indexing
+
+Use the <tt>:delta</tt> key.
+
+Accepts either <tt>true</tt>, or a hash with a <tt>:field</tt> key.
+
+If you pass <tt>true</tt>, the <tt>updated_at</tt> column will be used for choosing the delta records, if it exists. If it doesn't exist, the entire table will be reindexed at every delta. Example:
+
+  :delta => true
+
+If you need to use a non-default column name, use a hash:
+ 
+  :delta => {:field => 'created_at'}
+  
+Note that the column type must be time-comparable in the DB. Also note that faceting may return higher counts than actually exist on delta-indexed tables, and that sorting by string columns will not work well. These are both limitations of Sphinx's index merge scheme. You can perhaps mitigate the issues by only searching the main index for facets or sorts:
+
+  Ultrasphinx::Search.new(:query => "query", :indexes => Ultrasphinx::MAIN_INDEX)
+
+The date range of the delta include is set in the <tt>.base</tt> file.
+
 = Examples
 
 == Complex configuration
@@ -110,6 +130,7 @@ Here's an example configuration using most of the options, taken from production
         {:association_name => 'comments', :field => 'body', :as => 'comments', 
           :conditions => "comments.item_type = '#{base_class}'"}
       ],
+      :delta => {:field => 'published_at'},
       :conditions => self.live_condition_string
   end  
 
@@ -137,16 +158,38 @@ If the associations weren't just <tt>has_many</tt> and <tt>belongs_to</tt>, you 
     def self.is_indexed opts = {}    
       opts = HashWithIndifferentAccess.new(opts)
           
-      opts.assert_valid_keys ['fields', 'concatenate', 'conditions', 'include']
+      opts.assert_valid_keys ['fields', 'concatenate', 'conditions', 'include', 'delta']
+
+      # Single options
       
-      Array(opts['fields']).each do |entry|
+      if opts['conditions']
+        # Do nothing
+      end
+      
+      if opts['delta']
+        if opts['delta'] == true
+          opts['delta'] = {'field' => 'updated_at'} 
+        elsif opts['delta'].is_a? String
+          opts['delta'] = {'field' => opts['delta']} 
+        end
+        opts['delta'].stringify_keys!
+        opts['delta'].assert_valid_keys ['field']
+      end
+      
+      # Enumerable options
+      
+      opts['fields'] = Array(opts['fields'])
+      opts['concatenate'] = Array(opts['concatenate'])
+      opts['include'] = Array(opts['include'])
+                  
+      opts['fields'].each do |entry|
         if entry.is_a? Hash
           entry.stringify_keys!
           entry.assert_valid_keys ['field', 'as', 'facet', 'function_sql', 'sortable']
         end
       end
       
-      Array(opts['concatenate']).each do |entry|
+      opts['concatenate'].each do |entry|
         entry.stringify_keys!
         entry.assert_valid_keys ['class_name', 'association_name', 'conditions', 'field', 'as', 'fields', 'association_sql', 'facet', 'function_sql', 'sortable']
         raise Ultrasphinx::ConfigurationError, "You can't mix regular concat and group concats" if entry['fields'] and (entry['field'] or entry['class_name'] or entry['association_name'])
@@ -155,11 +198,11 @@ If the associations weren't just <tt>has_many</tt> and <tt>belongs_to</tt>, you 
         raise Ultrasphinx::ConfigurationError, "Regular concatenations should have multiple fields" if entry['fields'] and !entry['fields'].is_a?(Array)
       end
       
-      Array(opts['include']).each do |entry|
+      opts['include'].each do |entry|
         entry.stringify_keys!
         entry.assert_valid_keys ['class_name', 'association_name', 'field', 'as', 'association_sql', 'facet', 'function_sql', 'sortable']
       end
-      
+            
       Ultrasphinx::MODEL_CONFIGURATION[self.name] = opts
     end
   end

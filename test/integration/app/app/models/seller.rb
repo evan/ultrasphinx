@@ -8,7 +8,8 @@ class Seller < ActiveRecord::Base
     'created_at', 
     'capitalization', 
     'user_id'
-  ]
+  ],
+    :delta => true
   
   def name 
     company_name

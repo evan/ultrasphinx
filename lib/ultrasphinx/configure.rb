@@ -41,21 +41,33 @@ module Ultrasphinx
               
         say "rebuilding configurations for #{RAILS_ENV} environment" 
         say "available models are #{MODEL_CONFIGURATION.keys.to_sentence}"
-        File.open(CONF_PATH, "w") do |conf|
-        
+        File.open(CONF_PATH, "w") do |conf|              
           conf.puts global_header            
-          sources = []
-          
-          say "generating SQL"
-          cached_groups = Fields.instance.groups.join("\n")
-          MODEL_CONFIGURATION.each_with_index do |model_options, class_id|
-            model, options = model_options
-            klass, source = model.constantize, model.tableize.gsub('/', '__')   
-            sources << source
-            conf.puts build_source(Fields.instance, model, options, class_id, klass, source, cached_groups)
+          say "generating SQL"    
+
+          INDEXES.each do |index|
+            sources = []
+            cached_groups = Fields.instance.groups.join("\n")
+
+            MODEL_CONFIGURATION.each_with_index do |model_and_options, class_id|              
+              # This relies on hash sort order being deterministic per-machine
+              model, options = model_and_options
+              klass = model.constantize
+              source = "#{model.tableize.gsub('/', '__')}_#{index}"
+ 
+              if index != DELTA_INDEX or options['delta']
+                # If we are building the delta, we only want to include the models that requested it
+                conf.puts build_source(index, Fields.instance, model, options, class_id, klass, source, cached_groups)
+                sources << source                
+              end
+            end
+            
+            if sources.any?
+              # Don't generate a delta index if there are no delta tables
+              conf.puts build_index(index, sources)
+            end
+            
           end
-          
-          conf.puts build_index(sources)
         end              
       end
       
@@ -68,7 +80,8 @@ module Ultrasphinx
         ["\n# Auto-generated at #{Time.now}.",
          "# Hand modifications will be overwritten.",
          "# #{BASE_PATH}\n",
-         INDEXER_SETTINGS._to_conf_string('indexer'),
+         INDEXER_SETTINGS.except('delta')._to_conf_string('indexer'),
+         "",
          DAEMON_SETTINGS._to_conf_string("searchd")]
       end      
       
@@ -86,9 +99,31 @@ module Ultrasphinx
         end                 
         conf.sort.join("\n")
       end
+
+      
+      def build_delta_condition(index, klass, options)
+        if index == DELTA_INDEX and options['delta']
+          # Add delta condition if necessary
+          table, field = klass.table_name, options['delta']['field']
+          source_string = "#{table}.#{field}"
+          delta_column = klass.columns_hash[field] 
+
+          if delta_column 
+            raise ConfigurationError, "#{source_string} is not a :datetime" unless delta_column.type == :datetime
+            if (options['fields'] + options['concatenate'] + options['include']).detect { |entry| entry['sortable'] }
+              # Warning about the sortable problem
+              # XXX Kind of in an odd place, but I want to happen at index time
+              Ultrasphinx.say "warning; text sortable columns on #{klass.name} will return wrong results with partial delta indexing"
+            end            
+            string = "#{source_string} > #{SQL_FUNCTIONS[ADAPTER]['delta']._interpolate(INDEXER_SETTINGS['delta'])}";
+          else
+            Ultrasphinx.say "warning; #{klass.name} will reindex the entire table during delta indexing"
+          end
+        end
+      end
       
       
-      def setup_source_arrays(klass, fields, class_id, conditions)        
+      def setup_source_arrays(index, klass, fields, class_id, conditions)        
         condition_strings = Array(conditions).map do |condition| 
           "(#{condition})"
         end
@@ -101,12 +136,13 @@ module Ultrasphinx
       end
       
       
-      def range_select_string(klass)
+      def range_select_string(klass, delta_condition)
         ["sql_query_range = SELECT",
           SQL_FUNCTIONS[ADAPTER]['range_cast']._interpolate("MIN(#{klass.primary_key})"),
-          ", ",
+          ",",
           SQL_FUNCTIONS[ADAPTER]['range_cast']._interpolate("MAX(#{klass.primary_key})"),
-          "FROM #{klass.table_name}"
+          "FROM #{klass.table_name}",
+          ("WHERE #{delta_condition}" if delta_condition),
         ].join(" ")
       end
       
@@ -116,11 +152,16 @@ module Ultrasphinx
       end      
       
             
-      def build_source(fields, model, options, class_id, klass, source, groups)
+      def build_source(index, fields, model, options, class_id, klass, source, groups)
                 
         column_strings, join_strings, condition_strings, group_bys, use_distinct, remaining_columns = 
           setup_source_arrays(
-            klass, fields, class_id, options['conditions'])
+            index, klass, fields, class_id, options['conditions'])
+            
+        delta_condition = 
+          build_delta_condition(
+            index, klass, options)             
+        condition_strings << delta_condition if delta_condition
 
         column_strings, join_strings, group_bys, remaining_columns = 
           build_regular_fields(
@@ -140,7 +181,7 @@ module Ultrasphinx
          "source #{source}\n{",
           SOURCE_SETTINGS._to_conf_string,
           setup_source_database(klass),
-          range_select_string(klass),
+          range_select_string(klass, delta_condition),
           build_query(klass, column_strings, join_strings, condition_strings, use_distinct, group_bys),
           "\n" + groups,
           query_info_string(klass, class_id),
@@ -271,13 +312,13 @@ module Ultrasphinx
       end
       
     
-      def build_index(sources)
+      def build_index(index, sources)
         ["\n# Index configuration\n\n",
-          "index #{UNIFIED_INDEX_NAME}\n{",
+          "index #{index}\n{",
           sources.sort.map do |source| 
             "  source = #{source}"
           end.join("\n"),          
-          INDEX_SETTINGS.merge('path' => INDEX_SETTINGS['path'] + "/sphinx_index_#{UNIFIED_INDEX_NAME}")._to_conf_string,
+          INDEX_SETTINGS.merge('path' => INDEX_SETTINGS['path'] + "/sphinx_index_#{index}")._to_conf_string,
          "}\n\n"]
       end
       

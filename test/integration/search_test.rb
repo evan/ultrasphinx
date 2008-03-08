@@ -16,8 +16,20 @@ class SearchTest < Test::Unit::TestCase
   
   def test_with_subtotals_option
     S.client_options['with_subtotals'] = true
-    @s = S.new.run
+    
+    # No delta index; accurate subtotals sum
+    @s = S.new(:indexes => Ultrasphinx::MAIN_INDEX).run
     assert_equal @s.total_entries, @s.subtotals.values._sum
+    
+    # With delta; subtotals sum not less than total sum
+    @s = S.new.run
+    assert @s.subtotals.values._sum >= @s.total_entries 
+    
+    # With delta and filter; request class gets accurate count regardless
+    @s = S.new(:class_names => 'Seller').run
+    assert_equal @s.total_entries, @s.subtotals['Seller']    
+    assert @s.subtotals.values._sum >= @s.total_entries 
+    
     S.client_options['with_subtotals'] = false
   end
   
@@ -82,6 +94,34 @@ class SearchTest < Test::Unit::TestCase
       @total,
       @s = S.new.run.total_entries
     )  
+  end
+  
+  def test_individual_totals_with_pagination
+    Ultrasphinx::MODEL_CONFIGURATION.keys.each do |class_name| 
+      if class_name == "User"
+        assert_equal User.count(:conditions => {:deleted => false }), 
+          S.new(:class_names => class_name, :page => 2).total_entries
+      else
+        assert_equal class_name.constantize.count, 
+          S.new(:class_names => class_name, :page => 2).total_entries
+      end
+    end
+  end
+
+  def test_individual_totals_without_pagination
+    Ultrasphinx::MODEL_CONFIGURATION.keys.each do |class_name| 
+      begin
+        if class_name == "User"
+          assert_equal User.count(:conditions => {:deleted => false }), 
+            S.new(:class_names => class_name).total_entries
+        else
+          assert_equal class_name.constantize.count, 
+            S.new(:class_names => class_name).total_entries
+        end
+      rescue Object
+        raise class_name
+      end
+    end
   end
   
   def test_sort_by_date

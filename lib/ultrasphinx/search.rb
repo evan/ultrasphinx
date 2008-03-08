@@ -42,6 +42,7 @@ The hash lets you customize internal aspects of the search.
 <tt>:weights</tt>:: A hash. Text-field names and associated query weighting. The default weight for every field is 1.0. Example: <tt>:weights => {'title' => 2.0}</tt>
 <tt>:filters</tt>:: A hash. Names of numeric or date fields and associated values. You can use a single value, an array of values, or a range. (See the bottom of the ActiveRecord::Base page for an example.)
 <tt>:facets</tt>:: An array of fields for grouping/faceting. You can access the returned facet values and their result counts with the <tt>facets</tt> method.
+<tt>:indexes</tt>:: An array of indexes to search. Currently only <tt>Ultrasphinx::MAIN_INDEX</tt> and <tt>Ultrasphinx::DELTA_INDEX</tt> are available. Defaults to both; changing this is rarely needed.
 
 Note that you can set up your own query defaults in <tt>environment.rb</tt>: 
   
@@ -100,6 +101,10 @@ Note that your database is never changed by anything Ultrasphinx does.
       :per_page => 20,
       :sort_by => nil,
       :sort_mode => 'relevance',
+      :indexes => [
+          MAIN_INDEX, 
+          (DELTA_INDEX if Ultrasphinx.delta_index_present?)
+        ].compact,
       :weights => {},
       :class_names => [],
       :filters => {},
@@ -125,7 +130,8 @@ Note that your database is never changed by anything Ultrasphinx does.
       :max_missing_records => 5, 
       :max_retries => 4,
       :retry_sleep_time => 0.5,
-      :max_facets => 100,
+      :max_facets => 1000,
+      :max_matches_offset => 1000,
       # Whether to add an accessor to each returned result that specifies its global rank in 
       # the search.
       :with_global_rank => false,
@@ -149,45 +155,12 @@ Note that your database is never changed by anything Ultrasphinx does.
     
     INTERNAL_KEYS = ['parsed_query'] #:nodoc:
 
-    def self.get_models_to_class_ids #:nodoc:
-      # Reading the conf file makes sure that we are in sync with the actual Sphinx index,
-      # not whatever you happened to change your models to most recently
-      unless File.exist? CONF_PATH
-        Ultrasphinx.say "configuration file not found for #{RAILS_ENV.inspect} environment"
-        Ultrasphinx.say "please run 'rake ultrasphinx:configure'"
-      else
-        begin  
-          lines = open(CONF_PATH).readlines          
-
-          sources = lines.select do |line| 
-            line =~ /^source \w/
-          end.map do |line| 
-            line[/source ([\w\d_-]*)/, 1].gsub('__', '/').classify
-          end
-          
-          ids = lines.select do |line| 
-            line =~ /^sql_query /
-          end.map do |line| 
-            line[/(\d*) AS class_id/, 1].to_i
-          end
-          
-          raise unless sources.size == ids.size          
-          Hash[*sources.zip(ids).flatten]
-                                  
-        rescue
-          Ultrasphinx.say "#{CONF_PATH} file is corrupted"
-          Ultrasphinx.say "please run 'rake ultrasphinx:configure'"
-        end    
-        
-      end
-    end
-
-    MODELS_TO_IDS = get_models_to_class_ids || {} 
+    MODELS_TO_IDS = Ultrasphinx.get_models_to_class_ids || {} 
 
     IDS_TO_MODELS = MODELS_TO_IDS.invert #:nodoc:
-      
-    MAX_MATCHES = DAEMON_SETTINGS["max_matches"].to_i 
     
+    MAX_MATCHES = DAEMON_SETTINGS["max_matches"].to_i 
+
     FACET_CACHE = {} #:nodoc: 
     
     # Returns the options hash.
@@ -296,6 +269,7 @@ Note that your database is never changed by anything Ultrasphinx does.
       @options['query'] = @options['query'].to_s
       @options['class_names'] = Array(@options['class_names'])
       @options['facets'] = Array(@options['facets'])
+      @options['indexes'] = Array(@options['indexes']).join(" ")
             
       raise UsageError, "Weights must be a Hash" unless @options['weights'].is_a? Hash
       raise UsageError, "Filters must be a Hash" unless @options['filters'].is_a? Hash
@@ -308,18 +282,26 @@ Note that your database is never changed by anything Ultrasphinx does.
       say "discarded invalid keys: #{extra_keys * ', '}" if extra_keys.any? and RAILS_ENV != "test" 
     end
     
-    # Run the search, filling results with an array of ActiveRecord objects. Set the parameter to false if you only want the ids returned.
+    # Run the search, filling results with an array of ActiveRecord objects. Set the parameter to false 
+    # if you only want the ids returned.
     def run(reify = true)
       @request = build_request_with_options(@options)
 
       say "searching for #{@options.inspect}"
 
       perform_action_with_retries do
-        @response = @request.query(parsed_query, UNIFIED_INDEX_NAME)
+        @response = @request.query(parsed_query, @options['indexes'])
         say "search returned #{total_entries}/#{response[:total_found].to_i} in #{time.to_f} seconds."
           
         if self.class.client_options['with_subtotals']        
           @subtotals = get_subtotals(@request, parsed_query) 
+          
+          # If the original query has a filter on this class, we will use its more accurate total rather the facet's 
+          # less accurate total.
+          if @options['class_names'].size == 1
+            @subtotals[@options['class_names'].first] = response[:total_found]
+          end
+          
         end
         
         Array(@options['facets']).each do |facet|
@@ -363,8 +345,8 @@ Note that your database is never changed by anything Ultrasphinx does.
       end.flatten
       
       excerpting_options = {
-        :docs => docs, 
-        :index => UNIFIED_INDEX_NAME, 
+        :docs => docs,         
+        :index => MAIN_INDEX, # http://www.sphinxsearch.com/forum/view.html?id=100
         :words => strip_query_commands(parsed_query)
       }
       self.class.excerpting_options.except('content_methods').each do |key, value|
