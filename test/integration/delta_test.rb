@@ -36,4 +36,17 @@ class DeltaTest < Test::Unit::TestCase
 
     assert_equal @count, S.new.total_entries
   end
+  
+  def test_merge
+    Dir.chdir "#{HERE}/integration/app" do    
+      Echoe.silence do
+        system("rake ultrasphinx:daemon:start")
+      end
+
+      output = `rake ultrasphinx:index:merge 2>&1`
+      assert_match /merged 0.1 Kwords/, output
+      assert_match /Index rotated ok/, output
+    end
+  end  
+  
 end

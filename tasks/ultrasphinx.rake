@@ -31,6 +31,11 @@ namespace :ultrasphinx do
       ultrasphinx_index(Ultrasphinx::DELTA_INDEX)
     end
     
+    desc "Merge the delta index into the main index."
+    task :merge =>  [:_environment] do
+      ultrasphinx_merge
+    end
+    
   end
 
   desc "Reindex and rotate all indexes."  
@@ -121,6 +126,7 @@ namespace :us do
   task :in => ["ultrasphinx:index"]
   task :main => ["ultrasphinx:index:main"]
   task :delta => ["ultrasphinx:index:delta"]
+  task :merge => ["ultrasphinx:index:merge"]
   task :spell => ["ultrasphinx:spelling:build"]
   task :conf => ["ultrasphinx:configure"]  
   task :boot => ["ultrasphinx:bootstrap"]  
@@ -144,8 +150,7 @@ end
 
 def ultrasphinx_index(index)
   rotate = ultrasphinx_daemon_running?
-  index_path = Ultrasphinx::INDEX_SETTINGS['path']
-  mkdir_p index_path unless File.directory? index_path
+  ultrasphinx_create_index_path
   
   cmd = "indexer --config '#{Ultrasphinx::CONF_PATH}'"
   cmd << " #{ENV['OPTS']} " if ENV['OPTS']
@@ -154,16 +159,43 @@ def ultrasphinx_index(index)
   
   say "$ #{cmd}"
   system cmd
+    
+  ultrasphinx_check_rotate if rotate    
+end
+
+def ultrasphinx_merge
+  rotate = ultrasphinx_daemon_running?
+
+  indexes = [Ultrasphinx::MAIN_INDEX, Ultrasphinx::DELTA_INDEX]
+  indexes.each do |index|
+    raise "#{index} index is missing" unless File.exist? "#{Ultrasphinx::INDEX_SETTINGS['path']}/sphinx_index_#{index}.spa"
+  end
+  
+  cmd = "indexer --config '#{Ultrasphinx::CONF_PATH}'"
+  cmd << " #{ENV['OPTS']} " if ENV['OPTS']
+  cmd << " --rotate" if rotate
+  cmd << " --merge #{indexes.join(' ')}"
+  
+  say "$ #{cmd}"
+  system cmd
       
-  if rotate
-    sleep(4)
-    failed = Dir[index_path + "/*.new.*"]
-    if failed.any?
-      say "warning; index failed to rotate! Deleting new indexes"
-      failed.each {|f| File.delete f }
-    else
-      say "index rotated ok"
-    end
+  ultrasphinx_check_rotate
+end
+
+def ultrasphinx_check_rotate
+  sleep(4)
+  failed = Dir[Ultrasphinx::INDEX_SETTINGS['path'] + "/*.new.*"]
+  if failed.any?
+    say "warning; index failed to rotate! Deleting new indexes"
+    failed.each {|f| File.delete f }
+  else
+    say "index rotated ok"
+  end
+end
+
+def ultrasphinx_create_index_path
+  unless File.directory? Ultrasphinx::INDEX_SETTINGS['path']
+    mkdir_p Ultrasphinx::INDEX_SETTINGS['path'] 
   end
 end
 
