@@ -51,7 +51,9 @@ module Ultrasphinx
   }
   
   CONNECTION_DEFAULTS = {
-    :host => 'localhost'
+    :host => 'localhost',
+    :password => '',
+    :username => 'root'
   }
      
   mattr_accessor :with_rake
