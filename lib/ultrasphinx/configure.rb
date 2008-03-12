@@ -114,8 +114,14 @@ module Ultrasphinx
               # Warning about the sortable problem
               # XXX Kind of in an odd place, but I want to happen at index time
               Ultrasphinx.say "warning; text sortable columns on #{klass.name} will return wrong results with partial delta indexing"
-            end            
-            string = "#{source_string} > #{SQL_FUNCTIONS[ADAPTER]['delta']._interpolate(INDEXER_SETTINGS['delta'])}";
+            end
+
+            delta = INDEXER_SETTINGS['delta']
+            if delta 
+              string = "#{source_string} > #{SQL_FUNCTIONS[ADAPTER]['delta']._interpolate(delta)}";
+            else
+              raise ConfigurationError, "No 'indexer { delta }' setting specified in '#{BASE_PATH}'"
+            end
           else
             Ultrasphinx.say "warning; #{klass.name} will reindex the entire table during delta indexing"
           end
@@ -123,7 +129,7 @@ module Ultrasphinx
       end
       
       
-      def setup_source_arrays(index, klass, fields, class_id, conditions)        
+      def setup_source_arrays(index, klass, fields, class_id, conditions, order)
         condition_strings = Array(conditions).map do |condition| 
           "(#{condition})"
         end
@@ -132,7 +138,7 @@ module Ultrasphinx
           "(#{klass.table_name}.#{klass.primary_key} * #{MODEL_CONFIGURATION.size} + #{class_id}) AS id", 
           "#{class_id} AS class_id", "'#{klass.name}' AS class"]
         remaining_columns = fields.types.keys - ["class", "class_id"]        
-        [column_strings, [], condition_strings, [], false, remaining_columns]
+        [column_strings, [], condition_strings, [], false, remaining_columns, order]
       end
       
       
@@ -154,9 +160,9 @@ module Ultrasphinx
             
       def build_source(index, fields, model, options, class_id, klass, source, groups)
                 
-        column_strings, join_strings, condition_strings, group_bys, use_distinct, remaining_columns = 
+        column_strings, join_strings, condition_strings, group_bys, use_distinct, remaining_columns, order = 
           setup_source_arrays(
-            index, klass, fields, class_id, options['conditions'])
+            index, klass, fields, class_id, options['conditions'], options['order'])
             
         delta_condition = 
           build_delta_condition(
@@ -182,14 +188,14 @@ module Ultrasphinx
           SOURCE_SETTINGS._to_conf_string,
           setup_source_database(klass),
           range_select_string(klass, delta_condition),
-          build_query(klass, column_strings, join_strings, condition_strings, use_distinct, group_bys),
+          build_query(klass, column_strings, join_strings, condition_strings, use_distinct, group_bys, order),
           "\n" + groups,
           query_info_string(klass, class_id),
           "}\n\n"]
       end
       
       
-      def build_query(klass, column_strings, join_strings, condition_strings, use_distinct, group_bys)
+      def build_query(klass, column_strings, join_strings, condition_strings, use_distinct, group_bys, order)
         
         primary_key = "#{klass.table_name}.#{klass.primary_key}"
         group_bys = case ADAPTER
@@ -211,7 +217,8 @@ module Ultrasphinx
           join_strings.uniq,
           "WHERE #{primary_key} >= $start AND #{primary_key} <= $end",
           condition_strings.uniq.map {|condition| "AND #{condition}" },
-          "GROUP BY #{group_bys}"
+          "GROUP BY #{group_bys}",
+          ("ORDER BY #{order}" if order)
         ].flatten.compact.join(" ")
       end
       
@@ -242,7 +249,7 @@ module Ultrasphinx
           association = get_association(klass, entry)
 
           # You can use 'class_name' and 'association_sql' to associate to a model that doesn't actually 
-          # have an association
+          # have an association.
           join_klass = association ? association.class_name.constantize : entry['class_name'].constantize
                         
           raise ConfigurationError, "Unknown association from #{klass} to #{entry['class_name'] || entry['association_name']}" if not association and not entry['association_sql']
@@ -272,23 +279,25 @@ module Ultrasphinx
           if entry['field']
             # Group concats
   
-            # Only has_many's or explicit sql right now
+            # Only has_many's or explicit sql right now.
             association = get_association(klass, entry)
             
             # You can use 'class_name' and 'association_sql' to associate to a model that doesn't actually 
-            # have an association
+            # have an association. The automatic choice of a table alias chosen might be kind of strange.
             join_klass = association ? association.class_name.constantize : entry['class_name'].constantize
         
             join_strings = install_join_unless_association_sql(entry['association_sql'], nil, join_strings) do 
-              # XXX make sure foreign key is right for polymorphic relationships
+              # XXX The foreign key is not verified for polymorphic relationships.
               association = get_association(klass, entry)
               "LEFT OUTER JOIN #{join_klass.table_name} AS #{entry['table_alias']} ON #{klass.table_name}.#{klass.primary_key} = #{entry['table_alias']}.#{association.primary_key_name}" + 
-                (entry['conditions'] ? " AND (#{entry['conditions']})" : "")
+                # XXX Is this valid?
+                (entry['conditions'] ? " AND (#{entry['conditions']})" : "") 
             end
             
             source_string = "#{entry['table_alias']}.#{entry['field']}"
+            order_string = ("ORDER BY #{entry['order']}" if entry['order'])
             # We are using the field in an aggregate, so we don't want to add it to group_bys
-            source_string = SQL_FUNCTIONS[ADAPTER]['group_concat']._interpolate(source_string)
+            source_string = SQL_FUNCTIONS[ADAPTER]['group_concat']._interpolate(source_string, order_string)
             use_distinct = true
             
             column_strings, remaining_columns = install_field(fields, source_string, entry['as'], entry['function_sql'], entry['facet'], column_strings, remaining_columns)
@@ -311,7 +320,7 @@ module Ultrasphinx
         [column_strings, join_strings, group_bys, use_distinct, remaining_columns]
       end
       
-    
+          
       def build_index(index, sources)
         ["\n# Index configuration\n\n",
           "index #{index}\n{",

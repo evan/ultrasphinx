@@ -97,9 +97,15 @@ class String
     end
   end
   
-  def _interpolate(value)
-    self.gsub('?', value)
+  # Interpolate SQL field names into functions
+  def _interpolate(*values)
+    if values.size == 1
+      self.gsub('?', values.first)
+    else
+      values.inject(self) { |result, value| result.sub('?', value.to_s) }
+    end
   end
+  
 end
 
 module Ultrasphinx::NumericSelf

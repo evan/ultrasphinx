@@ -42,6 +42,16 @@ SQL conditions, to scope which records are selected for indexing. Accepts a stri
   
 The <tt>:conditions</tt> key is especially useful if you delete records by marking them deleted rather than removing them from the database.
 
+== Ordering subgroups
+ 
+Use the <tt>:order</tt> key.
+
+An SQL order string.
+
+  :order => 'posts.id ASC'
+  
+
+
 == Including a field from an association
 
 Use the <tt>:include</tt> key.
@@ -76,9 +86,9 @@ Also use the <tt>:concatenate</tt> key.
 To concatenate one field from a set of associated records as a combined field in the parent record, use a group (or vertical) concatenation. A group concatenation should contain an <tt>:association_name</tt> key (the association name for the included model), a <tt>:field</tt> key (the field on the included model to concatenate), and an optional <tt>:as</tt> key (also the name of the result of the concatenation). For example, to concatenate all <tt>Post#body</tt> contents into the parent's <tt>responses</tt> field:
   :concatenate => [{:association_name => 'posts', :field => 'body', :as => 'responses'}]
 
-The keys <tt>:facet</tt>, <tt>:sortable</tt>, <tt>:conditions</tt>, <tt>:function_sql</tt>, <tt>:class_name</tt>, and <tt>:association_sql</tt>, are also recognized.
+The keys <tt>:facet</tt>, <tt>:sortable</tt>, <tt>:order</tt>, <tt>:conditions</tt>, <tt>:function_sql</tt>, <tt>:class_name</tt>, and <tt>:association_sql</tt>, are also recognized. 
 
-Vertical concatenations are implemented with GROUP_CONCAT on MySQL and with an aggregate and a stored procedure on PostgreSQL.
+Vertical concatenations are implemented with GROUP_CONCAT on MySQL and with an aggregate and a stored procedure on PostgreSQL. Note that <tt>:order</tt> is useful if you need to order the grouping so that proximity search works correctly, and <tt>:conditions</tt> are currently ignored if you have <tt>:association_sql</tt> defined.
 
 == Custom joins
 
@@ -158,7 +168,7 @@ If the associations weren't just <tt>has_many</tt> and <tt>belongs_to</tt>, you 
     def self.is_indexed opts = {}    
       opts = HashWithIndifferentAccess.new(opts)
           
-      opts.assert_valid_keys ['fields', 'concatenate', 'conditions', 'include', 'delta']
+      opts.assert_valid_keys ['fields', 'concatenate', 'conditions', 'include', 'delta', 'order']
 
       # Single options
       
@@ -191,11 +201,12 @@ If the associations weren't just <tt>has_many</tt> and <tt>belongs_to</tt>, you 
       
       opts['concatenate'].each do |entry|
         entry.stringify_keys!
-        entry.assert_valid_keys ['class_name', 'association_name', 'conditions', 'field', 'as', 'fields', 'association_sql', 'facet', 'function_sql', 'sortable']
+        entry.assert_valid_keys ['class_name', 'association_name', 'conditions', 'field', 'as', 'fields', 'association_sql', 'facet', 'function_sql', 'sortable', 'order']
         raise Ultrasphinx::ConfigurationError, "You can't mix regular concat and group concats" if entry['fields'] and (entry['field'] or entry['class_name'] or entry['association_name'])
         raise Ultrasphinx::ConfigurationError, "Concatenations must specify an :as key" unless entry['as']
         raise Ultrasphinx::ConfigurationError, "Group concatenations must not have multiple fields" if entry['field'].is_a? Array
         raise Ultrasphinx::ConfigurationError, "Regular concatenations should have multiple fields" if entry['fields'] and !entry['fields'].is_a?(Array)
+        raise Ultrasphinx::ConfigurationError, "Regular concatenations can't specify an order" if entry['fields'] and entry['order']
       end
       
       opts['include'].each do |entry|
