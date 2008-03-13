@@ -179,7 +179,7 @@ def ultrasphinx_merge
   say "$ #{cmd}"
   system cmd
       
-  ultrasphinx_check_rotate
+  ultrasphinx_check_rotate if rotate
 end
 
 def ultrasphinx_check_rotate
@@ -187,6 +187,7 @@ def ultrasphinx_check_rotate
   failed = Dir[Ultrasphinx::INDEX_SETTINGS['path'] + "/*.new.*"]
   if failed.any?
     say "warning; index failed to rotate! Deleting new indexes"
+    say "try 'killall searchd' and then 'rake ultrasphinx:daemon:start'"
     failed.each {|f| File.delete f }
   else
     say "index rotated ok"
