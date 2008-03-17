@@ -21,8 +21,7 @@ module Ultrasphinx
                   end
                 end
               rescue Object => e
-                say "warning: possibly critical autoload error on #{filename}"
-                say e.inspect
+                say "warning: critical autoload error on #{filename}; try referencing \"#{filename.camelize}\" directly in the console"
                 #say e.backtrace.join("\n") if RAILS_ENV == "development"
               end
             end 

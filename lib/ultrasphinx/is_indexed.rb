@@ -166,8 +166,7 @@ If the associations weren't just <tt>has_many</tt> and <tt>belongs_to</tt>, you 
 =end
   
     def self.is_indexed opts = {}    
-      opts = HashWithIndifferentAccess.new(opts)
-          
+      opts.stringify_keys!          
       opts.assert_valid_keys ['fields', 'concatenate', 'conditions', 'include', 'delta', 'order']
 
       # Single options
@@ -182,7 +181,8 @@ If the associations weren't just <tt>has_many</tt> and <tt>belongs_to</tt>, you 
         elsif opts['delta'].is_a? String
           opts['delta'] = {'field' => opts['delta']} 
         end
-        opts['delta'].stringify_keys!
+        
+        opts['delta']._stringify_all!
         opts['delta'].assert_valid_keys ['field']
       end
       
@@ -192,25 +192,31 @@ If the associations weren't just <tt>has_many</tt> and <tt>belongs_to</tt>, you 
       opts['concatenate'] = Array(opts['concatenate'])
       opts['include'] = Array(opts['include'])
                   
-      opts['fields'].each do |entry|
+      opts['fields'].map! do |entry|
         if entry.is_a? Hash
-          entry.stringify_keys!
+          entry._stringify_all!('sortable', 'facet')
           entry.assert_valid_keys ['field', 'as', 'facet', 'function_sql', 'sortable']
+          entry
+        else
+          entry.to_s
         end
       end
       
       opts['concatenate'].each do |entry|
-        entry.stringify_keys!
+        entry._stringify_all!('fields', 'sortable', 'facet')
+      
         entry.assert_valid_keys ['class_name', 'association_name', 'conditions', 'field', 'as', 'fields', 'association_sql', 'facet', 'function_sql', 'sortable', 'order']
         raise Ultrasphinx::ConfigurationError, "You can't mix regular concat and group concats" if entry['fields'] and (entry['field'] or entry['class_name'] or entry['association_name'])
         raise Ultrasphinx::ConfigurationError, "Concatenations must specify an :as key" unless entry['as']
         raise Ultrasphinx::ConfigurationError, "Group concatenations must not have multiple fields" if entry['field'].is_a? Array
         raise Ultrasphinx::ConfigurationError, "Regular concatenations should have multiple fields" if entry['fields'] and !entry['fields'].is_a?(Array)
         raise Ultrasphinx::ConfigurationError, "Regular concatenations can't specify an order" if entry['fields'] and entry['order']
+
+        entry['fields'].map!(&:to_s) if entry['fields'] # Stringify fields array
       end
       
       opts['include'].each do |entry|
-        entry.stringify_keys!
+        entry._stringify_all!('sortable', 'facet')
         entry.assert_valid_keys ['class_name', 'association_name', 'field', 'as', 'association_sql', 'facet', 'function_sql', 'sortable']
       end
             
