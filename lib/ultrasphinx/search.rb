@@ -281,7 +281,7 @@ Note that your database is never changed by anything Ultrasphinx does.
       @results, @subtotals, @facets, @response = [], {}, {}, {}
         
       extra_keys = @options.keys - (self.class.query_defaults.keys + INTERNAL_KEYS)
-      say "discarded invalid keys: #{extra_keys * ', '}" if extra_keys.any? and RAILS_ENV != "test" 
+      log "discarded invalid keys: #{extra_keys * ', '}" if extra_keys.any? and RAILS_ENV != "test" 
     end
     
     # Run the search, filling results with an array of ActiveRecord objects. Set the parameter to false 
@@ -289,11 +289,11 @@ Note that your database is never changed by anything Ultrasphinx does.
     def run(reify = true)
       @request = build_request_with_options(@options)
 
-      say "searching for #{@options.inspect}"
+      log "searching for #{@options.inspect}"
 
       perform_action_with_retries do
         @response = @request.query(parsed_query, @options['indexes'])
-        say "search returned #{total_entries}/#{response[:total_found].to_i} in #{time.to_f} seconds."
+        log "search returned #{total_entries}/#{response[:total_found].to_i} in #{time.to_f} seconds."
           
         if self.class.client_options['with_subtotals']        
           @subtotals = get_subtotals(@request, parsed_query) 
@@ -395,6 +395,10 @@ Note that your database is never changed by anything Ultrasphinx does.
       end
     end
   
+    def log msg #:nodoc:
+      Ultrasphinx.log msg
+    end
+
     def say msg #:nodoc:
       Ultrasphinx.say msg
     end

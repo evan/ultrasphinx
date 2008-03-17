@@ -104,8 +104,9 @@ sql_query_pre = ) + SQL_FUNCTIONS['postgresql']['stored_procedures'].values.join
     ActiveRecord::Base.connection.execute(value)
   end
   
-  # Logger.
+  # Warn-mode logger. Also called from rake tasks.  
   def self.say msg
+    # XXX Method name is stupid.
     if with_rake
       puts msg[0..0].upcase + msg[1..-1]
     else
@@ -118,6 +119,16 @@ sql_query_pre = ) + SQL_FUNCTIONS['postgresql']['stored_procedures'].values.join
     end        
     nil # Explicitly return nil
   end
+  
+  # Debug-mode logger.  
+  def self.log msg
+    # XXX Method name is stupid.
+    if defined? RAILS_DEFAULT_LOGGER
+      RAILS_DEFAULT_LOGGER.debug msg
+    else
+      STDERR.puts msg
+    end
+  end    
   
   # Configuration file parser.
   def self.options_for(heading, path)
