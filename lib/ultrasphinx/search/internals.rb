@@ -254,7 +254,7 @@ module Ultrasphinx
             end or
               # XXX This default is kind of buried, but I'm not sure why you would need it to be 
               # configurable, since you can use ['finder_methods'].
-              "find_all_by_id"
+              "find_all_by_#{klass.primary_key}"
             )
 
           records = klass.send(finder, ids_hash[class_name])
