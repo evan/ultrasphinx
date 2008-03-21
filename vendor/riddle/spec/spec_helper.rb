@@ -1,4 +1,5 @@
 require 'riddle'
+require 'spec'
 require 'spec/sphinx_helper'
 
 Spec::Runner.configure do |config|

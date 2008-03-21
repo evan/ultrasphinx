@@ -122,9 +122,24 @@ fclose($file);
 
 $client->SetFieldWeights(array());
 
+// comment
+$file = fopen("spec/fixtures/data/comment.bin", "w");
+fwrite($file, $client->_reqs[$client->AddQuery("test ", "*", "commenting")]);
+fclose($file);
+
 // update_simple
 $file = fopen("spec/fixtures/data/update_simple.bin", "w");
 fwrite($file, $client->UpdateAttributes("people", array("birthday"), array(1 => array(191163600))));
+fclose($file);
+
+// keywords_without_hits
+$file = fopen("spec/fixtures/data/keywords_without_hits.bin", "w");
+fwrite($file, $client->BuildKeywords("pat", "people", false));
+fclose($file);
+
+// keywords_with_hits
+$file = fopen("spec/fixtures/data/keywords_with_hits.bin", "w");
+fwrite($file, $client->BuildKeywords("pat", "people", true));
 fclose($file);
 
 ?>

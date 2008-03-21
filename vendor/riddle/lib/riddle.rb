@@ -12,8 +12,11 @@ module Riddle #:nodoc:
     Major = 0
     Minor = 9
     Tiny  = 8
-    Rev   = 1112
+    # Revision number for RubyForge's sake, taken from what Sphinx
+    # outputs to the command line.
+    Rev   = 1198
     
-    String = [Major, Minor, Tiny].join('.') + "r#{Rev}"
+    String      = [Major, Minor, Tiny].join('.') + "rc1"
+    GemVersion  = [Major, Minor, Tiny, Rev].join('.')
   end
 end

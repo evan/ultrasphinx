@@ -123,6 +123,12 @@ describe Riddle::Client do
     client.queue.first.should == query_contents(:field_weights)
   end
   
+  it "should build a message with acomment correctly" do
+    client = Riddle::Client.new
+    client.append_query "test ", "*", "commenting"
+    client.queue.first.should == query_contents(:comment)
+  end
+  
   it "should keep multiple messages in the queue" do
     client = Riddle::Client.new
     client.weights = [100, 1]
@@ -150,5 +156,25 @@ describe Riddle::Client do
       ["birthday"],
       {1 => [191163600]}
     ).should == query_contents(:update_simple)
+  end
+  
+  it "should build a keywords request without hits correctly" do
+    client = Riddle::Client.new
+    client.send(
+      :keywords_message,
+      "pat",
+      "people",
+      false
+    ).should == query_contents(:keywords_without_hits)
+  end
+  
+  it "should build a keywords request with hits correctly" do
+    client = Riddle::Client.new
+    client.send(
+      :keywords_message,
+      "pat",
+      "people",
+      true
+    ).should == query_contents(:keywords_with_hits)
   end
 end

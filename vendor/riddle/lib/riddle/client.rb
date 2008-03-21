@@ -26,15 +26,17 @@ module Riddle
   #
   class Client
     Commands = {
-      :search  => 0, # SEARCHD_COMMAND_SEARCH
-      :excerpt => 1, # SEARCHD_COMMAND_EXCERPT
-      :update  => 2  # SEARCHD_COMMAND_UPDATE
+      :search   => 0, # SEARCHD_COMMAND_SEARCH
+      :excerpt  => 1, # SEARCHD_COMMAND_EXCERPT
+      :update   => 2, # SEARCHD_COMMAND_UPDATE
+      :keywords => 3  # SEARCHD_COMMAND_KEYWORDS
     }
     
     Versions = {
-      :search  => 0x112, # VER_COMMAND_SEARCH
-      :excerpt => 0x100, # VER_COMMAND_EXCERPT
-      :update  => 0x101  # VER_COMMAND_UPDATE
+      :search   => 0x113, # VER_COMMAND_SEARCH
+      :excerpt  => 0x100, # VER_COMMAND_EXCERPT
+      :update   => 0x101, # VER_COMMAND_UPDATE
+      :keywords => 0x100  # VER_COMMAND_KEYWORDS
     }
     
     Statuses = {
@@ -50,7 +52,7 @@ module Riddle
       :phrase     => 2, # SPH_MATCH_PHRASE
       :boolean    => 3, # SPH_MATCH_BOOLEAN
       :extended   => 4, # SPH_MATCH_EXTENDED
-      :fullsacn   => 5, # SPH_MATCH_FULLSCAN
+      :fullscan   => 5, # SPH_MATCH_FULLSCAN
       :extended2  => 6  # SPH_MATCH_EXTENDED2
     }
     
@@ -158,8 +160,8 @@ module Riddle
     
     # Append a query to the queue. This uses the same parameters as the query
     # method.
-    def append_query(search, index = '*')
-      @queue << query_message(search, index)
+    def append_query(search, index = '*', comments = '')
+      @queue << query_message(search, index, comments)
     end
     
     # Run all the queries currently in the queue. This will return an array of
@@ -275,8 +277,8 @@ module Riddle
     # related warning, it will be under the <tt>:warning</tt> key. Fatal errors
     # will be described under <tt>:error</tt>.
     #
-    def query(search, index = '*')      
-      @queue << query_message(search, index)
+    def query(search, index = '*', comments = '')
+      @queue << query_message(search, index, comments)
       self.run.first
     end
     
@@ -356,6 +358,30 @@ module Riddle
       )
       
       response.next_int
+    end
+    
+    # Generates a keyword list for a given query. Each keyword is represented
+    # by a hash, with keys :tokenised and :normalised. If return_hits is set to
+    # true it will also report on the number of hits and documents for each
+    # keyword (see :hits and :docs keys respectively).
+    def keywords(query, index, return_hits = false)
+      response = Response.new request(
+        :keywords,
+        keywords_message(query, index, return_hits)
+      )
+      
+      (0...response.next_int).collect do
+        hash = {}
+        hash[:tokenised]  = response.next
+        hash[:normalised] = response.next
+        
+        if return_hits
+          hash[:docs] = response.next_int
+          hash[:hits] = response.next_int
+        end
+        
+        hash
+      end
     end
     
     private
@@ -439,7 +465,7 @@ module Riddle
     end
     
     # Generation of the message to send to Sphinx for a search.
-    def query_message(search, index)
+    def query_message(search, index, comments = '')
       message = Message.new
       
       # Mode, Limits, Sort Mode
@@ -500,6 +526,8 @@ module Riddle
         message.append_int val
       end
       
+      message.append_string comments
+      
       message.to_s
     end
     
@@ -541,6 +569,17 @@ module Riddle
         message.append_64bit_int key # document ID
         message.append_ints *values # array of new values (integers)
       end
+      
+      message.to_s
+    end
+    
+    # Generates the simple message to send to the daemon for a keywords request.
+    def keywords_message(query, index, return_hits)
+      message = Message.new
+      
+      message.append_string query
+      message.append_string index
+      message.append_int return_hits ? 1 : 0
       
       message.to_s
     end
