@@ -32,6 +32,7 @@ Features include:
 * spellcheck
 * faceting on text, date, and numeric fields
 * field weighting, merging, and aliases
+* sorting and filtering by geodistance
 * <tt>belongs_to</tt> and <tt>has_many</tt> includes
 * drop-in compatibility with will_paginate[http://err.lighthouseapp.com/projects/466/home]
 * drop-in compatibility with Interlock[http://blog.evanweaver.com/files/doc/fauna/interlock/]

@@ -36,7 +36,7 @@ searchd
   
   # What interface the search daemon should listen on 
   address = 0.0.0.0
-  port = 3312
+  port = 3313
   seamless_rotate = 1
   
   # Where to to store the logs
@@ -55,7 +55,7 @@ client
   dictionary_name = <%= dictionary = 'ap' %>
   # How your application connects to the search daemon (not necessarily the same as above)
   server_host = localhost
-  server_port = 3312
+  server_port = 3313
 }
 
 source

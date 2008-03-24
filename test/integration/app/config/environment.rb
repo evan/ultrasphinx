@@ -11,5 +11,6 @@ Rails::Initializer.run do |config|
 end
 
 Ultrasphinx::Search.client_options["finder_methods"].unshift("custom_find")
+Ultrasphinx::Search.query_defaults["location"]["units"] = "degrees"
 
 # Dependencies.log_activity = true

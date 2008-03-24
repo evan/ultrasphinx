@@ -37,6 +37,7 @@ test/integration/app/app/helpers/application_helper.rb
 test/integration/app/app/helpers/sellers_helper.rb
 test/integration/app/app/helpers/states_helper.rb
 test/integration/app/app/helpers/users_helper.rb
+test/integration/app/app/models/category.rb
 test/integration/app/app/models/geo/address.rb
 test/integration/app/app/models/geo/country.rb
 test/integration/app/app/models/geo/state.rb
@@ -71,7 +72,6 @@ test/integration/app/config/environments/test.rb
 test/integration/app/config/locomotive.yml
 test/integration/app/config/routes.rb
 test/integration/app/config/ultrasphinx/default.base
-test/integration/app/config/ultrasphinx/development.conf
 test/integration/app/config/ultrasphinx/development.conf.canonical
 test/integration/app/db/migrate/001_create_users.rb
 test/integration/app/db/migrate/002_create_sellers.rb
@@ -82,7 +82,8 @@ test/integration/app/db/migrate/006_add_deleted_to_user.rb
 test/integration/app/db/migrate/007_add_lat_and_long_to_address.rb
 test/integration/app/db/migrate/008_add_mission_statement_to_seller.rb
 test/integration/app/db/migrate/009_create_countries.rb
-test/integration/app/db/schema.rb
+test/integration/app/db/migrate/010_create_categories.rb
+test/integration/app/db/migrate/011_categories_sellers.rb
 test/integration/app/doc/README_FOR_APP
 test/integration/app/public/404.html
 test/integration/app/public/500.html
@@ -115,6 +116,8 @@ test/integration/app/script/process/spawner
 test/integration/app/script/runner
 test/integration/app/script/server
 test/integration/app/test/fixtures/addresses.yml
+test/integration/app/test/fixtures/categories.yml
+test/integration/app/test/fixtures/categories_sellers.yml
 test/integration/app/test/fixtures/countries.yml
 test/integration/app/test/fixtures/sellers.yml
 test/integration/app/test/fixtures/states.yml
@@ -125,6 +128,7 @@ test/integration/app/test/functional/states_controller_test.rb
 test/integration/app/test/functional/users_controller_test.rb
 test/integration/app/test/test_helper.rb
 test/integration/app/test/unit/address_test.rb
+test/integration/app/test/unit/category_test.rb
 test/integration/app/test/unit/country_test.rb
 test/integration/app/test/unit/seller_test.rb
 test/integration/app/test/unit/state_test.rb
@@ -153,6 +157,7 @@ vendor/riddle/README
 vendor/riddle/spec/fixtures/data/anchor.bin
 vendor/riddle/spec/fixtures/data/any.bin
 vendor/riddle/spec/fixtures/data/boolean.bin
+vendor/riddle/spec/fixtures/data/comment.bin
 vendor/riddle/spec/fixtures/data/distinct.bin
 vendor/riddle/spec/fixtures/data/field_weights.bin
 vendor/riddle/spec/fixtures/data/filter.bin
@@ -166,6 +171,8 @@ vendor/riddle/spec/fixtures/data/filter_range_exclude.bin
 vendor/riddle/spec/fixtures/data/group.bin
 vendor/riddle/spec/fixtures/data/index.bin
 vendor/riddle/spec/fixtures/data/index_weights.bin
+vendor/riddle/spec/fixtures/data/keywords_with_hits.bin
+vendor/riddle/spec/fixtures/data/keywords_without_hits.bin
 vendor/riddle/spec/fixtures/data/phrase.bin
 vendor/riddle/spec/fixtures/data/rank_mode.bin
 vendor/riddle/spec/fixtures/data/simple.bin
@@ -179,6 +186,7 @@ vendor/riddle/spec/fixtures/sql/conf.example.yml
 vendor/riddle/spec/fixtures/sql/data.sql
 vendor/riddle/spec/fixtures/sql/structure.sql
 vendor/riddle/spec/functional/excerpt_spec.rb
+vendor/riddle/spec/functional/keywords_spec.rb
 vendor/riddle/spec/functional/search_spec.rb
 vendor/riddle/spec/functional/update_spec.rb
 vendor/riddle/spec/spec_helper.rb

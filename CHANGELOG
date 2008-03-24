@@ -1,4 +1,6 @@
 
+v1.9.2. Add geodistance support (Jeremy Seitz, Mark Lane). 
+
 v1.9.1. Add ultrasphinx:index:merge task for index merging, and a note in DEPLOYMENT_NOTES about how to use it.
 
 v1.9. Delta indexing. ERb now supported in .base files. Allow setting the searched indexes at runtime.

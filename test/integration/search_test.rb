@@ -11,7 +11,7 @@ class SearchTest < Test::Unit::TestCase
     assert_nothing_raised do
       @s = S.new(:query => 'seller').run
     end
-    assert_equal 20, @s.results.size
+    assert_equal 20, @s.size
   end  
   
   def test_with_subtotals_option
@@ -34,6 +34,7 @@ class SearchTest < Test::Unit::TestCase
   end
   
   def test_ignore_missing_records_option
+    S.client_options['distance'] = false # must disable geodistance or line 57 will bomb
     @s = S.new(:per_page => 1).run
     @record = @s.first
     assert_equal 1, @s.size
@@ -50,9 +51,8 @@ class SearchTest < Test::Unit::TestCase
     end 
     assert_equal 0, @s.size
     assert_equal 1, @s.per_page
-
     S.client_options['ignore_missing_records'] = false
-    
+  
     # Re-insert the record... ugh
     @new_record = @record.class.new(@record.attributes)
     @new_record.id = @record.id
@@ -253,7 +253,7 @@ class SearchTest < Test::Unit::TestCase
   end
 
   def test_included_text_facet_without_association_sql
-    # there are 40 users, but only 20 sellers. So you get 20 facets + 1 nil with 20 items
+    # There are 40 users, but only 20 sellers. So you get 20 facets + 1 nil with 20 items
     @s = Ultrasphinx::Search.new(:class_names => 'User', :facets => ['company']).run
     assert_equal(
       (Seller.count + 1), 
@@ -262,8 +262,9 @@ class SearchTest < Test::Unit::TestCase
   end
 
   def test_included_text_facet_with_association_sql
-    # XXX there are 40 users but only 20 sellers, but the replace function from user deletes 
-    # User #6 and 16 (why?). There is also a nil facet that gets added for a total of 19 objects
+    # XXX there are 40 users but only 20 sellers, but the replace function from User deletes 
+    # User #6 and 16 (why? Hash collision?). There is also a nil facet that gets added for a 
+    # total of 19 objects
     @s = Ultrasphinx::Search.new(:class_names => 'User', :facets => ['company_two']).run
     assert_equal(
       (Seller.count - 1), 
@@ -317,4 +318,64 @@ class SearchTest < Test::Unit::TestCase
     assert_match /strong/, @excerpted_item.name
   end
   
+  def test_distance_ascending
+    # (21.289453, -157.842783) is Ala Moana Shopping Center, 1450 Ala Moana Blvd, Honolulu HI 96814
+    @s = Ultrasphinx::Search.new(:class_names => 'Geo::Address', 
+          :query => 'Honolulu',
+          :per_page => 40,
+          :sort_mode => 'extended',
+          :sort_by => 'distance',
+          :location => {
+            :lat => 21.289453,
+            :long => -157.842783
+          })
+    @s.run
+    # This should return all items in the database, sorted in increasing distance
+    assert_equal 40, @s.size
+    assert_match /Waikiki Aquarium/, @s.first.name
+    assert_match /Waikiki Aquarium/, @s[1].name
+    assert_in_delta 3439, @s.first.distance, 10
+  end
+  
+  def test_distance_filter
+    # (21.289453, -157.842783) is Ala Moana Shopping Center, 1450 Ala Moana Blvd, Honolulu HI 96814
+    @s = Ultrasphinx::Search.new(:class_names => 'Geo::Address', 
+          :query => 'Honolulu',
+          :per_page => 40,
+          :sort_mode => 'extended',
+          :sort_by => 'distance',
+          :filters => {'distance' => 0..5000},
+          :location => {
+            :lat => 21.289453,
+            :long => -157.842783
+          })
+    @s.run
+
+    @s.each do |obj|
+      # This should return only those items within 5000 meters of Ala Moana, which 
+      # is only Waikiki Aquarium and Diamond Head.
+      assert_match /Waikiki Aquarium|Diamond Head/, obj.name
+    end
+        
+    assert_in_delta 3439, @s.first.distance, 10 # Closest item should be Waikiki at 3439 meters
+  end
+  
+  def test_distance_decending
+    # (21.289453, -157.842783) is Ala Moana Shopping Center, 1450 Ala Moana Blvd, Honolulu HI 96814
+    @s = Ultrasphinx::Search.new(:class_names => 'Geo::Address', 
+          :query => 'Honolulu',
+          :per_page => 40,
+          :sort_mode => 'extended',
+          :sort_by => 'distance desc',
+          :location => {
+            :lat => 21.289453,
+            :long => -157.842783
+          })
+    @s.run
+    
+    # Ids should come back in reverse order because the fixtures have the farther locations later in the file
+    assert_equal 40, @s.size
+    assert_match /Kailua Beach Park/, @s.first.name 
+    assert_in_delta 16940, @s.first.distance, 40
+  end
 end

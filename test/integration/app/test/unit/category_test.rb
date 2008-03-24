@@ -1,8 +1,6 @@
 require File.dirname(__FILE__) + '/../test_helper'
 
-class Geo::StatesTest < Test::Unit::TestCase
-  fixtures :states
-
+class CategoryTest < ActiveSupport::TestCase
   # Replace this with your real tests.
   def test_truth
     assert true

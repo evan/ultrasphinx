@@ -2,6 +2,9 @@
 module Ultrasphinx
   class Search
     module Internals
+    
+      INFINITY = 1/0.0
+    
       include Associations
 
       # These methods are kept stateless to ease debugging
@@ -11,6 +14,8 @@ module Ultrasphinx
       def build_request_with_options opts
       
         request = Riddle::Client.new
+        
+        # Basic options
         request.instance_eval do          
           @server = Ultrasphinx::CLIENT_SETTINGS['server_host']
           @port = Ultrasphinx::CLIENT_SETTINGS['server_port']          
@@ -20,8 +25,29 @@ module Ultrasphinx
           @max_matches = [@offset + @limit + Ultrasphinx::Search.client_options['max_matches_offset'], MAX_MATCHES].min
         end
           
+        # Geosearch location
+        loc = opts['location']
+        loc.stringify_keys!
+        lat, long = loc['lat'], loc['long']
+        if lat and long
+          # Convert degrees to radians, if requested
+          if loc['units'] == 'degrees'
+            lat = degrees_to_radians(lat)
+            long = degrees_to_radians(long)
+          end
+          # Set the location/anchor point
+          request.set_anchor(loc['lat_attribute_name'], lat, loc['long_attribute_name'], long)
+        end
+                  
         # Sorting
         sort_by = opts['sort_by']
+        if options['location']
+          case sort_by
+            when "distance asc", "distance" then sort_by = "@geodist asc"
+            when "distance desc" then sort_by = "@geodist desc"
+          end
+        end
+        
         # Use the additional sortable column if it is a text type
         sort_by += "_sortable" if Fields.instance.types[sort_by] == "text"
         
@@ -65,13 +91,19 @@ module Ultrasphinx
         end          
 
         # Extract raw filters 
-        # XXX This is poorly done. We should coerce based on the Field types, not the value class
+        # XXX This is poorly done. We should coerce based on the Field types, not the value class.
+        # That would also allow us to move numeric filters from the query string into the hash.
         Array(opts['filters']).each do |field, value|          
-          field = field.to_s
-          type = Fields.instance.types[field]
-          unless type
-            raise UsageError, "field #{field.inspect} is invalid"
+
+          field = field.to_s          
+          type = Fields.instance.types[field]             
+          
+          # Special derived attribute
+          if field == 'distance' and options['location']
+            field, type = '@geodist', 'float'
           end
+
+          raise UsageError, "field #{field.inspect} is invalid" unless type
           
           begin
             case value
@@ -292,6 +324,16 @@ module Ultrasphinx
             end
           end
         end
+
+        # Add an accessor for distance, if requested
+        if self.options['location']['lat'] and self.options['location']['long']
+          results.each_with_index do |result, index|
+            if result
+              distance = (response[:matches][index][:attributes]['@geodist'] or INFINITY)
+              result.instance_variable_get('@attributes')['distance'] = distance
+            end
+          end
+        end
         
         results.compact!
         
@@ -335,6 +377,10 @@ module Ultrasphinx
         # Also removes apostrophes in the middle of words so that they don't get split in two.
         s.gsub(/(^|\s)(AND|OR|NOT|\@\w+)(\s|$)/i, "").gsub(/(\w)\'(\w)/, '\1\2')
       end 
+      
+      def degrees_to_radians(value)
+        Math::PI * value / 180.0
+      end
     
     end
   end  
