@@ -50,7 +50,7 @@ The hash lets you customize internal aspects of the search.
 Note that you can set up your own query defaults in <tt>environment.rb</tt>: 
   
   self.class.query_defaults = HashWithIndifferentAccess.new({
-    :per_page => 10,c
+    :per_page => 10,
     :sort_mode => 'relevance',
     :weights => {'title' => 2.0}
   })
