@@ -99,7 +99,10 @@ This is a special singleton configuration class that stores the index field conf
         begin
         
           # Fields are from the model
+          # We destructively canonicize them back onto the configuration hash
           options['fields'] = options['fields'].to_a.map do |entry|
+            entry = {'field' => entry} unless entry.is_a? Hash
+
             extract_table_alias!(entry, klass)
             extract_field_alias!(entry, klass)
             

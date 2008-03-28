@@ -231,14 +231,8 @@ module Ultrasphinx
       
 
       def build_regular_fields(klass, fields, entries, column_strings, join_strings, group_bys, remaining_columns)          
-        entries.to_a.each do |entry|          
-
-          source_string = if entry['sortable']            
-            entry['field'] # Use the alias
-          else            
-            "#{entry['table_alias']}.#{entry['field']}" # Use the column
-          end
-          
+        entries.to_a.each do |entry|
+          source_string = "#{entry['table_alias']}.#{entry['field']}"
           group_bys << source_string
           column_strings, remaining_columns = install_field(fields, source_string, entry['as'], entry['function_sql'], entry['facet'], column_strings, remaining_columns)
         end

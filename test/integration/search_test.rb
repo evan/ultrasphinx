@@ -227,7 +227,7 @@ class SearchTest < Test::Unit::TestCase
   
   def test_unconfigured_sortable_name
     assert_raises(Ultrasphinx::UsageError) do
-      S.new(:class_names => 'User', :sort_by => 'company', :sort_mode => 'ascending', :per_page => 5).run
+      S.new(:class_names => 'Seller', :sort_by => 'company_name', :sort_mode => 'ascending', :per_page => 5).run
     end
   end
   
