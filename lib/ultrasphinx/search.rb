@@ -83,7 +83,7 @@ Note that Sphinx expects lat/long to be indexed as radians. If you have degrees 
 
 Then, set <tt>Ultrasphinx::Search.client_options[:location][:units] = 'degrees'</tt>.
 
-The <tt>:double</tt> column type is recommended for storing location data.
+The MySQL <tt>:double</tt> column type is recommended for storing location data. For Postgres, use <tt>:float</tt.
 
 == Interlock integration
   

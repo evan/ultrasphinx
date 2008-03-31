@@ -1,7 +1,7 @@
 class AddLatAndLongToAddress < ActiveRecord::Migration
   def self.up
-    add_column :addresses, :lat, :double
-    add_column :addresses, :lng, :double
+    add_column :addresses, :lat, :float # Postgres doesn't have :double
+    add_column :addresses, :lng, :float
   end
 
   def self.down

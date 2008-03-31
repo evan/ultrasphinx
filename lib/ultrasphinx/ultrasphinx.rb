@@ -67,43 +67,30 @@ module Ultrasphinx
       'group_concat' => "CAST(GROUP_CONCAT(DISTINCT ? ? SEPARATOR ' ') AS CHAR)",
       'delta' => "DATE_SUB(NOW(), INTERVAL ? SECOND)",      
       'hash' => "CAST(CRC32(?) AS unsigned)",
-      'range_cast' => "?",
-      'stored_procedures' => {}
+      'range_cast' => "?"
     },
     'postgresql' => {
       'group_concat' => "GROUP_CONCAT(?)",
       'delta' => "(NOW() - '? SECOND'::interval)",
       'range_cast' => "cast(coalesce(?,1) AS integer)",
-      'hash' => "CRC32(?)",
-      'stored_procedures' => Hash[*(
-        ['hex_to_int', 'group_concat', 'concat_ws', 'unix_timestamp', 'crc32'].map do |name|
-          [name, load_stored_procedure(name)]
-        end.flatten
-        )
-      ]
+      'hash' => "CRC32(?)"
     }      
   }
   
   DEFAULTS = {
     'mysql' => %(
-type = mysql
-sql_query_pre = SET SESSION group_concat_max_len = 65535
-sql_query_pre = SET NAMES utf8
-  ), 
+      type = mysql
+      sql_query_pre = SET SESSION group_concat_max_len = 65535
+      sql_query_pre = SET NAMES utf8
+    ), 
     'postgresql' => %(
-type = pgsql
-sql_query_pre = ) + SQL_FUNCTIONS['postgresql']['stored_procedures'].values.join(' ') + %(
-  )
-}
+      type = pgsql
+      sql_query_pre =
+    )
+  }
     
   ADAPTER = ActiveRecord::Base.connection.instance_variable_get("@config")[:adapter] rescue 'mysql'
-  
-  # Install the stored procedures.
-  # XXX This shouldn't be done at every index, say the Postgres people.
-  SQL_FUNCTIONS[ADAPTER]['stored_procedures'].each do |key, value|
-    ActiveRecord::Base.connection.execute(value)
-  end
-  
+    
   # Warn-mode logger. Also called from rake tasks.  
   def self.say msg
     # XXX Method name is stupid.

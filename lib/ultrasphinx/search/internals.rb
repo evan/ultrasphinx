@@ -48,6 +48,9 @@ module Ultrasphinx
           end
         end
         
+        # Use the additional sortable column if it is a text type
+        sort_by += "_sortable" if Fields.instance.types[sort_by] == "text"
+        
         unless sort_by.blank?
           if opts['sort_mode'].to_s == 'relevance'
             # If you're sorting by a field you don't want 'relevance' order
@@ -124,7 +127,7 @@ module Ultrasphinx
                 raise NoMethodError
             end
           rescue NoMethodError => e
-            raise UsageError, "filter value #{value.inspect} for field #{field.inspect} is invalid"
+            raise UsageError, "Filter value #{value.inspect} for field #{field.inspect} is invalid"
           end
         end
         
@@ -258,7 +261,10 @@ module Ultrasphinx
             
       # Inverse-modulus map the Sphinx ids to the table-specific ids
       def convert_sphinx_ids(sphinx_ids)    
-        number_of_models = IDS_TO_MODELS.size
+        
+        number_of_models = IDS_TO_MODELS.size        
+        raise ConfigurationError, "No model mappings were found. Your #{RAILS_ENV}.conf file is corrupted, or your application container needs to be restarted." if number_of_models == 0
+        
         sphinx_ids.sort_by do |item| 
           item[:index]
         end.map do |item|
