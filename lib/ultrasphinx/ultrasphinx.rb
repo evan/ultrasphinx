@@ -98,7 +98,7 @@ module Ultrasphinx
       puts msg[0..0].upcase + msg[1..-1]
     else
       msg = "** ultrasphinx: #{msg}"
-      if defined? RAILS_DEFAULT_LOGGER
+      if defined?(RAILS_DEFAULT_LOGGER) && RAILS_DEFAULT_LOGGER
         RAILS_DEFAULT_LOGGER.warn msg
       else
         STDERR.puts msg
@@ -110,7 +110,7 @@ module Ultrasphinx
   # Debug-mode logger.  
   def self.log msg
     # XXX Method name is stupid.
-    if defined? RAILS_DEFAULT_LOGGER
+    if defined?(RAILS_DEFAULT_LOGGER) && RAILS_DEFAULT_LOGGER
       RAILS_DEFAULT_LOGGER.debug msg
     else
       STDERR.puts msg
