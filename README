@@ -25,7 +25,7 @@ Sphinx/Ultrasphinx is the fastest and most stable Rails fulltext search solution
 
 Features include:
 
-* searching and ranking across orthogonal models
+* searching and ranking across multiple models
 * delta index support
 * excerpt highlighting
 * Google-style query parser
