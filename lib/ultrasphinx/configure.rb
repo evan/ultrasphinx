@@ -232,15 +232,9 @@ module Ultrasphinx
 
       def build_regular_fields(klass, fields, entries, column_strings, join_strings, group_bys, remaining_columns)          
         entries.to_a.each do |entry|          
-
-          source_string = if entry['sortable']            
-            entry['field'] # Use the alias
-          else            
-            "#{entry['table_alias']}.#{entry['field']}" # Use the column
-          end
-          
+          source_string = "#{entry['table_alias']}.#{entry['field']}"          
           group_bys << source_string
-          column_strings, remaining_columns = install_field(fields, source_string, entry['as'], entry['function_sql'], entry['facet'], column_strings, remaining_columns)
+          column_strings, remaining_columns = install_field(fields, source_string, entry['as'], entry['function_sql'], entry['facet'], entry['sortable'], column_strings, remaining_columns)
         end
         
         [column_strings, join_strings, group_bys, remaining_columns]
@@ -272,7 +266,7 @@ module Ultrasphinx
           
           source_string = "#{entry['table_alias']}.#{entry['field']}"
           group_bys << source_string
-          column_strings, remaining_columns = install_field(fields, source_string, entry['as'], entry['function_sql'], entry['facet'], column_strings, remaining_columns)                         
+          column_strings, remaining_columns = install_field(fields, source_string, entry['as'], entry['function_sql'], entry['facet'], entry['sortable'], column_strings, remaining_columns)                         
         end
         
         [column_strings, join_strings, group_bys, remaining_columns]
@@ -305,7 +299,7 @@ module Ultrasphinx
             source_string = SQL_FUNCTIONS[ADAPTER]['group_concat']._interpolate(source_string, order_string)
             use_distinct = true
             
-            column_strings, remaining_columns = install_field(fields, source_string, entry['as'], entry['function_sql'], entry['facet'], column_strings, remaining_columns)
+            column_strings, remaining_columns = install_field(fields, source_string, entry['as'], entry['function_sql'], entry['facet'], entry['sortable'], column_strings, remaining_columns)
             
           elsif entry['fields']
             # Regular concats
@@ -315,7 +309,7 @@ module Ultrasphinx
               group_bys << subsource_string
             end.join(', ') + ")"
             
-            column_strings, remaining_columns = install_field(fields, source_string, entry['as'], entry['function_sql'], entry['facet'], column_strings, remaining_columns)              
+            column_strings, remaining_columns = install_field(fields, source_string, entry['as'], entry['function_sql'], entry['facet'], entry['sortable'], column_strings, remaining_columns)              
 
           else
             raise ConfigurationError, "Invalid concatenate parameters for #{model}: #{entry.inspect}."
@@ -337,11 +331,17 @@ module Ultrasphinx
       end
       
     
-      def install_field(fields, source_string, as, function_sql, with_facet, column_strings, remaining_columns)
+      def install_field(fields, source_string, as, function_sql, with_facet, with_sortable, column_strings, remaining_columns)
         source_string = function_sql._interpolate(source_string) if function_sql
 
         column_strings << fields.cast(source_string, as)
         remaining_columns.delete(as)
+        
+        # Generate duplicate text fields for sorting
+        if with_sortable
+          column_strings << fields.cast(source_string, "#{as}_sortable")
+          remaining_columns.delete("#{as}_sortable")
+        end
         
         # Generate hashed integer fields for text grouping
         if with_facet

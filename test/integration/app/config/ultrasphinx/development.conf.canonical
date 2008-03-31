@@ -1,5 +1,5 @@
 
-# Auto-generated at Mon Mar 31 00:50:43 -0400 2008.
+# Auto-generated at Mon Mar 31 02:37:26 -0400 2008.
 # Hand modifications will be overwritten.
 # /Users/eweaver/Desktop/projects/ub/vendor/plugins/ultrasphinx/test/integration/app/config/ultrasphinx/default.base
 indexer {
@@ -70,7 +70,7 @@ sql_host = localhost
 sql_pass = 
 sql_user = root
 sql_query_range = SELECT MIN(id) , MAX(id) FROM sellers 
-sql_query = SELECT (sellers.id * 5 + 1) AS id, '' AS address_name, sellers.capitalization AS capitalization, 'Seller' AS class, 1 AS class_id, '' AS company, 0 AS company_facet, sellers.company_name AS company_name, CAST(CRC32(sellers.company_name) AS unsigned) AS company_name_facet, company_name AS company_name_sortable, '' AS company_two, 0 AS company_two_facet, '' AS content, UNIX_TIMESTAMP(sellers.created_at) AS created_at, 0 AS deleted, '' AS email, 0 AS lat, 0 AS lng, '' AS login, sellers.mission_statement AS mission_statement, mission_statement AS mission_statement_sortable, '' AS name, '' AS state, sellers.user_id AS user_id FROM sellers WHERE sellers.id >= $start AND sellers.id <= $end GROUP BY sellers.id
+sql_query = SELECT (sellers.id * 5 + 1) AS id, '' AS address_name, sellers.capitalization AS capitalization, 'Seller' AS class, 1 AS class_id, '' AS company, 0 AS company_facet, sellers.company_name AS company_name, CAST(CRC32(sellers.company_name) AS unsigned) AS company_name_facet, sellers.company_name AS company_name_sortable, '' AS company_two, 0 AS company_two_facet, '' AS content, UNIX_TIMESTAMP(sellers.created_at) AS created_at, 0 AS deleted, '' AS email, 0 AS lat, 0 AS lng, '' AS login, sellers.mission_statement AS mission_statement, sellers.mission_statement AS mission_statement_sortable, '' AS name, '' AS state, sellers.user_id AS user_id FROM sellers WHERE sellers.id >= $start AND sellers.id <= $end GROUP BY sellers.id
 
 sql_attr_float = capitalization
 sql_attr_uint = class_id
@@ -233,7 +233,7 @@ sql_host = localhost
 sql_pass = 
 sql_user = root
 sql_query_range = SELECT MIN(id) , MAX(id) FROM sellers WHERE sellers.updated_at > DATE_SUB(NOW(), INTERVAL 88200 SECOND)
-sql_query = SELECT (sellers.id * 5 + 1) AS id, '' AS address_name, sellers.capitalization AS capitalization, 'Seller' AS class, 1 AS class_id, '' AS company, 0 AS company_facet, sellers.company_name AS company_name, CAST(CRC32(sellers.company_name) AS unsigned) AS company_name_facet, company_name AS company_name_sortable, '' AS company_two, 0 AS company_two_facet, '' AS content, UNIX_TIMESTAMP(sellers.created_at) AS created_at, 0 AS deleted, '' AS email, 0 AS lat, 0 AS lng, '' AS login, sellers.mission_statement AS mission_statement, mission_statement AS mission_statement_sortable, '' AS name, '' AS state, sellers.user_id AS user_id FROM sellers WHERE sellers.id >= $start AND sellers.id <= $end AND sellers.updated_at > DATE_SUB(NOW(), INTERVAL 88200 SECOND) GROUP BY sellers.id
+sql_query = SELECT (sellers.id * 5 + 1) AS id, '' AS address_name, sellers.capitalization AS capitalization, 'Seller' AS class, 1 AS class_id, '' AS company, 0 AS company_facet, sellers.company_name AS company_name, CAST(CRC32(sellers.company_name) AS unsigned) AS company_name_facet, sellers.company_name AS company_name_sortable, '' AS company_two, 0 AS company_two_facet, '' AS content, UNIX_TIMESTAMP(sellers.created_at) AS created_at, 0 AS deleted, '' AS email, 0 AS lat, 0 AS lng, '' AS login, sellers.mission_statement AS mission_statement, sellers.mission_statement AS mission_statement_sortable, '' AS name, '' AS state, sellers.user_id AS user_id FROM sellers WHERE sellers.id >= $start AND sellers.id <= $end AND sellers.updated_at > DATE_SUB(NOW(), INTERVAL 88200 SECOND) GROUP BY sellers.id
 
 sql_attr_float = capitalization
 sql_attr_uint = class_id

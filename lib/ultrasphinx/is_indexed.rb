@@ -220,19 +220,7 @@ If the associations weren't just <tt>has_many</tt> and <tt>belongs_to</tt>, you 
         entry._stringify_all!('sortable', 'facet')
         entry.assert_valid_keys ['class_name', 'association_name', 'field', 'as', 'association_sql', 'facet', 'function_sql', 'sortable']
       end
-
-      # Add special alias columns for text sortables so that the original column doesn't get
-      # removed, since Sphinx will either store stems or ordinals but not both. We use the
-      # original alias as source so that the query doesn't get repeated in case it is 
-      # resource-intensive.
-      opts.slice('fields', 'concatenate', 'include').values._flatten_once.each do |entry|
-        if entry['sortable']
-          entry.delete('sortable')
-          name = "#{entry['as'] || entry['field']}"
-          opts['fields'] << {'field' => name, 'as' => "#{name}_sortable", 'sortable' => true}
-        end
-      end
-            
+                  
       Ultrasphinx::MODEL_CONFIGURATION[self.name] = opts
     end
   end

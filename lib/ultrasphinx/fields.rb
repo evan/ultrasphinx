@@ -107,8 +107,8 @@ This is a special singleton configuration class that stores the index field conf
               # XXX I think this is here for migrations
               Ultrasphinx.say "warning: field #{entry['field']} is not present in #{model}"
             else
-              save_and_verify_type(entry['as'], klass.columns_hash[entry['field']].type, entry['sortable'], klass)
-              install_facets!(entry, klass)
+              save_and_verify_type(entry['as'], klass.columns_hash[entry['field']].type, nil, klass)
+              install_duplicate_fields!(entry, klass)
             end            
           end  
           
@@ -119,15 +119,15 @@ This is a special singleton configuration class that stores the index field conf
             
             association_model = get_association_model(klass, entry)
             
-            save_and_verify_type(entry['as'] || entry['field'], association_model.columns_hash[entry['field']].type, entry['sortable'], klass)
-            install_facets!(entry, klass)
+            save_and_verify_type(entry['as'] || entry['field'], association_model.columns_hash[entry['field']].type, nil, klass)
+            install_duplicate_fields!(entry, klass)
           end  
           
           # Regular concats are CHAR, group_concats are BLOB and need to be cast to CHAR
           options['concatenate'].to_a.each do |entry|
             extract_table_alias!(entry, klass)
-            save_and_verify_type(entry['as'], 'text', entry['sortable'], klass) 
-            install_facets!(entry, klass)
+            save_and_verify_type(entry['as'], 'text', nil, klass) 
+            install_duplicate_fields!(entry, klass)
           end          
           
         rescue ActiveRecord::StatementInvalid
@@ -138,10 +138,14 @@ This is a special singleton configuration class that stores the index field conf
       self
     end
     
-    def install_facets!(entry, klass)
+    def install_duplicate_fields!(entry, klass)
       if entry['facet']
         save_and_verify_type(entry['as'], 'text', nil, klass) # source must be a string
         save_and_verify_type("#{entry['as']}_facet", 'integer', nil, klass)
+      end
+      if entry['sortable']
+        save_and_verify_type(entry['as'], 'text', nil, klass) # source must be a string
+        save_and_verify_type("#{entry['as']}_sortable", 'text', true, klass)      
       end
       entry
     end
