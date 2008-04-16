@@ -12,7 +12,7 @@ The easiest way to install is to grab the gem (available since 0.9.8r1112 only):
 However, if you're so inclined, you can grab sourcecode via subversion. If you
 are after a specific release, use the tag as follows:
 
-  svn co http://rails-oceania.googlecode.com/svn/patallan/riddle/tags/0.9.8-rc1 riddle
+  svn co http://rails-oceania.googlecode.com/svn/patallan/riddle/tags/0.9.8-rc2 riddle
 
 Or for the most current, just use trunk:
 
@@ -25,7 +25,8 @@ Please note that at the time of writing, the following versions are supported (i
 * 0.9.8-r985
 * 0.9.8-r1065
 * 0.9.8-r1112
-* 0.9.8-rc1 (gem version is 0.9.8.1198)
+* 0.9.8-rc1 (gem version: 0.9.8.1198)
+* 0.9.8-rc2 (gem version: 0.9.8.1231)
 
 To get started, just instantiate a Client object:
 

@@ -14,7 +14,7 @@ If you use this software, please {make a donation}[http://blog.evanweaver.com/do
 == Requirements
 
 * MySQL 5.0, or PostgreSQL 8.2
-* Sphinx 0.9.8-rc1
+* Sphinx 0.9.8-rc2
 * Rails 2.0.2
 
 More recent versions than listed are usually ok.

@@ -206,14 +206,9 @@ module Riddle
 
           result[:matches] << {:doc => doc, :weight => weight, :index => i, :attributes => {}}
           result[:attribute_names].each do |attr|
-            case result[:attributes][attr]
-            when AttributeTypes[:float]
-              result[:matches].last[:attributes][attr] = response.next_float
-            when AttributeTypes[:multi]
-              result[:matches].last[:attributes][attr] = response.next_int_array
-            else
-              result[:matches].last[:attributes][attr] = response.next_int
-            end
+            result[:matches].last[:attributes][attr] = attribute_from_type(
+              result[:attributes][attr], response
+            )
           end
         end
 
@@ -582,6 +577,17 @@ module Riddle
       message.append_int return_hits ? 1 : 0
       
       message.to_s
+    end
+    
+    def attribute_from_type(type, response)
+      type -= AttributeTypes[:multi] if is_multi = type > AttributeTypes[:multi]
+      
+      case type
+      when AttributeTypes[:float]
+        is_multi ? response.next_float_array : response.next_float
+      else
+        is_multi ? response.next_int_array   : response.next_int
+      end
     end
   end
 end
