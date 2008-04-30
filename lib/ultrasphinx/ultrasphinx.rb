@@ -186,22 +186,6 @@ module Ultrasphinx
   STOPWORDS_PATH = "#{Ultrasphinx::INDEX_SETTINGS['path']}/#{DICTIONARY}-stopwords.txt"
 
   MODEL_CONFIGURATION = {}     
-
-  # Complain if the database names go out of sync.
-  def self.verify_database_name
-    if File.exist? CONF_PATH
-      begin
-        if options_for(
-          "source #{MODEL_CONFIGURATION.keys.first.tableize}_#{MAIN_INDEX}", 
-          CONF_PATH
-        )['sql_db'] != ActiveRecord::Base.connection.instance_variable_get("@config")[:database]
-          say "warning; configured database name is out-of-date"
-          say "please run 'rake ultrasphinx:configure'"
-        end 
-      rescue Object
-      end
-    end
-  end
   
   # See if a delta index was defined.
   def self.delta_index_present?
