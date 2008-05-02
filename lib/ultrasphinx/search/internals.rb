@@ -347,14 +347,10 @@ module Ultrasphinx
       
       def perform_action_with_retries
         tries = 0
+        exceptions = [NoMethodError, Riddle::VersionError, Riddle::ResponseError, Errno::ECONNREFUSED, Errno::ECONNRESET,  Errno::EPIPE]
         begin
           yield
-        rescue NoMethodError,
-            Riddle::VersionError,
-            Riddle::ResponseError,
-            Errno::ECONNREFUSED, 
-            Errno::ECONNRESET, 
-            Errno::EPIPE => e
+        rescue *exceptions => e
           tries += 1
           if tries <= Ultrasphinx::Search.client_options['max_retries']
             say "restarting query (#{tries} attempts already) (#{e})"            
@@ -362,7 +358,9 @@ module Ultrasphinx
             retry
           else
             say "query failed"
-            raise DaemonError, e.to_s
+            # Clear the rescue list, retry one last time, and let the error fail up the stack
+            exceptions = []
+            retry
           end
         end
       end
