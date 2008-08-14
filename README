@@ -1,4 +1,3 @@
-
 Ultrasphinx 
 
 Ruby on Rails configurator and client to the Sphinx full text search engine.
@@ -51,7 +50,7 @@ You also need the <tt>chronic</tt> gem:
   sudo gem install chronic
 
 Then, install the plugin:
-  script/plugin install -x svn://rubyforge.org/var/svn/fauna/ultrasphinx/trunk
+  script/plugin install git://github.com/fauna/ultrasphinx.git
  
 Next, copy the <tt>examples/default.base</tt> file to <tt>RAILS_ROOT/config/ultrasphinx/default.base</tt>. This file sets up the  Sphinx daemon options such as port, host, and index location.
   
