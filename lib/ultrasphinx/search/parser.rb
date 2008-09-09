@@ -131,7 +131,14 @@ module Ultrasphinx
           # Remove some spaces
           content.gsub!(/^"\s+|\s+"$/, '"')
           # Convert fields into sphinx style, reformat the stream object
-          if content =~ /(.*?):(.*)/
+          if content =~ /(^(http|https):\/\/[a-z0-9]+([-.]{1}[a-z0-9]*)+. [a-z]{2,5}(([0-9]{1,5})?\/.*)?$)/ix
+            # XXX hack, its somewhat common to search for URLs.  be sure to add 
+            # " @, /," in the charset_type of the US config to search on all 
+            # URLs and email addresses, and add:
+            # prefix_fields = url, domain
+            # to your US config
+            token_hash[nil] += [[operator, content]]
+          elsif content =~ /(.*?):(.*)/
             token_hash[$1] += [[operator, $2]]
           else
             token_hash[nil] += [[operator, content]]
