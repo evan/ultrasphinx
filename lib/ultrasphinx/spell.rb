@@ -1,5 +1,4 @@
 
-
 module Ultrasphinx
 
 =begin rdoc
@@ -41,6 +40,8 @@ If <tt>@correction</tt> is not <tt>nil</tt>, go ahead and suggest it to the user
     
     def self.correct string
       return nil unless SP
+      return nil if string =~ /\d+/
+
       correction = string.gsub(/[\w\']+/) do |word| 
         unless SP.check(word)
           SP.suggest(word).first
