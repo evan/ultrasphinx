@@ -16,7 +16,7 @@ module Ultrasphinx
                   filename = filename[0..-4]
                   begin                
                     File.basename(filename).camelize.constantize
-                  rescue NameError => e
+                  rescue LoadError, NameError => e
                     filename.camelize.constantize
                   end
                 end

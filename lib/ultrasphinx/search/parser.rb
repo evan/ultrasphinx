@@ -111,6 +111,13 @@ module Ultrasphinx
           end        
         end
         
+        # Account for trailing operators
+        operators = OPERATORS.to_a.flatten
+        if operators.include?(token_stream.first)
+          token_stream.pop until !operators.include?(token_stream.last)
+          token_stream << '' until token_stream.size > 0 && token_stream.size.even?
+        end
+        
         if token_stream.size.zero? or token_stream.size.odd?
           raise Error, "#{token_stream.inspect} is not a valid token stream"
         end
