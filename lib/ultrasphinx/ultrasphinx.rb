@@ -127,12 +127,20 @@ module Ultrasphinx
     section = contents[/^#{heading.gsub('/', '__')}\s*?\{(.*?)\}/m, 1]
     
     if section
+      # Strip comments and leading/trailing whitespace
+      section.gsub!(/^\s*(.*?)\s*(?:#.*)?$/, '\1')
+
       # Convert to a hash
-      options = section.split("\n").map do |line|
-        line =~ /\s*(.*?)\s*=\s*([^\#]*)/
-        $1 ? [$1, $2.strip] : []
-      end      
-      Hash[*options.flatten] 
+      returning({}) do |options|
+        lines = section.split(/\n+/)
+        while line = lines.shift
+          if line =~ /(.*?)\s*=\s*(.*)/
+            key, value = $1, [$2]
+            value << (line = lines.shift) while line =~ /\\$/
+            options[key] = value.join("\n    ")
+          end
+        end
+      end
     else
       # XXX Is it safe to raise here?
       Ultrasphinx.say "warning; heading #{heading} not found in #{path}; it may be corrupted. "
