@@ -388,7 +388,7 @@ Note that your database is never changed by anything Ultrasphinx does.
       # Fetch the actual field contents
       docs = results_with_content_methods.map do |result, methods|
         methods.map do |method| 
-          method and strip_bogus_characters(result.send(method)) or ""
+          method and strip_bogus_characters(result.send(method).to_s) or ""
         end
       end.flatten
       
