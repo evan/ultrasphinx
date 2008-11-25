@@ -130,7 +130,17 @@ module Ultrasphinx
       
       
       def setup_source_arrays(index, klass, fields, class_id, conditions, order)
-        condition_strings = Array(conditions).map do |condition| 
+        if((klass.column_names.include? klass.inheritance_column) and (klass.superclass != ActiveRecord::Base))
+          if conditions.nil?
+            conditions = ""
+          else
+            conditions += " AND  "
+          end
+          conditions +=  "#{klass.table_name}.#{klass.inheritance_column} = '#{klass.name.to_s}'  "
+        end
+     	
+
+	condition_strings = Array(conditions).map do |condition| 
           "(#{condition})"
         end
         
