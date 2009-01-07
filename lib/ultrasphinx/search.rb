@@ -275,6 +275,9 @@ Note that your database is never changed by anything Ultrasphinx does.
       require_run    
       (total_entries / per_page.to_f).ceil
     end
+
+    # add alias for total_pages as expected by latest will_paginate
+    alias total_pages page_count
             
     # Returns the previous page number.
     def previous_page 
