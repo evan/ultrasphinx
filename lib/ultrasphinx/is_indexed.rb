@@ -218,7 +218,7 @@ If the associations weren't just <tt>has_many</tt> and <tt>belongs_to</tt>, you 
       
       opts['include'].each do |entry|
         entry._stringify_all!('sortable', 'facet')
-        entry.assert_valid_keys ['class_name', 'association_name', 'field', 'as', 'association_sql', 'facet', 'function_sql', 'sortable', 'table_alias']
+        entry.assert_valid_keys ['class_name', 'association_name', 'field', 'as', 'association_sql', 'facet', 'function_sql', 'sortable', 'table_alias', 'dont_group_by']
       end
                   
       Ultrasphinx::MODEL_CONFIGURATION[self.name] = opts

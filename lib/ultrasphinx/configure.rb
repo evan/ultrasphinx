@@ -266,7 +266,7 @@ module Ultrasphinx
           end
           
           source_string = "#{entry['table_alias']}.#{entry['field']}"
-          group_bys << source_string
+          group_bys << source_string unless entry['dont_group_by']
           column_strings, remaining_columns = install_field(fields, source_string, entry['as'], entry['function_sql'], entry['facet'], entry['sortable'], column_strings, remaining_columns)                         
         end
         
