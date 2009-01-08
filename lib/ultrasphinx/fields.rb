@@ -19,6 +19,7 @@ This is a special singleton configuration class that stores the index field conf
       'datetime' => 'date',
       'timestamp' => 'date',
       'float' => 'float',
+      'decimal' => 'integer', # this ain't right, but float doesn't work.
       'boolean' => 'bool'
     }
         
