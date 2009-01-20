@@ -76,6 +76,7 @@ module Ultrasphinx
       'hash' => "CRC32(?)"
     }      
   }
+  SQL_FUNCTIONS['jdbcmysql'] = SQL_FUNCTIONS['mysql']
   
   DEFAULTS = {
     'mysql' => %(
@@ -88,6 +89,7 @@ module Ultrasphinx
       sql_query_pre =
     )
   }
+  DEFAULTS['jdbcmysql'] = DEFAULTS['mysql']
     
   ADAPTER = ActiveRecord::Base.connection.instance_variable_get("@config")[:adapter] rescue 'mysql'
     

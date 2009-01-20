@@ -1,3 +1,4 @@
+$LOAD_PATH.unshift(File.dirname(__FILE__) + '/../lib')
 
 ENV['RAILS_ENV'] ||= "development"
 
@@ -6,6 +7,7 @@ namespace :ultrasphinx do
   task :_environment => [:environment] do
     # We can't just chain :environment because we want to make 
     # sure it's set only for known Sphinx tasks
+    require 'ultrasphinx'
     Ultrasphinx.with_rake = true
   end
   

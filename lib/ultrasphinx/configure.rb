@@ -88,7 +88,7 @@ module Ultrasphinx
       def setup_source_database(klass)
         # Supporting Postgres now
         connection_settings = klass.connection.instance_variable_get("@config")
-        raise ConfigurationError, "Unsupported database adapter" unless connection_settings
+        raise ConfigurationError, "Unsupported database adapter" unless connection_settings || defined?(JRUBY_VERSION)
 
         adapter_defaults = DEFAULTS[ADAPTER]
         raise ConfigurationError, "Unsupported database adapter" unless adapter_defaults
