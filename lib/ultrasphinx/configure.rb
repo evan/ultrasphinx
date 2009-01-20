@@ -29,7 +29,7 @@ module Ultrasphinx
         end
   
         # Build the field-to-type mappings.
-        Fields.instance.configure(MODEL_CONFIGURATION)
+        Ultrasphinx::Fields.instance.configure(MODEL_CONFIGURATION)
       end
       
                     
