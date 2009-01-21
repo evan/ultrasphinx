@@ -199,7 +199,7 @@ module Ultrasphinx
         
         primary_key = "#{klass.table_name}.#{klass.primary_key}"
         group_bys = case ADAPTER
-          when 'mysql'
+          when 'mysql', 'jdbcmysql'
             primary_key
           when 'postgresql'
             # Postgres is very fussy about GROUP_BY 
