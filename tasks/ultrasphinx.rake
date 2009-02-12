@@ -2,6 +2,9 @@ $LOAD_PATH.unshift(File.dirname(__FILE__) + '/../lib')
 
 ENV['RAILS_ENV'] ||= "development"
 
+module Ultrasphinx
+end
+
 namespace :ultrasphinx do  
 
   task :_environment => [:environment] do
