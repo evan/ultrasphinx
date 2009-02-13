@@ -53,7 +53,7 @@ namespace :ultrasphinx do
     task :start => [:_environment] do
       FileUtils.mkdir_p File.dirname(Ultrasphinx::DAEMON_SETTINGS["log"]) rescue nil
       raise Ultrasphinx::DaemonError, "Already running" if ultrasphinx_daemon_running?
-      system "searchd --config '#{Ultrasphinx::CONF_PATH}'"
+      system "searchd --config #{Ultrasphinx::CONF_PATH}"
       sleep(4) # give daemon a chance to write the pid file
       if ultrasphinx_daemon_running?
         say "started successfully"
@@ -159,7 +159,7 @@ def ultrasphinx_index(index)
   rotate = ultrasphinx_daemon_running?
   ultrasphinx_create_index_path
   
-  cmd = "indexer --config '#{Ultrasphinx::CONF_PATH}'"
+  cmd = "indexer --config #{Ultrasphinx::CONF_PATH}"
   cmd << " #{ENV['OPTS']} " if ENV['OPTS']
   cmd << " --rotate" if rotate
   cmd << " #{index}"
@@ -178,7 +178,7 @@ def ultrasphinx_merge
     raise "#{index} index is missing" unless File.exist? "#{Ultrasphinx::INDEX_SETTINGS['path']}/sphinx_index_#{index}.spa"
   end
   
-  cmd = "indexer --config '#{Ultrasphinx::CONF_PATH}'"
+  cmd = "indexer --config #{Ultrasphinx::CONF_PATH}"
   cmd << " #{ENV['OPTS']} " if ENV['OPTS']
   cmd << " --rotate" if rotate
   cmd << " --merge #{indexes.join(' ')}"
