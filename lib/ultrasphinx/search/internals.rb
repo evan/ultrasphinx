@@ -248,7 +248,7 @@ module Ultrasphinx
           end
           
           klass.connection.execute("SELECT #{field_string} AS value, #{SQL_FUNCTIONS[ADAPTER]['hash']._interpolate(field_string)} AS hash FROM #{klass.table_name} #{join_string} GROUP BY value").each do |hash|
-            FACET_CACHE[facet][hash['hash'].to_i] = hash['value']
+            FACET_CACHE[facet][hash[1].to_i] = hash[0]
           end                            
           klass
         end
