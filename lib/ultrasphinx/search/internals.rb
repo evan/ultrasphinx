@@ -253,7 +253,6 @@ module Ultrasphinx
           end
           
           query = "SELECT #{field_string} AS value, #{SQL_FUNCTIONS[ADAPTER]['hash']._interpolate(field_string)} AS hash FROM #{klass.table_name} #{join_string} GROUP BY value"
-          Ultrasphinx.say("query: #{query}")
           
           klass.connection.execute(query).each do |hash|
             FACET_CACHE[facet][hash[1].to_i] = hash[0]
