@@ -243,11 +243,19 @@ module Ultrasphinx
                 (configuration['association_sql'] or "LEFT OUTER JOIN #{association_model.table_name} AS #{table_alias} ON #{table_alias}.#{klass.to_s.downcase}_id = #{klass.table_name}.#{association_model.primary_key}")
               ]
             when 'concatenate'
-              # Wait for someone to complain before worrying about this
-              raise "Concatenation text facets have not been implemented"
+              raise "Concatenation text facets have only been implemented for when :association_sql is defined" if configuration['association_sql'].blank?
+              
+              table_alias = configuration['table_alias']
+              
+              [ "#{table_alias}.#{configuration['field']}",
+                configuration['association_sql']
+              ]
           end
           
-          klass.connection.execute("SELECT #{field_string} AS value, #{SQL_FUNCTIONS[ADAPTER]['hash']._interpolate(field_string)} AS hash FROM #{klass.table_name} #{join_string} GROUP BY value").each do |hash|
+          query = "SELECT #{field_string} AS value, #{SQL_FUNCTIONS[ADAPTER]['hash']._interpolate(field_string)} AS hash FROM #{klass.table_name} #{join_string} GROUP BY value"
+          Ultrasphinx.say("query: #{query}")
+          
+          klass.connection.execute(query).each do |hash|
             FACET_CACHE[facet][hash[1].to_i] = hash[0]
           end                            
           klass
