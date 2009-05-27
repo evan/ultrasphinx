@@ -277,7 +277,7 @@ module Ultrasphinx
         end.map do |item|
           class_name = IDS_TO_MODELS[item[:doc] % number_of_models]
           raise DaemonError, "Impossible Sphinx document id #{item[:doc]} in query result" unless class_name
-          [class_name, item[:doc] / number_of_models]
+          [class_name, (item[:doc] / number_of_models).to_i]
         end
       end
 
