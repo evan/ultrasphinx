@@ -39,7 +39,9 @@ module Ultrasphinx
         load_constants
               
         say "rebuilding configurations for #{RAILS_ENV} environment" 
-        say "available models are #{MODEL_CONFIGURATION.keys.to_sentence}"
+        # stable sort classes by name rather than rely on hash order
+        model_list = MODEL_CONFIGURATION.keys.sort
+        say "available models are #{model_list.to_sentence}"
         File.open(CONF_PATH, "w") do |conf|              
           conf.puts global_header            
           say "generating SQL"    
@@ -48,9 +50,8 @@ module Ultrasphinx
             sources = []
             cached_groups = Fields.instance.groups.join("\n")
 
-            MODEL_CONFIGURATION.each_with_index do |model_and_options, class_id|              
-              # This relies on hash sort order being deterministic per-machine
-              model, options = model_and_options
+            model_list.each_with_index do |model, class_id|
+              options = MODEL_CONFIGURATION[model]
               klass = model.constantize
               source = "#{model.tableize.gsub('/', '__')}_#{index}"
  
