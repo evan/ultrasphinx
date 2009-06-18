@@ -291,7 +291,7 @@ module Ultrasphinx
         end
         
         ids.map {|ary| ary.first}.uniq.each do |class_name|
-          klass = class_name.singularize.constantize
+          klass = class_name.constantize
           
           finder = (
             Ultrasphinx::Search.client_options['finder_methods'].detect do |method_name| 
