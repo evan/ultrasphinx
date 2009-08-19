@@ -96,7 +96,9 @@ module Ultrasphinx
 
         conf = [adapter_defaults]                  
         connection_settings.reverse_merge(CONNECTION_DEFAULTS).each do |key, value|
-          conf << "#{CONFIG_MAP[key]} = #{value}" if CONFIG_MAP[key]          
+          if CONFIG_MAP[key] && !SOURCE_SETTINGS[CONFIG_MAP[key]]
+            conf << "#{CONFIG_MAP[key]} = #{value}"
+          end
         end                 
         conf.sort.join("\n")
       end
