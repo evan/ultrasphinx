@@ -105,13 +105,21 @@ module Ultrasphinx
 
           raise UsageError, "field #{field.inspect} is invalid" unless type
           
+          exclude = false
+          
+          # check for exclude flag attached to filter
+          if value.is_a?(Hash)
+            exclude = value[:exclude]
+            value = value[:value]
+          end
+
           begin
             case value
               when Integer, Float, BigDecimal, NilClass, Array
                 # XXX Hack to force floats to be floats
                 value = value.to_f if type == 'float'
                 # Just bomb the filter in there
-                request.filters << Riddle::Client::Filter.new(field, Array(value), false)
+                request.filters << Riddle::Client::Filter.new(field, Array(value), exclude)
               when Range
                 # Make sure ranges point in the right direction
                 min, max = [value.begin, value.end].map {|x| x._to_numeric }
@@ -119,7 +127,7 @@ module Ultrasphinx
                 min, max = max, min if min > max
                 # XXX Hack to force floats to be floats
                 min, max = min.to_f, max.to_f if type == 'float'
-                request.filters << Riddle::Client::Filter.new(field, min..max, false)
+                request.filters << Riddle::Client::Filter.new(field, min..max, exclude)
               when String
                 # XXX Hack to move text filters into the query
                 opts['parsed_query'] << " @#{field} #{value}"
