@@ -198,6 +198,17 @@ class SearchTest < Test::Unit::TestCase
       S.new(:class_names => 'Seller', :filters => {'company_name' => 'seller17'}).run.size
     )  
   end
+
+  def test_exclusion_filter
+    assert_equal(
+      Seller.count(:conditions => 'user_id = 17'),
+      S.new(:class_names => 'Seller', :filters => { 'user_id' => { 'value' => 17, 'exclude' => false } }).run.size
+    )
+    assert_equal(
+      Seller.count(:conditions => 'user_id != 17'),
+      S.new(:class_names => 'Seller', :filters => { 'user_id' => { 'value' => 17, 'exclude' => true } }).run.size
+    )
+  end
   
   def test_invalid_filter
     assert_raises(Ultrasphinx::UsageError) do
