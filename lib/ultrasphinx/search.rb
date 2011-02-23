@@ -87,7 +87,7 @@ The MySQL <tt>:double</tt> column type is recommended for storing location data.
 
 == Interlock integration
   
-Ultrasphinx uses the <tt>find_all_by_id</tt> method to instantiate records. If you set <tt>with_finders: true</tt> in {Interlock's}[http://blog.evanweaver.com/files/doc/fauna/interlock] <tt>config/memcached.yml</tt>, Interlock overrides <tt>find_all_by_id</tt> with a caching version.
+Ultrasphinx uses the <tt>find_all_by_id</tt> method to instantiate records. If you set <tt>with_finders: true</tt> in {Interlock's}[http://fauna.github.com/fauna/interlock] <tt>config/memcached.yml</tt>, Interlock overrides <tt>find_all_by_id</tt> with a caching version.
 
 == Will_paginate integration
 
