@@ -2,6 +2,10 @@ Ultrasphinx
 
 Ruby on Rails configurator and client to the Sphinx full text search engine.
 
+== DEPRECATED
+
+Please use {Thinking Sphinx}[http://freelancing-god.github.com/ts/en/] instead.
+
 == License
 
 Copyright 2007-2008 Cloudburst, LLC. Licensed under the AFL 3. See the included LICENSE file. Some portions copyright Pat Allan, distributed under the MIT license, and used with permission. Some portions copyright PJ Hyett and Mislav Marohnić, distributed under the MIT license, and used with permission.
