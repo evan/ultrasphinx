@@ -158,7 +158,7 @@ module Ultrasphinx
         request, facet = original_request._deep_dup, original_facet        
         facet += "_facet" if Fields.instance.types[original_facet] == 'text'            
         
-        unless Fields.instance.types[facet]
+        if Fields.instance.types[facet].nil?
           if facet == original_facet
             raise UsageError, "Field #{original_facet} does not exist" 
           else
